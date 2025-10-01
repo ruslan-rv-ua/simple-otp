@@ -65,7 +65,7 @@ class TOTPDialog(wx.Dialog):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Current OTP section
-        current_label = wx.StaticText(panel, label="Current Password:")
+        current_label = wx.StaticText(panel, label="Current")
         main_sizer.Add(current_label, 0, wx.ALL, 5)
 
         current_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -73,7 +73,6 @@ class TOTPDialog(wx.Dialog):
             panel, style=wx.TE_READONLY | wx.TE_CENTER, size=(200, -1)
         )
         self.current_text.AcceptsFocusFromKeyboard = lambda: True
-        self.current_text.SetName("current")
         # Make text larger and bold
         font = self.current_text.GetFont()
         font.PointSize = 14
@@ -81,14 +80,14 @@ class TOTPDialog(wx.Dialog):
         self.current_text.SetFont(font)
         current_sizer.Add(self.current_text, 1, wx.ALL | wx.EXPAND, 5)
 
-        self.current_copy_btn = wx.Button(panel, label="Copy")
+        self.current_copy_btn = wx.Button(panel, label="Copy Current")
         self.current_copy_btn.Bind(wx.EVT_BUTTON, self._on_copy_current)
         current_sizer.Add(self.current_copy_btn, 0, wx.ALL, 5)
 
         main_sizer.Add(current_sizer, 0, wx.ALL | wx.EXPAND, 5)
 
         # Next OTP section
-        next_label = wx.StaticText(panel, label="Next Password:")
+        next_label = wx.StaticText(panel, label="Next")
         main_sizer.Add(next_label, 0, wx.ALL, 5)
 
         next_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -100,7 +99,7 @@ class TOTPDialog(wx.Dialog):
         self.next_text.SetFont(font)
         next_sizer.Add(self.next_text, 1, wx.ALL | wx.EXPAND, 5)
 
-        self.next_copy_btn = wx.Button(panel, label="Copy")
+        self.next_copy_btn = wx.Button(panel, label="Copy Next")
         self.next_copy_btn.Bind(wx.EVT_BUTTON, self._on_copy_next)
         next_sizer.Add(self.next_copy_btn, 0, wx.ALL, 5)
 
