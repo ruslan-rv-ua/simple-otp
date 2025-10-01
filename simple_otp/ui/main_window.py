@@ -172,9 +172,17 @@ class MainWindow(wx.Frame):
             )
             return
 
+        # Check if this is the last account
+        accounts = self.accounts_manager.list_accounts()
+        is_last_account = len(accounts) == 1
+
         # Confirm deletion
+        confirm_msg = f"Are you sure you want to delete {selected.get_display_name()}?"
+        if is_last_account:
+            confirm_msg += "\n\nThis is the last account. The application will close after deletion."
+
         confirm = wx.MessageBox(
-            f"Are you sure you want to delete {selected.get_display_name()}?",
+            confirm_msg,
             "Confirm Delete",
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
@@ -185,13 +193,22 @@ class MainWindow(wx.Frame):
         # Delete the account
         try:
             if self.accounts_manager.delete_account(selected.name, selected.issuer):
-                # Refresh the list
-                self._load_accounts()
-                wx.MessageBox(
-                    f"Account deleted: {selected.get_display_name()}",
-                    "Account Deleted",
-                    wx.OK | wx.ICON_INFORMATION,
-                )
+                # If this was the last account, show message and close the app
+                if is_last_account:
+                    wx.MessageBox(
+                        f"Account deleted: {selected.get_display_name()}\n\nThe application will now close.",
+                        "Last Account Deleted",
+                        wx.OK | wx.ICON_INFORMATION,
+                    )
+                    self.Close()
+                else:
+                    # Refresh the list
+                    self._load_accounts()
+                    wx.MessageBox(
+                        f"Account deleted: {selected.get_display_name()}",
+                        "Account Deleted",
+                        wx.OK | wx.ICON_INFORMATION,
+                    )
             else:
                 wx.MessageBox(
                     "Failed to delete account (not found)",

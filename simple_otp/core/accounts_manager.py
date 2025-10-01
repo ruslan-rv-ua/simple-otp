@@ -132,6 +132,8 @@ class AccountsManager:
         """
         Delete an account from storage.
 
+        If this is the last account, the storage file will be deleted.
+
         Args:
             name: Account name to delete
             issuer: Issuer of the account to delete (empty string if no issuer)
@@ -148,7 +150,12 @@ class AccountsManager:
         ]
 
         if len(accounts) < original_count:
-            self._save_accounts(accounts)
+            # If this was the last account, delete the storage file
+            if len(accounts) == 0:
+                if self._storage_path.exists():
+                    self._storage_path.unlink()
+            else:
+                self._save_accounts(accounts)
             return True
 
         return False
