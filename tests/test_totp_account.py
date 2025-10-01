@@ -1,0 +1,368 @@
+"""Tests for TOTPAccount model."""
+
+import pyotp
+import pytest
+
+from simple_otp.core.encryptor import Encryptor
+from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
+
+
+class TestDigestAlgorithm:
+    """Tests for DigestAlgorithm enum."""
+
+    def test_digest_algorithm_values(self):
+        """Test that digest algorithm enum has correct values."""
+        assert DigestAlgorithm.SHA1 == "sha1"
+        assert DigestAlgorithm.SHA256 == "sha256"
+        assert DigestAlgorithm.SHA512 == "sha512"
+
+    def test_get_digest_sha1(self):
+        """Test getting SHA1 digest function."""
+        from hashlib import sha1
+
+        digest = DigestAlgorithm.SHA1.get_digest()
+        assert digest is sha1
+
+    def test_get_digest_sha256(self):
+        """Test getting SHA256 digest function."""
+        from hashlib import sha256
+
+        digest = DigestAlgorithm.SHA256.get_digest()
+        assert digest is sha256
+
+    def test_get_digest_sha512(self):
+        """Test getting SHA512 digest function."""
+        from hashlib import sha512
+
+        digest = DigestAlgorithm.SHA512.get_digest()
+        assert digest is sha512
+
+
+class TestEncryptor:
+    """Tests for Encryptor class."""
+
+    def test_generate_salt(self):
+        """Test salt generation."""
+        salt = Encryptor.generate_salt()
+        assert isinstance(salt, str)
+        assert len(salt) > 0
+
+    def test_encrypt_decrypt_roundtrip(self):
+        """Test that encryption and decryption work correctly."""
+        plain_secret = "JBSWY3DPEHPK3PXP"
+        password = "test_password_123"
+        salt = Encryptor.generate_salt()
+
+        # Encrypt
+        encrypted = Encryptor.encrypt(plain_secret, password, salt)
+        assert isinstance(encrypted, str)
+        assert encrypted != plain_secret
+
+        # Decrypt
+        decrypted = Encryptor.decrypt(encrypted, password, salt)
+        assert decrypted == plain_secret
+
+    def test_decrypt_with_wrong_password_fails(self):
+        """Test that decryption fails with wrong password."""
+        plain_secret = "JBSWY3DPEHPK3PXP"
+        password = "correct_password"
+        wrong_password = "wrong_password"
+        salt = Encryptor.generate_salt()
+
+        encrypted = Encryptor.encrypt(plain_secret, password, salt)
+
+        # Should raise an exception when decrypting with wrong password
+        with pytest.raises(Exception):  # cryptography.exceptions.InvalidTag
+            Encryptor.decrypt(encrypted, wrong_password, salt)
+
+    def test_encrypt_with_custom_iterations(self):
+        """Test encryption with custom iteration count."""
+        plain_secret = "JBSWY3DPEHPK3PXP"
+        password = "test_password"
+        salt = Encryptor.generate_salt()
+        iterations = 100_000
+
+        encrypted = Encryptor.encrypt(plain_secret, password, salt, iterations)
+        decrypted = Encryptor.decrypt(encrypted, password, salt, iterations)
+
+        assert decrypted == plain_secret
+
+
+class TestTOTPAccount:
+    """Tests for TOTPAccount dataclass."""
+
+    @pytest.fixture
+    def valid_salt(self):
+        """Generate a valid salt."""
+        return Encryptor.generate_salt()
+
+    @pytest.fixture
+    def valid_encrypted_secret(self):
+        """Generate a valid encrypted secret."""
+        plain_secret = "JBSWY3DPEHPK3PXP"
+        password = "test_password"
+        salt = Encryptor.generate_salt()
+        return Encryptor.encrypt(plain_secret, password, salt)
+
+    @pytest.fixture
+    def test_password(self):
+        """Test password for encryption/decryption."""
+        return "test_password_123"
+
+    @pytest.fixture
+    def encrypted_account_data(self, test_password):
+        """Generate encrypted account data."""
+        plain_secret = "JBSWY3DPEHPK3PXP"
+        salt = Encryptor.generate_salt()
+        encrypted_secret = Encryptor.encrypt(plain_secret, test_password, salt)
+        return {
+            "plain_secret": plain_secret,
+            "encrypted_secret": encrypted_secret,
+            "salt": salt,
+            "password": test_password,
+        }
+
+    def test_create_account_with_defaults(self, encrypted_account_data):
+        """Test creating account with minimal required parameters."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="user@example.com",
+        )
+
+        assert account.encrypted_secret == encrypted_account_data["encrypted_secret"]
+        assert account.salt == encrypted_account_data["salt"]
+        assert account.iterations == 600_000
+        assert account.digits == 6
+        assert account.digest == DigestAlgorithm.SHA1
+        assert account.interval == 30
+        assert account.name == "user@example.com"
+        assert account.issuer == ""
+
+    def test_create_account_with_all_parameters(self, encrypted_account_data):
+        """Test creating account with all parameters."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="user@example.com",
+            iterations=100_000,
+            issuer="GitHub",
+            digits=8,
+            digest=DigestAlgorithm.SHA256,
+            interval=60,
+        )
+
+        assert account.encrypted_secret == encrypted_account_data["encrypted_secret"]
+        assert account.salt == encrypted_account_data["salt"]
+        assert account.iterations == 100_000
+        assert account.name == "user@example.com"
+        assert account.issuer == "GitHub"
+        assert account.digits == 8
+        assert account.digest == DigestAlgorithm.SHA256
+        assert account.interval == 60
+
+    def test_empty_encrypted_secret_raises_error(self, valid_salt):
+        """Test that empty encrypted_secret raises ValueError."""
+        with pytest.raises(ValueError, match="encrypted_secret cannot be empty"):
+            TOTPAccount(encrypted_secret="", salt=valid_salt, name="test")
+
+    def test_empty_salt_raises_error(self, valid_encrypted_secret):
+        """Test that empty salt raises ValueError."""
+        with pytest.raises(ValueError, match="salt cannot be empty"):
+            TOTPAccount(encrypted_secret=valid_encrypted_secret, salt="", name="test")
+
+    def test_empty_name_raises_error(self, valid_encrypted_secret, valid_salt):
+        """Test that empty name raises ValueError."""
+        with pytest.raises(ValueError, match="name cannot be empty"):
+            TOTPAccount(
+                encrypted_secret=valid_encrypted_secret, salt=valid_salt, name=""
+            )
+
+    def test_low_iterations_raises_error(self, valid_encrypted_secret, valid_salt):
+        """Test that iterations < 100,000 raises ValueError."""
+        with pytest.raises(ValueError, match="iterations must be at least 100,000"):
+            TOTPAccount(
+                encrypted_secret=valid_encrypted_secret,
+                salt=valid_salt,
+                name="test",
+                iterations=50_000,
+            )
+
+    def test_invalid_digits_raises_error(self, valid_encrypted_secret, valid_salt):
+        """Test that invalid digits value raises ValueError."""
+        with pytest.raises(ValueError, match="digits must be 6 or 8"):
+            TOTPAccount(
+                encrypted_secret=valid_encrypted_secret,
+                salt=valid_salt,
+                name="test",
+                digits=4,
+            )
+
+    def test_negative_interval_raises_error(self, valid_encrypted_secret, valid_salt):
+        """Test that negative interval raises ValueError."""
+        with pytest.raises(ValueError, match="interval must be positive"):
+            TOTPAccount(
+                encrypted_secret=valid_encrypted_secret,
+                salt=valid_salt,
+                name="test",
+                interval=-10,
+            )
+
+    def test_zero_interval_raises_error(self, valid_encrypted_secret, valid_salt):
+        """Test that zero interval raises ValueError."""
+        with pytest.raises(ValueError, match="interval must be positive"):
+            TOTPAccount(
+                encrypted_secret=valid_encrypted_secret,
+                salt=valid_salt,
+                name="test",
+                interval=0,
+            )
+
+    def test_get_display_name_with_issuer_and_name(self, encrypted_account_data):
+        """Test display name with both issuer and name."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="user@example.com",
+            issuer="GitHub",
+        )
+        assert account.get_display_name() == "GitHub (user@example.com)"
+
+    def test_get_display_name_with_issuer_only(self, encrypted_account_data):
+        """Test display name with only issuer."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="user@example.com",
+            issuer="GitHub",
+        )
+        # With both issuer and name, should show both
+        assert account.get_display_name() == "GitHub (user@example.com)"
+
+    def test_get_display_name_with_name_only(self, encrypted_account_data):
+        """Test display name with only name."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="user@example.com",
+        )
+        assert account.get_display_name() == "user@example.com"
+
+    def test_sha256_digest(self, encrypted_account_data):
+        """Test using SHA256 digest algorithm."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="test",
+            digest=DigestAlgorithm.SHA256,
+        )
+        assert account.digest == DigestAlgorithm.SHA256
+
+    def test_sha512_digest(self, encrypted_account_data):
+        """Test using SHA512 digest algorithm."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="test",
+            digest=DigestAlgorithm.SHA512,
+        )
+        assert account.digest == DigestAlgorithm.SHA512
+
+    def test_8_digit_code(self, encrypted_account_data):
+        """Test creating account with 8-digit codes."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="test",
+            digits=8,
+        )
+        assert account.digits == 8
+
+    def test_custom_interval(self, encrypted_account_data):
+        """Test creating account with custom interval."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="test",
+            interval=60,
+        )
+        assert account.interval == 60
+
+    def test_get_totp_returns_correct_instance(self, encrypted_account_data):
+        """Test that get_totp returns a valid pyotp.TOTP instance."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="user@example.com",
+            issuer="GitHub",
+        )
+
+        totp = account.get_totp(encrypted_account_data["password"])
+
+        assert isinstance(totp, pyotp.TOTP)
+        assert totp.digits == account.digits
+        assert totp.interval == account.interval
+        assert totp.name == account.name
+        assert totp.issuer == account.issuer
+
+    def test_get_totp_generates_valid_code(self, encrypted_account_data):
+        """Test that get_totp generates a valid TOTP code."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="test_account",
+        )
+
+        totp = account.get_totp(encrypted_account_data["password"])
+        code = totp.now()
+
+        assert isinstance(code, str)
+        assert len(code) == account.digits
+        assert code.isdigit()
+
+    def test_get_totp_with_wrong_password_raises_error(self, encrypted_account_data):
+        """Test that get_totp fails with wrong password."""
+        account = TOTPAccount(
+            encrypted_secret=encrypted_account_data["encrypted_secret"],
+            salt=encrypted_account_data["salt"],
+            name="test_account",
+        )
+
+        with pytest.raises(Exception):  # cryptography.exceptions.InvalidTag
+            account.get_totp("wrong_password")
+
+    def test_get_totp_with_8_digits(self, test_password):
+        """Test TOTP generation with 8-digit codes."""
+        plain_secret = "JBSWY3DPEHPK3PXP"
+        salt = Encryptor.generate_salt()
+        encrypted_secret = Encryptor.encrypt(plain_secret, test_password, salt)
+
+        account = TOTPAccount(
+            encrypted_secret=encrypted_secret, salt=salt, name="test", digits=8
+        )
+
+        totp = account.get_totp(test_password)
+        code = totp.now()
+
+        assert len(code) == 8
+        assert code.isdigit()
+
+    def test_get_totp_with_sha256(self, test_password):
+        """Test TOTP generation with SHA256 algorithm."""
+        plain_secret = "JBSWY3DPEHPK3PXP"
+        salt = Encryptor.generate_salt()
+        encrypted_secret = Encryptor.encrypt(plain_secret, test_password, salt)
+
+        account = TOTPAccount(
+            encrypted_secret=encrypted_secret,
+            salt=salt,
+            name="test",
+            digest=DigestAlgorithm.SHA256,
+        )
+
+        totp = account.get_totp(test_password)
+        code = totp.now()
+
+        assert isinstance(code, str)
+        assert len(code) == 6
+        assert code.isdigit()
