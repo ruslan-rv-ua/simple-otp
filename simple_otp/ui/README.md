@@ -21,6 +21,29 @@ The main window has been implemented with the following features:
 - **Single column**: "Name" - displays formatted as "issuer - name" (or just "name" if no issuer)
 - **Single selection mode** (wx.LC_SINGLE_SEL)
 - Currently populated with sample accounts for testing
+- **Item activation** (double-click or Enter) opens TOTP dialog
+
+## TOTP Dialog
+The TOTP dialog (`totp_dialog.py`) is shown when a list item is activated:
+
+### Features
+- **Current Password**: Displays the currently valid OTP code
+- **Next Password**: Displays the next OTP code (for the next time interval)
+- **Copy Buttons**: Copy password to clipboard without spaces (using pyperclip)
+- **Progress Bar**: Visual countdown showing time remaining in current interval
+  - Progress bar fills from 100% to 0% as the interval time elapses
+- **Auto-refresh**: Updates every 100ms using wx.Timer for smooth progress
+
+### Password Formatting
+- OTP codes are displayed with **digits grouped by 2** (e.g., "12 34 56" or "12 34 56 78")
+- Spaces are shown for readability but removed when copying to clipboard
+
+### Technical Details
+- Uses `pyotp.TOTP.now()` for current code
+- Uses `pyotp.TOTP.at(time)` for next code
+- Timer updates display and progress bar every 100ms
+- Dialog is centered on parent window
+- Proper cleanup of timer on dialog close
 
 ## Menu Bar
 
