@@ -40,12 +40,16 @@ class AccountsManager:
     def _create_initial_storage(self) -> None:
         """Create initial storage file with an example account."""
         # Create an example account with a known password for demonstration
+        # Uses test TOTP account from https://authenticationtest.com/totpChallenge
+        # Email: totp@authenticationtest.com
+        # Secret: I65VU7K5ZQL7WB4E
+        # This can be used to verify the TOTP implementation works correctly
         example_password = "example_password"
         example_account = TOTPAccount.from_secret(
-            name="user@example.com",
-            secret="JBSWY3DPEHPK3PXP",  # Standard test secret from RFC 6238
+            name="totp@authenticationtest.com",
+            secret="I65VU7K5ZQL7WB4E",  # Test secret from authenticationtest.com
             password=example_password,
-            issuer="Example Service",
+            issuer="AuthenticationTest.com",
             digits=6,
             digest=DigestAlgorithm.SHA1,
             interval=30,
@@ -184,8 +188,10 @@ class AccountsManager:
         Get all accounts from storage.
 
         Returns:
-            List of all TOTPAccount objects
+            List of all TOTPAccount objects (empty list if storage doesn't exist)
         """
+        if not self._storage_path.exists():
+            return []
         return self._load_accounts()
 
     def update_account(
@@ -296,12 +302,16 @@ class AccountsManager:
         if self.has_accounts():
             raise ValueError("Accounts already exist")
 
-        # Create a default account
+        # Create a default test account from https://authenticationtest.com/totpChallenge
+        # This allows users to test the TOTP implementation with a publicly available test account
+        # Email: totp@authenticationtest.com
+        # Secret: I65VU7K5ZQL7WB4E
+        # Users can verify the generated codes against the website: https://authenticationtest.com/totpChallenge
         default_account = TOTPAccount.from_secret(
-            name="user@example.com",
-            secret="JBSWY3DPEHPK3PXP",  # Standard test secret from RFC 6238
+            name="totp@authenticationtest.com",
+            secret="I65VU7K5ZQL7WB4E",  # Test secret from authenticationtest.com
             password=password,
-            issuer="Example Service",
+            issuer="AuthenticationTest.com",
             digits=6,
             digest=DigestAlgorithm.SHA1,
             interval=30,

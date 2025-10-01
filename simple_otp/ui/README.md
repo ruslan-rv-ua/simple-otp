@@ -48,8 +48,8 @@ The TOTP dialog (`totp_dialog.py`) is shown when a list item is activated:
 ## Menu Bar
 
 ### Account Menu
-- **Add** (F7) - Shows stub message box
-- **Delete** (Del) - Shows stub message box (with selected account info if available)
+- **Add** (F7) - Opens Add Account dialog to create new TOTP accounts
+- **Delete** (Del) - Deletes the selected account with confirmation
 
 ### Help Menu
 - **About** - Shows proper About dialog with:
@@ -82,8 +82,19 @@ The application currently loads 5 sample accounts:
 4. Company Portal - admin@company.com
 5. Microsoft - test@microsoft.com
 
-## Next Steps
-- Replace sample data with real TOTPAccount objects from AccountsManager
-- Implement actual Add Account functionality
-- Implement actual Delete Account functionality
-- Add TOTP code display and countdown timer
+## Add Account Feature
+
+The Add Account feature (`add_account_dialog.py`) allows users to manually add new TOTP accounts:
+
+### Features
+- **Required Fields**: Name and Secret (Base32)
+- **Optional Fields**: Issuer, Digits (6/8), Digest Algorithm (SHA1/256/512), Interval
+- **Validation**: 
+  - Name and Secret are required
+  - Secret must be valid Base32 format
+  - Automatic normalization (removes spaces, converts to uppercase)
+  - Prevents duplicate accounts (same name + issuer)
+- **Encryption**: Secrets are encrypted with master password before storage
+- **Error Handling**: Clear error messages for validation failures
+
+See [docs/ADD_ACCOUNT_USAGE.md](../../docs/ADD_ACCOUNT_USAGE.md) for detailed usage instructions.

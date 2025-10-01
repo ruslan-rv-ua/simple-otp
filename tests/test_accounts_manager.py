@@ -72,8 +72,9 @@ class TestAccountsManagerInitialization:
         assert len(accounts) == 1
 
         example = accounts[0]
-        assert example.name == "user@example.com"
-        assert example.issuer == "Example Service"
+        # Updated to match the new test account from authenticationtest.com
+        assert example.name == "totp@authenticationtest.com"
+        assert example.issuer == "AuthenticationTest.com"
         assert example.digits == 6
         assert example.interval == 30
 

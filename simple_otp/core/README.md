@@ -36,11 +36,24 @@ manager = AccountsManager(storage_path=Path("custom/path/accounts.json"))
 
 When you create an `AccountsManager` instance for the first time, it automatically:
 1. Creates the `accounts.json` file if it doesn't exist
-2. Adds an example account with the following credentials:
-   - **Name**: `user@example.com`
-   - **Issuer**: `Example Service`
-   - **Password**: `example_password`
-   - **Secret**: `JBSWY3DPEHPK3PXP` (standard RFC 6238 test secret)
+2. Adds a test account from [authenticationtest.com](https://authenticationtest.com/totpChallenge):
+   - **Name**: `totp@authenticationtest.com`
+   - **Issuer**: `AuthenticationTest.com`
+   - **Password**: `example_password` (master password for encryption)
+   - **Secret**: `I65VU7K5ZQL7WB4E` (publicly available test secret)
+
+#### Testing the Default Account
+
+You can verify the TOTP implementation works correctly by:
+1. Opening the default account in the app (use password: `example_password`)
+2. Copying the generated TOTP code
+3. Visiting https://authenticationtest.com/totpChallenge
+4. Logging in with:
+   - **Email**: `totp@authenticationtest.com`
+   - **Password**: `pa$$w0rd`
+   - **MFA Code**: The TOTP code from the app
+
+If authentication succeeds, your TOTP implementation is working correctly!
 
 ### Operations
 

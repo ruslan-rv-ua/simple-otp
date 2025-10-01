@@ -5,6 +5,8 @@ import wx.adv
 from ObjectListView3 import ColumnDefn, Filter, ObjectListView
 
 from simple_otp.core.accounts_manager import AccountsManager
+from simple_otp.models.totp_account import TOTPAccount
+from simple_otp.ui.add_account_dialog import AddAccountDialog
 from simple_otp.ui.totp_dialog import TOTPDialog
 
 
@@ -157,11 +159,55 @@ class MainWindow(wx.Frame):
 
     def _on_add_account(self, event):
         """Handle Add Account menu item."""
-        wx.MessageBox(
-            "Add Account functionality not yet implemented",
-            "Add Account",
-            wx.OK | wx.ICON_INFORMATION,
-        )
+        # Show the add account dialog
+        dialog = AddAccountDialog(self)
+        result = dialog.ShowModal()
+
+        if result == wx.ID_OK:
+            # Get the account data from the dialog
+            account_data = dialog.get_account_data()
+
+            try:
+                # Create a new TOTP account with the provided data
+                new_account = TOTPAccount.from_secret(
+                    name=account_data["name"],
+                    secret=account_data["secret"],
+                    password=self.password,
+                    issuer=account_data["issuer"],
+                    digits=account_data["digits"],
+                    digest=account_data["digest"],
+                    interval=account_data["interval"],
+                )
+
+                # Add the account to the accounts manager
+                self.accounts_manager.add_account(new_account)
+
+                # Refresh the accounts list
+                self._load_accounts()
+
+                # Show success message
+                wx.MessageBox(
+                    f"Account added successfully: {new_account.get_display_name()}",
+                    "Account Added",
+                    wx.OK | wx.ICON_INFORMATION,
+                )
+
+            except ValueError as e:
+                # Handle duplicate account or validation errors
+                wx.MessageBox(
+                    f"Failed to add account: {str(e)}",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+            except Exception as e:
+                # Handle any other errors
+                wx.MessageBox(
+                    f"An unexpected error occurred: {str(e)}",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+
+        dialog.Destroy()
 
     def _on_delete_account(self, event):
         """Handle Delete Account menu item."""
