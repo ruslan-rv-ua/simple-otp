@@ -4,6 +4,7 @@ import wx
 from ObjectListView3 import ColumnDefn, Filter, ObjectListView
 
 from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
+from simple_otp.ui.totp_dialog import TOTPDialog
 
 
 class MainWindow(wx.Frame):
@@ -87,6 +88,9 @@ class MainWindow(wx.Frame):
         # Add the list to the sizer (with proportion 1 to take remaining space)
         main_sizer.Add(self.accounts_list, 1, wx.ALL | wx.EXPAND, 5)
 
+        # Bind list item activation event (double-click or Enter)
+        self.accounts_list.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self._on_item_activated)
+
         panel.SetSizer(main_sizer)
 
     def _load_sample_accounts(self):
@@ -143,6 +147,27 @@ class MainWindow(wx.Frame):
         # Apply the filter
         self.accounts_list.SetFilter(Filter.Predicate(filter_func))
         self.accounts_list.RepopulateList()
+
+    def _on_item_activated(self, event):
+        """Handle list item activation (double-click or Enter)."""
+        account = self.accounts_list.GetSelectedObject()
+        if account is None:
+            return
+
+        # For demo, use the same password as used in sample data
+        demo_password = "demo123"
+
+        try:
+            # Show TOTP dialog
+            dialog = TOTPDialog(self, account, demo_password)
+            dialog.ShowModal()
+            dialog.Destroy()
+        except Exception as e:
+            wx.MessageBox(
+                f"Failed to display TOTP: {str(e)}",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
 
     def _on_add_account(self, event):
         """Handle Add Account menu item."""
