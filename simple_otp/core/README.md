@@ -1,0 +1,158 @@
+# Core Module
+
+This module contains the core business logic for the simple-otp application.
+
+## Components
+
+### `encryptor.py`
+Provides encryption and decryption utilities for TOTP secrets using:
+- **PBKDF2-HMAC-SHA256** for key derivation
+- **AES-256-GCM** for encryption
+
+### `accounts_manager.py`
+Manages TOTP accounts with JSON file persistence.
+
+## AccountsManager
+
+The `AccountsManager` class handles all operations for managing TOTP accounts, including storage, retrieval, and modification.
+
+### Storage Location
+
+By default, accounts are stored in `accounts.json` one level up from the project folder. For example:
+```
+c:/dev/
+├── simple-otp/          # Project folder
+│   └── simple_otp/
+└── accounts.json        # Accounts storage (one level up)
+```
+
+You can also specify a custom storage path:
+```python
+from pathlib import Path
+manager = AccountsManager(storage_path=Path("custom/path/accounts.json"))
+```
+
+### Initial Setup
+
+When you create an `AccountsManager` instance for the first time, it automatically:
+1. Creates the `accounts.json` file if it doesn't exist
+2. Adds an example account with the following credentials:
+   - **Name**: `user@example.com`
+   - **Issuer**: `Example Service`
+   - **Password**: `example_password`
+   - **Secret**: `JBSWY3DPEHPK3PXP` (standard RFC 6238 test secret)
+
+### Operations
+
+#### Add Account
+```python
+from simple_otp.core.accounts_manager import AccountsManager
+from simple_otp.models.totp_account import TOTPAccount, DigestAlgorithm
+
+manager = AccountsManager()
+
+account = TOTPAccount.from_secret(
+    name="user@example.com",
+    secret="JBSWY3DPEHPK3PXP",
+    password="my_password",
+    issuer="Google",
+    digits=6,
+    digest=DigestAlgorithm.SHA1,
+    interval=30,
+)
+
+manager.add_account(account)
+```
+
+#### Get Account
+```python
+account = manager.get_account("user@example.com", "Google")
+if account:
+    totp = account.get_totp("my_password")
+    code = totp.now()
+    print(f"Current code: {code}")
+```
+
+#### List All Accounts
+```python
+accounts = manager.list_accounts()
+for account in accounts:
+    print(account.get_display_name())
+```
+
+#### Update Account
+```python
+updated_account = TOTPAccount.from_secret(
+    name="newemail@example.com",
+    secret="NEWSECRET",
+    password="my_password",
+    issuer="Google",
+)
+
+success = manager.update_account(
+    old_name="user@example.com",
+    old_issuer="Google",
+    new_account=updated_account
+)
+```
+
+#### Delete Account
+```python
+deleted = manager.delete_account("user@example.com", "Google")
+if deleted:
+    print("Account deleted successfully")
+```
+
+#### Clear All Accounts
+```python
+count = manager.clear_all_accounts()
+print(f"Cleared {count} accounts")
+```
+
+### JSON Format
+
+The accounts are stored in an indented JSON format for readability:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "user@example.com",
+      "encrypted_secret": "base64_encoded_encrypted_data",
+      "salt": "base64_encoded_salt",
+      "iterations": 600000,
+      "issuer": "Google",
+      "digits": 6,
+      "digest": "sha1",
+      "interval": 30
+    }
+  ]
+}
+```
+
+### Security Considerations
+
+- **Secrets are encrypted**: All TOTP secrets are encrypted using AES-256-GCM with a password-derived key
+- **Secure key derivation**: Uses PBKDF2-HMAC-SHA256 with 600,000 iterations (OWASP recommendation)
+- **Unique salts**: Each account has its own cryptographically secure salt
+- **Password required**: You must provide the correct password to decrypt secrets and generate TOTP codes
+
+### Error Handling
+
+- **Duplicate accounts**: Adding an account with the same name and issuer raises `ValueError`
+- **Invalid credentials**: Attempting to decrypt with wrong password raises `cryptography.exceptions.InvalidTag`
+- **Missing file**: If the storage file is corrupted or missing, it will be recreated on next initialization
+- **Invalid account data**: Account validation occurs during creation (see `TOTPAccount` documentation)
+
+### Thread Safety
+
+The `AccountsManager` is **not thread-safe**. If you need concurrent access, implement your own locking mechanism.
+
+## Example Usage
+
+See `example_accounts_manager_usage.py` for a complete example demonstrating all operations.
+
+Run it with:
+```cmd
+uv run python -m simple_otp.core.example_accounts_manager_usage
+```

@@ -1,0 +1,247 @@
+"""Accounts manager for persisting TOTP accounts to JSON storage."""
+
+import json
+from pathlib import Path
+from typing import List, Optional
+
+from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
+
+
+class AccountsManager:
+    """
+    Manages TOTP accounts with JSON file persistence.
+
+    Accounts are stored in an indented JSON file one level up from the project folder.
+    If the file doesn't exist on initialization, an example account is created.
+    """
+
+    def __init__(self, storage_path: Optional[Path] = None):
+        """
+        Initialize the accounts manager.
+
+        Args:
+            storage_path: Optional custom path for the JSON file.
+                         If None, defaults to ../accounts.json (one level up from project).
+        """
+        if storage_path is None:
+            # Get the project root (where simple_otp package is located)
+            project_root = Path(__file__).parent.parent.parent
+            # Go one level up and create accounts.json
+            self._storage_path = project_root.parent / "accounts.json"
+        else:
+            self._storage_path = storage_path
+
+        # Initialize storage if it doesn't exist
+        if not self._storage_path.exists():
+            self._create_initial_storage()
+
+    def _create_initial_storage(self) -> None:
+        """Create initial storage file with an example account."""
+        # Create an example account with a known password for demonstration
+        example_password = "example_password"
+        example_account = TOTPAccount.from_secret(
+            name="user@example.com",
+            secret="JBSWY3DPEHPK3PXP",  # Standard test secret from RFC 6238
+            password=example_password,
+            issuer="Example Service",
+            digits=6,
+            digest=DigestAlgorithm.SHA1,
+            interval=30,
+        )
+
+        # Save to file
+        self._save_accounts([example_account])
+
+    def _load_accounts(self) -> List[TOTPAccount]:
+        """
+        Load all accounts from the JSON file.
+
+        Returns:
+            List of TOTPAccount objects
+
+        Raises:
+            FileNotFoundError: If the storage file doesn't exist
+            json.JSONDecodeError: If the file contains invalid JSON
+        """
+        with open(self._storage_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        accounts = []
+        for account_data in data.get("accounts", []):
+            # Convert digest string back to DigestAlgorithm enum
+            digest_str = account_data.get("digest", "sha1")
+            account_data["digest"] = DigestAlgorithm(digest_str)
+
+            account = TOTPAccount(**account_data)
+            accounts.append(account)
+
+        return accounts
+
+    def _save_accounts(self, accounts: List[TOTPAccount]) -> None:
+        """
+        Save all accounts to the JSON file.
+
+        Args:
+            accounts: List of TOTPAccount objects to save
+        """
+        # Convert accounts to dictionaries
+        accounts_data = []
+        for account in accounts:
+            account_dict = {
+                "name": account.name,
+                "encrypted_secret": account.encrypted_secret,
+                "salt": account.salt,
+                "iterations": account.iterations,
+                "issuer": account.issuer,
+                "digits": account.digits,
+                "digest": account.digest.value,  # Convert enum to string
+                "interval": account.interval,
+            }
+            accounts_data.append(account_dict)
+
+        # Write to file with indentation for readability
+        data = {"accounts": accounts_data}
+        with open(self._storage_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    def add_account(self, account: TOTPAccount) -> None:
+        """
+        Add a new account to storage.
+
+        Args:
+            account: TOTPAccount to add
+
+        Raises:
+            ValueError: If an account with the same name and issuer already exists
+        """
+        accounts = self._load_accounts()
+
+        # Check for duplicates
+        for existing in accounts:
+            if existing.name == account.name and existing.issuer == account.issuer:
+                raise ValueError(
+                    f"Account already exists: {account.get_display_name()}"
+                )
+
+        accounts.append(account)
+        self._save_accounts(accounts)
+
+    def delete_account(self, name: str, issuer: str = "") -> bool:
+        """
+        Delete an account from storage.
+
+        Args:
+            name: Account name to delete
+            issuer: Issuer of the account to delete (empty string if no issuer)
+
+        Returns:
+            True if account was deleted, False if not found
+        """
+        accounts = self._load_accounts()
+        original_count = len(accounts)
+
+        # Filter out the account to delete
+        accounts = [
+            acc for acc in accounts if not (acc.name == name and acc.issuer == issuer)
+        ]
+
+        if len(accounts) < original_count:
+            self._save_accounts(accounts)
+            return True
+
+        return False
+
+    def get_account(self, name: str, issuer: str = "") -> Optional[TOTPAccount]:
+        """
+        Get a specific account by name and issuer.
+
+        Args:
+            name: Account name
+            issuer: Issuer of the account (empty string if no issuer)
+
+        Returns:
+            TOTPAccount if found, None otherwise
+        """
+        accounts = self._load_accounts()
+
+        for account in accounts:
+            if account.name == name and account.issuer == issuer:
+                return account
+
+        return None
+
+    def list_accounts(self) -> List[TOTPAccount]:
+        """
+        Get all accounts from storage.
+
+        Returns:
+            List of all TOTPAccount objects
+        """
+        return self._load_accounts()
+
+    def update_account(
+        self, old_name: str, old_issuer: str, new_account: TOTPAccount
+    ) -> bool:
+        """
+        Update an existing account.
+
+        Args:
+            old_name: Current account name
+            old_issuer: Current account issuer
+            new_account: Updated TOTPAccount object
+
+        Returns:
+            True if account was updated, False if not found
+
+        Raises:
+            ValueError: If the new account name/issuer conflicts with another existing account
+        """
+        accounts = self._load_accounts()
+        account_found = False
+
+        for i, account in enumerate(accounts):
+            if account.name == old_name and account.issuer == old_issuer:
+                account_found = True
+
+                # Check if the new name/issuer conflicts with another account
+                if old_name != new_account.name or old_issuer != new_account.issuer:
+                    for other_account in accounts:
+                        if (
+                            other_account.name == new_account.name
+                            and other_account.issuer == new_account.issuer
+                            and other_account is not account
+                        ):
+                            raise ValueError(
+                                f"Account already exists: {new_account.get_display_name()}"
+                            )
+
+                # Update the account
+                accounts[i] = new_account
+                break
+
+        if account_found:
+            self._save_accounts(accounts)
+            return True
+
+        return False
+
+    def clear_all_accounts(self) -> int:
+        """
+        Remove all accounts from storage.
+
+        Returns:
+            Number of accounts that were removed
+        """
+        accounts = self._load_accounts()
+        count = len(accounts)
+        self._save_accounts([])
+        return count
+
+    def get_storage_path(self) -> Path:
+        """
+        Get the path to the JSON storage file.
+
+        Returns:
+            Path object pointing to the storage file
+        """
+        return self._storage_path
