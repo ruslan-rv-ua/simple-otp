@@ -15,13 +15,15 @@ class AccountsManager:
     If the file doesn't exist on initialization, an example account is created.
     """
 
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Optional[Path] = None, auto_create: bool = True):
         """
         Initialize the accounts manager.
 
         Args:
             storage_path: Optional custom path for the JSON file.
                          If None, defaults to ../accounts.json (one level up from project).
+            auto_create: If True, automatically create initial storage with example account.
+                        If False, storage must be created manually.
         """
         if storage_path is None:
             # Get the project root (where simple_otp package is located)
@@ -31,8 +33,8 @@ class AccountsManager:
         else:
             self._storage_path = storage_path
 
-        # Initialize storage if it doesn't exist
-        if not self._storage_path.exists():
+        # Initialize storage if it doesn't exist (only if auto_create is True)
+        if auto_create and not self._storage_path.exists():
             self._create_initial_storage()
 
     def _create_initial_storage(self) -> None:
@@ -130,6 +132,8 @@ class AccountsManager:
         """
         Delete an account from storage.
 
+        If this is the last account, the storage file will be deleted.
+
         Args:
             name: Account name to delete
             issuer: Issuer of the account to delete (empty string if no issuer)
@@ -146,7 +150,12 @@ class AccountsManager:
         ]
 
         if len(accounts) < original_count:
-            self._save_accounts(accounts)
+            # If this was the last account, delete the storage file
+            if len(accounts) == 0:
+                if self._storage_path.exists():
+                    self._storage_path.unlink()
+            else:
+                self._save_accounts(accounts)
             return True
 
         return False
@@ -245,3 +254,85 @@ class AccountsManager:
             Path object pointing to the storage file
         """
         return self._storage_path
+
+    def storage_exists(self) -> bool:
+        """
+        Check if the storage file exists.
+
+        Returns:
+            True if the storage file exists, False otherwise
+        """
+        return self._storage_path.exists()
+
+    def has_accounts(self) -> bool:
+        """
+        Check if there are any accounts in storage.
+
+        Returns:
+            True if storage exists and contains at least one account, False otherwise
+        """
+        if not self.storage_exists():
+            return False
+
+        try:
+            accounts = self._load_accounts()
+            return len(accounts) > 0
+        except (FileNotFoundError, json.JSONDecodeError):
+            return False
+
+    def create_initial_account(self, password: str) -> TOTPAccount:
+        """
+        Create and save an initial default account with the given password.
+
+        Args:
+            password: Password to encrypt the account secret
+
+        Returns:
+            The created TOTPAccount
+
+        Raises:
+            ValueError: If accounts already exist
+        """
+        if self.has_accounts():
+            raise ValueError("Accounts already exist")
+
+        # Create a default account
+        default_account = TOTPAccount.from_secret(
+            name="user@example.com",
+            secret="JBSWY3DPEHPK3PXP",  # Standard test secret from RFC 6238
+            password=password,
+            issuer="Example Service",
+            digits=6,
+            digest=DigestAlgorithm.SHA1,
+            interval=30,
+        )
+
+        # Save to file
+        self._save_accounts([default_account])
+        return default_account
+
+    def verify_password(self, password: str) -> bool:
+        """
+        Verify a password by attempting to decrypt the first account.
+
+        Args:
+            password: Password to verify
+
+        Returns:
+            True if password is correct (can decrypt first account), False otherwise
+        """
+        if not self.has_accounts():
+            return False
+
+        try:
+            accounts = self._load_accounts()
+            if len(accounts) == 0:
+                return False
+
+            # Try to decrypt the first account
+            first_account = accounts[0]
+            _ = first_account.get_totp(password)  # This will raise if password is wrong
+            return True
+        except Exception:
+            # Any exception means password is incorrect or decryption failed
+            return False

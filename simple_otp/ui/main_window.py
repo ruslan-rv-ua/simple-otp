@@ -11,9 +11,18 @@ from simple_otp.ui.totp_dialog import TOTPDialog
 class MainWindow(wx.Frame):
     """Main application window with search and accounts list."""
 
-    def __init__(self, parent):
-        """Initialize the main window."""
+    def __init__(self, parent, password: str):
+        """
+        Initialize the main window.
+
+        Args:
+            parent: Parent window (typically None)
+            password: Master password for decrypting accounts
+        """
         super().__init__(parent, title="Simple OTP", style=wx.DEFAULT_FRAME_STYLE)
+
+        # Store the password for decrypting accounts
+        self.password = password
 
         # Maximize the window
         self.Maximize()
@@ -134,23 +143,9 @@ class MainWindow(wx.Frame):
         if account is None:
             return
 
-        # Prompt for password
-        password_dialog = wx.PasswordEntryDialog(
-            self,
-            f"Enter password to decrypt {account.get_display_name()}:",
-            "Password Required",
-        )
-
-        if password_dialog.ShowModal() != wx.ID_OK:
-            password_dialog.Destroy()
-            return
-
-        password = password_dialog.GetValue()
-        password_dialog.Destroy()
-
         try:
-            # Show TOTP dialog
-            dialog = TOTPDialog(self, account, password)
+            # Show TOTP dialog using the stored password
+            dialog = TOTPDialog(self, account, self.password)
             dialog.ShowModal()
             dialog.Destroy()
         except Exception as e:
@@ -177,9 +172,17 @@ class MainWindow(wx.Frame):
             )
             return
 
+        # Check if this is the last account
+        accounts = self.accounts_manager.list_accounts()
+        is_last_account = len(accounts) == 1
+
         # Confirm deletion
+        confirm_msg = f"Are you sure you want to delete {selected.get_display_name()}?"
+        if is_last_account:
+            confirm_msg += "\n\nThis is the last account. The application will close after deletion."
+
         confirm = wx.MessageBox(
-            f"Are you sure you want to delete {selected.get_display_name()}?",
+            confirm_msg,
             "Confirm Delete",
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
@@ -190,13 +193,22 @@ class MainWindow(wx.Frame):
         # Delete the account
         try:
             if self.accounts_manager.delete_account(selected.name, selected.issuer):
-                # Refresh the list
-                self._load_accounts()
-                wx.MessageBox(
-                    f"Account deleted: {selected.get_display_name()}",
-                    "Account Deleted",
-                    wx.OK | wx.ICON_INFORMATION,
-                )
+                # If this was the last account, show message and close the app
+                if is_last_account:
+                    wx.MessageBox(
+                        f"Account deleted: {selected.get_display_name()}\n\nThe application will now close.",
+                        "Last Account Deleted",
+                        wx.OK | wx.ICON_INFORMATION,
+                    )
+                    self.Close()
+                else:
+                    # Refresh the list
+                    self._load_accounts()
+                    wx.MessageBox(
+                        f"Account deleted: {selected.get_display_name()}",
+                        "Account Deleted",
+                        wx.OK | wx.ICON_INFORMATION,
+                    )
             else:
                 wx.MessageBox(
                     "Failed to delete account (not found)",
