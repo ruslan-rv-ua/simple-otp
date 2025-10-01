@@ -11,9 +11,18 @@ from simple_otp.ui.totp_dialog import TOTPDialog
 class MainWindow(wx.Frame):
     """Main application window with search and accounts list."""
 
-    def __init__(self, parent):
-        """Initialize the main window."""
+    def __init__(self, parent, password: str):
+        """
+        Initialize the main window.
+
+        Args:
+            parent: Parent window (typically None)
+            password: Master password for decrypting accounts
+        """
         super().__init__(parent, title="Simple OTP", style=wx.DEFAULT_FRAME_STYLE)
+
+        # Store the password for decrypting accounts
+        self.password = password
 
         # Maximize the window
         self.Maximize()
@@ -134,23 +143,9 @@ class MainWindow(wx.Frame):
         if account is None:
             return
 
-        # Prompt for password
-        password_dialog = wx.PasswordEntryDialog(
-            self,
-            f"Enter password to decrypt {account.get_display_name()}:",
-            "Password Required",
-        )
-
-        if password_dialog.ShowModal() != wx.ID_OK:
-            password_dialog.Destroy()
-            return
-
-        password = password_dialog.GetValue()
-        password_dialog.Destroy()
-
         try:
-            # Show TOTP dialog
-            dialog = TOTPDialog(self, account, password)
+            # Show TOTP dialog using the stored password
+            dialog = TOTPDialog(self, account, self.password)
             dialog.ShowModal()
             dialog.Destroy()
         except Exception as e:
