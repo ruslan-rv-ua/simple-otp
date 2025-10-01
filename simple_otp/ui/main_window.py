@@ -1,9 +1,10 @@
 """Main window for simple-otp application."""
 
 import wx
+import wx.adv
 from ObjectListView3 import ColumnDefn, Filter, ObjectListView
 
-from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
+from simple_otp.core.accounts_manager import AccountsManager
 from simple_otp.ui.totp_dialog import TOTPDialog
 
 
@@ -17,12 +18,15 @@ class MainWindow(wx.Frame):
         # Maximize the window
         self.Maximize()
 
+        # Initialize accounts manager
+        self.accounts_manager = AccountsManager()
+
         # Create the UI components
         self._create_menu_bar()
         self._create_ui()
 
-        # Sample data for testing
-        self._load_sample_accounts()
+        # Load accounts from storage
+        self._load_accounts()
 
     def _create_menu_bar(self):
         """Create the menu bar with Account and Help menus."""
@@ -93,34 +97,10 @@ class MainWindow(wx.Frame):
 
         panel.SetSizer(main_sizer)
 
-    def _load_sample_accounts(self):
-        """Load sample accounts for testing."""
-        # Common password for all demo accounts
-        demo_password = "demo123"
-
-        # Standard test secret from RFC 6238
-        demo_secret = "JBSWY3DPEHPK3PXP"
-
-        # Create sample accounts: 3 issuers x 3 email providers
-        issuers = ["Binance", "Whitebit", "ByBit"]
-        email_domains = ["gmail.com", "github.com", "microsoft.com"]
-
-        sample_accounts = []
-        for issuer in issuers:
-            for domain in email_domains:
-                email = f"user@{domain}"
-                account = TOTPAccount.from_secret(
-                    name=email,
-                    secret=demo_secret,
-                    password=demo_password,
-                    issuer=issuer,
-                    digits=6,
-                    digest=DigestAlgorithm.SHA1,
-                    interval=30,
-                )
-                sample_accounts.append(account)
-
-        self.accounts_list.SetObjects(sample_accounts)
+    def _load_accounts(self):
+        """Load accounts from the accounts manager."""
+        accounts = self.accounts_manager.list_accounts()
+        self.accounts_list.SetObjects(accounts)
 
     def _on_search(self, event):
         """Handle search text change."""
@@ -154,12 +134,23 @@ class MainWindow(wx.Frame):
         if account is None:
             return
 
-        # For demo, use the same password as used in sample data
-        demo_password = "demo123"
+        # Prompt for password
+        password_dialog = wx.PasswordEntryDialog(
+            self,
+            f"Enter password to decrypt {account.get_display_name()}:",
+            "Password Required",
+        )
+
+        if password_dialog.ShowModal() != wx.ID_OK:
+            password_dialog.Destroy()
+            return
+
+        password = password_dialog.GetValue()
+        password_dialog.Destroy()
 
         try:
             # Show TOTP dialog
-            dialog = TOTPDialog(self, account, demo_password)
+            dialog = TOTPDialog(self, account, password)
             dialog.ShowModal()
             dialog.Destroy()
         except Exception as e:
@@ -186,11 +177,38 @@ class MainWindow(wx.Frame):
             )
             return
 
-        wx.MessageBox(
-            f"Delete functionality not yet implemented\nSelected: {selected.get_display_name()}",
-            "Delete Account",
-            wx.OK | wx.ICON_INFORMATION,
+        # Confirm deletion
+        confirm = wx.MessageBox(
+            f"Are you sure you want to delete {selected.get_display_name()}?",
+            "Confirm Delete",
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
+
+        if confirm != wx.YES:
+            return
+
+        # Delete the account
+        try:
+            if self.accounts_manager.delete_account(selected.name, selected.issuer):
+                # Refresh the list
+                self._load_accounts()
+                wx.MessageBox(
+                    f"Account deleted: {selected.get_display_name()}",
+                    "Account Deleted",
+                    wx.OK | wx.ICON_INFORMATION,
+                )
+            else:
+                wx.MessageBox(
+                    "Failed to delete account (not found)",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+        except Exception as e:
+            wx.MessageBox(
+                f"Failed to delete account: {str(e)}",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
 
     def _on_exit(self, event):
         """Handle Exit menu item."""
