@@ -366,3 +366,189 @@ class TestTOTPAccount:
         assert isinstance(code, str)
         assert len(code) == 6
         assert code.isdigit()
+
+
+class TestTOTPAccountFromSecret:
+    """Tests for TOTPAccount.from_secret classmethod."""
+
+    @pytest.fixture
+    def test_password(self):
+        """Test password for encryption/decryption."""
+        return "test_password_123"
+
+    @pytest.fixture
+    def test_secret(self):
+        """Test TOTP secret."""
+        return "JBSWY3DPEHPK3PXP"
+
+    def test_from_secret_with_defaults(self, test_secret, test_password):
+        """Test creating account from secret with default parameters."""
+        account = TOTPAccount.from_secret(
+            name="user@example.com", secret=test_secret, password=test_password
+        )
+
+        assert account.name == "user@example.com"
+        assert account.issuer == ""
+        assert account.digits == 6
+        assert account.digest == DigestAlgorithm.SHA1
+        assert account.interval == 30
+        assert account.iterations == 600_000
+        assert account.encrypted_secret  # Should have encrypted secret
+        assert account.salt  # Should have generated salt
+
+    def test_from_secret_with_all_parameters(self, test_secret, test_password):
+        """Test creating account from secret with all parameters."""
+        account = TOTPAccount.from_secret(
+            name="user@example.com",
+            secret=test_secret,
+            password=test_password,
+            issuer="GitHub",
+            digits=8,
+            digest=DigestAlgorithm.SHA256,
+            interval=60,
+            iterations=100_000,
+        )
+
+        assert account.name == "user@example.com"
+        assert account.issuer == "GitHub"
+        assert account.digits == 8
+        assert account.digest == DigestAlgorithm.SHA256
+        assert account.interval == 60
+        assert account.iterations == 100_000
+
+    def test_from_secret_generates_unique_salts(self, test_secret, test_password):
+        """Test that from_secret generates unique salts for each account."""
+        account1 = TOTPAccount.from_secret(
+            name="test1", secret=test_secret, password=test_password
+        )
+        account2 = TOTPAccount.from_secret(
+            name="test2", secret=test_secret, password=test_password
+        )
+
+        assert account1.salt != account2.salt
+        assert account1.encrypted_secret != account2.encrypted_secret
+
+    def test_from_secret_encrypts_correctly(self, test_secret, test_password):
+        """Test that from_secret encrypts the secret correctly."""
+        account = TOTPAccount.from_secret(
+            name="test", secret=test_secret, password=test_password
+        )
+
+        # Should be able to decrypt and use the secret
+        totp = account.get_totp(test_password)
+        code = totp.now()
+
+        assert isinstance(code, str)
+        assert len(code) == 6
+        assert code.isdigit()
+
+    def test_from_secret_empty_secret_raises_error(self, test_password):
+        """Test that empty secret raises ValueError."""
+        with pytest.raises(ValueError, match="secret cannot be empty"):
+            TOTPAccount.from_secret(name="test", secret="", password=test_password)
+
+    def test_from_secret_empty_name_raises_error(self, test_secret, test_password):
+        """Test that empty name raises ValueError."""
+        with pytest.raises(ValueError, match="name cannot be empty"):
+            TOTPAccount.from_secret(name="", secret=test_secret, password=test_password)
+
+    def test_from_secret_invalid_digits_raises_error(self, test_secret, test_password):
+        """Test that invalid digits value raises ValueError."""
+        with pytest.raises(ValueError, match="digits must be 6 or 8"):
+            TOTPAccount.from_secret(
+                name="test", secret=test_secret, password=test_password, digits=4
+            )
+
+    def test_from_secret_low_iterations_raises_error(self, test_secret, test_password):
+        """Test that low iterations value raises ValueError."""
+        with pytest.raises(ValueError, match="iterations must be at least 100,000"):
+            TOTPAccount.from_secret(
+                name="test",
+                secret=test_secret,
+                password=test_password,
+                iterations=50_000,
+            )
+
+    def test_from_secret_totp_matches_reference(self, test_secret, test_password):
+        """Test that from_secret produces same TOTP as direct PyOTP."""
+        account = TOTPAccount.from_secret(
+            name="test", secret=test_secret, password=test_password
+        )
+
+        # Get TOTP from account
+        account_totp = account.get_totp(test_password)
+        account_code = account_totp.now()
+
+        # Get TOTP directly from PyOTP with same secret
+        reference_totp = pyotp.TOTP(test_secret)
+        reference_code = reference_totp.now()
+
+        assert account_code == reference_code
+
+    def test_from_secret_with_sha256_digest(self, test_secret, test_password):
+        """Test from_secret with SHA256 digest algorithm."""
+        account = TOTPAccount.from_secret(
+            name="test",
+            secret=test_secret,
+            password=test_password,
+            digest=DigestAlgorithm.SHA256,
+        )
+
+        assert account.digest == DigestAlgorithm.SHA256
+
+        totp = account.get_totp(test_password)
+        code = totp.now()
+
+        assert len(code) == 6
+        assert code.isdigit()
+
+    def test_from_secret_with_sha512_digest(self, test_secret, test_password):
+        """Test from_secret with SHA512 digest algorithm."""
+        account = TOTPAccount.from_secret(
+            name="test",
+            secret=test_secret,
+            password=test_password,
+            digest=DigestAlgorithm.SHA512,
+        )
+
+        assert account.digest == DigestAlgorithm.SHA512
+
+        totp = account.get_totp(test_password)
+        code = totp.now()
+
+        assert len(code) == 6
+        assert code.isdigit()
+
+    def test_from_secret_with_8_digits(self, test_secret, test_password):
+        """Test from_secret with 8-digit codes."""
+        account = TOTPAccount.from_secret(
+            name="test", secret=test_secret, password=test_password, digits=8
+        )
+
+        assert account.digits == 8
+
+        totp = account.get_totp(test_password)
+        code = totp.now()
+
+        assert len(code) == 8
+        assert code.isdigit()
+
+    def test_from_secret_with_custom_interval(self, test_secret, test_password):
+        """Test from_secret with custom interval."""
+        account = TOTPAccount.from_secret(
+            name="test", secret=test_secret, password=test_password, interval=60
+        )
+
+        assert account.interval == 60
+
+        totp = account.get_totp(test_password)
+        assert totp.interval == 60
+
+    def test_from_secret_wrong_password_fails(self, test_secret, test_password):
+        """Test that wrong password fails to decrypt."""
+        account = TOTPAccount.from_secret(
+            name="test", secret=test_secret, password=test_password
+        )
+
+        with pytest.raises(Exception):  # cryptography.exceptions.InvalidTag
+            account.get_totp("wrong_password")

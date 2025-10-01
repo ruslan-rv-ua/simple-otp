@@ -84,6 +84,58 @@ class TOTPAccount:
                 f"digest must be a DigestAlgorithm, got {type(self.digest)}"
             )
 
+    @classmethod
+    def from_secret(
+        cls,
+        name: str,
+        secret: str,
+        password: str,
+        issuer: str = "",
+        digits: int = 6,
+        digest: DigestAlgorithm = DigestAlgorithm.SHA1,
+        interval: int = 30,
+        iterations: int = 600_000,
+    ) -> "TOTPAccount":
+        """
+        Create a TOTPAccount from a plain TOTP secret.
+
+        Args:
+            name: Account name (e.g., email or username) - REQUIRED
+            secret: Plain TOTP secret (base32 encoded string)
+            password: User's password to encrypt the secret
+            issuer: Service name (e.g., "Google", "GitHub")
+            digits: Number of digits in TOTP code (6 or 8)
+            digest: Hash algorithm (SHA1, SHA256, or SHA512)
+            interval: Time interval in seconds (typically 30)
+            iterations: PBKDF2 iterations for key derivation (default 600,000)
+
+        Returns:
+            TOTPAccount instance with encrypted secret
+
+        Raises:
+            ValueError: If secret is empty or parameters are invalid
+        """
+        if not secret:
+            raise ValueError("secret cannot be empty")
+
+        # Generate a cryptographically secure salt
+        salt = Encryptor.generate_salt()
+
+        # Encrypt the secret
+        encrypted_secret = Encryptor.encrypt(secret, password, salt, iterations)
+
+        # Create and return the account instance
+        return cls(
+            name=name,
+            encrypted_secret=encrypted_secret,
+            salt=salt,
+            iterations=iterations,
+            issuer=issuer,
+            digits=digits,
+            digest=digest,
+            interval=interval,
+        )
+
     def get_display_name(self) -> str:
         """Get a display-friendly name for this account."""
         if self.issuer and self.name:
