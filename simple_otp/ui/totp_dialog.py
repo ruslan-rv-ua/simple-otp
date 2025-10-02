@@ -1,11 +1,13 @@
 """TOTP Dialog for displaying current and next OTP codes."""
 
 import time
+from pathlib import Path
 
 import pyperclip
 import wx
 
 from simple_otp.models.totp_account import TOTPAccount
+from simple_otp.ui.audio_player import AudioPlayer
 
 TIMER_INTERVAL_MS = 100  # Update every 100ms for smooth progress bar
 
@@ -44,6 +46,16 @@ class TOTPDialog(wx.Dialog):
         self.account = account
         self.password = password
         self.totp = account.get_totp(password)
+
+        # Initialize audio player
+        sounds_dir = Path(__file__).parent.parent / "assets" / "sounds"
+        try:
+            self.audio_player = AudioPlayer(sounds_dir)
+        except (FileNotFoundError, NotADirectoryError, OSError) as e:
+            # Log the error but allow dialog to continue without audio
+            print(f"Warning: Failed to initialize audio player: {e}")
+            self.audio_player = None
+        self.sound_played_for_interval = False
 
         # Create UI
         self._create_ui()
@@ -145,6 +157,19 @@ class TOTPDialog(wx.Dialog):
 
         # Update progress bar (it goes down as time progresses)
         self.progress_bar.SetValue(progress_percent)
+
+        # Play sound when less than 5 seconds remain (only once per interval)
+        if time_remaining < 5.0 and not self.sound_played_for_interval:
+            if self.audio_player:
+                try:
+                    self.audio_player.play("under_5_seconds.wav")
+                except (FileNotFoundError, RuntimeError) as e:
+                    # Log the error but don't interrupt the UI
+                    print(f"Warning: Failed to play sound: {e}")
+            self.sound_played_for_interval = True
+        elif time_remaining >= 5.0:
+            # Reset flag when we're back above 5 seconds (new interval started)
+            self.sound_played_for_interval = False
 
     def _on_timer(self, event):
         """Handle timer event to update codes and progress."""
