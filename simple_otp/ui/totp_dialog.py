@@ -7,6 +7,8 @@ import wx
 
 from simple_otp.models.totp_account import TOTPAccount
 
+TIMER_INTERVAL_MS = 100  # Update every 100ms for smooth progress bar
+
 
 def format_otp(otp_code: str) -> str:
     """
@@ -23,8 +25,6 @@ def format_otp(otp_code: str) -> str:
 
 class TOTPDialog(wx.Dialog):
     """Dialog displaying current and next TOTP codes with countdown."""
-
-    TIMER_INTERVAL_MS = 100  # Update every 100ms for smooth progress bar
 
     def __init__(self, parent, account: TOTPAccount, password: str):
         """
