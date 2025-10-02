@@ -179,23 +179,25 @@ class TOTPDialog(wx.Dialog):
         """Copy current OTP to clipboard (without spaces)."""
         otp_code = self.current_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
-        wx.MessageBox(
-            "Current password copied to clipboard!",
-            "Copied",
-            wx.OK | wx.ICON_INFORMATION,
-            self,
-        )
+        # Play sound notification
+        if self.audio_player:
+            try:
+                self.audio_player.play("password_copied.wav")
+            except (FileNotFoundError, RuntimeError) as e:
+                # Log the error but don't interrupt the UI
+                print(f"Warning: Failed to play sound: {e}")
 
     def _on_copy_next(self, event):
         """Copy next OTP to clipboard (without spaces)."""
         otp_code = self.next_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
-        wx.MessageBox(
-            "Next password copied to clipboard!",
-            "Copied",
-            wx.OK | wx.ICON_INFORMATION,
-            self,
-        )
+        # Play sound notification
+        if self.audio_player:
+            try:
+                self.audio_player.play("password_copied.wav")
+            except (FileNotFoundError, RuntimeError) as e:
+                # Log the error but don't interrupt the UI
+                print(f"Warning: Failed to play sound: {e}")
 
     def _on_close(self, event):
         """Handle close button click."""
