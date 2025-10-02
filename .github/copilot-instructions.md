@@ -114,3 +114,4 @@ This produces a 16-byte (128-bit) salt suitable for use with key derivation func
 - Use **uv** for ALL dependency operations (not pip/poetry)
 - Follow **Conventional Commits** for all git commits
 - This is a **desktop GUI app**, not a CLI tool
+- Code syntax must be compatible with Python 3.13 and newer; avoid using features or APIs that are deprecated in Python 3.13.
