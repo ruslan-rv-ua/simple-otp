@@ -235,8 +235,7 @@ class MainWindow(wx.Frame):
         """Handle Add Account menu item."""
         if not self.accounts_manager or not self.password:
             wx.MessageBox(
-                "No accounts file is open.\n\n"
-                "Please create or open a file first.",
+                "No accounts file is open.\n\nPlease create or open a file first.",
                 "No File",
                 wx.OK | wx.ICON_WARNING,
             )
@@ -317,8 +316,7 @@ class MainWindow(wx.Frame):
         confirm_msg = f"Are you sure you want to delete {selected.get_display_name()}?"
         if is_last_account:
             confirm_msg += (
-                "\n\nThis is the last account. "
-                "The file will remain open but empty."
+                "\n\nThis is the last account. The file will remain open but empty."
             )
 
         confirm = wx.MessageBox(

@@ -58,8 +58,7 @@ def authenticate(file_path: Path) -> str | None:
         # If this was the last attempt, show error
         if attempt == max_attempts:
             wx.MessageBox(
-                "Maximum login attempts exceeded.\n\n"
-                "The application will now close.",
+                "Maximum login attempts exceeded.\n\nThe application will now close.",
                 "Authentication Failed",
                 wx.OK | wx.ICON_ERROR,
             )
