@@ -76,7 +76,7 @@ class SettingsDialog(wx.Dialog):
         panel = wx.Panel(self.notebook)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Theme setting (placeholder - not implemented yet)
+        # Theme setting
         theme_label = wx.StaticText(panel, label="Theme:")
         sizer.Add(theme_label, 0, wx.ALL, 5)
 
@@ -85,21 +85,13 @@ class SettingsDialog(wx.Dialog):
         self.theme_choice.Enable(False)  # Disabled - not implemented
         sizer.Add(self.theme_choice, 0, wx.ALL | wx.EXPAND, 5)
 
-        # Font size setting (placeholder - not implemented yet)
+        # Font size setting
         font_size_label = wx.StaticText(panel, label="Font Size:")
         sizer.Add(font_size_label, 0, wx.ALL, 5)
 
         self.font_size_spin = wx.SpinCtrl(panel, value="10", min=8, max=24)
         self.font_size_spin.Enable(False)  # Disabled - not implemented
         sizer.Add(self.font_size_spin, 0, wx.ALL | wx.EXPAND, 5)
-
-        # Add note about disabled settings
-        note_text = wx.StaticText(
-            panel,
-            label="Note: UI settings are placeholders and not yet implemented.",
-        )
-        note_text.SetForegroundColour(wx.Colour(128, 128, 128))
-        sizer.Add(note_text, 0, wx.ALL, 10)
 
         panel.SetSizer(sizer)
         self.notebook.AddPage(panel, "User Interface")
@@ -109,35 +101,34 @@ class SettingsDialog(wx.Dialog):
         panel = wx.Panel(self.notebook)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Auto-copy to clipboard (placeholder)
+        # Auto-copy on update checkbox
+        self.auto_copy_on_update_check = wx.CheckBox(
+            panel,
+            label="Automatically copy password to clipboard when it updates",
+        )
+        sizer.Add(self.auto_copy_on_update_check, 0, wx.ALL, 5)
+
+        # Auto-copy to clipboard
         self.auto_copy_check = wx.CheckBox(
             panel, label="Automatically copy TOTP to clipboard"
         )
         self.auto_copy_check.Enable(False)  # Disabled - not implemented
         sizer.Add(self.auto_copy_check, 0, wx.ALL, 5)
 
-        # Clear clipboard (placeholder)
+        # Clear clipboard
         self.clear_clipboard_check = wx.CheckBox(
             panel, label="Clear clipboard after timeout"
         )
         self.clear_clipboard_check.Enable(False)  # Disabled - not implemented
         sizer.Add(self.clear_clipboard_check, 0, wx.ALL, 5)
 
-        # Clipboard timeout (placeholder)
+        # Clipboard timeout
         timeout_label = wx.StaticText(panel, label="Clipboard timeout (seconds):")
         sizer.Add(timeout_label, 0, wx.ALL, 5)
 
         self.clipboard_timeout_spin = wx.SpinCtrl(panel, value="30", min=5, max=300)
         self.clipboard_timeout_spin.Enable(False)  # Disabled - not implemented
         sizer.Add(self.clipboard_timeout_spin, 0, wx.ALL | wx.EXPAND, 5)
-
-        # Add note about disabled settings
-        note_text = wx.StaticText(
-            panel,
-            label="Note: Security settings are placeholders and not yet implemented.",
-        )
-        note_text.SetForegroundColour(wx.Colour(128, 128, 128))
-        sizer.Add(note_text, 0, wx.ALL, 10)
 
         panel.SetSizer(sizer)
         self.notebook.AddPage(panel, "Security")
@@ -147,7 +138,7 @@ class SettingsDialog(wx.Dialog):
         panel = wx.Panel(self.notebook)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Default digits (placeholder)
+        # Default digits
         digits_label = wx.StaticText(panel, label="Default number of digits:")
         sizer.Add(digits_label, 0, wx.ALL, 5)
 
@@ -156,7 +147,7 @@ class SettingsDialog(wx.Dialog):
         self.digits_choice.Enable(False)  # Disabled - not implemented
         sizer.Add(self.digits_choice, 0, wx.ALL | wx.EXPAND, 5)
 
-        # Default interval (placeholder)
+        # Default interval
         interval_label = wx.StaticText(panel, label="Default interval (seconds):")
         sizer.Add(interval_label, 0, wx.ALL, 5)
 
@@ -164,7 +155,7 @@ class SettingsDialog(wx.Dialog):
         self.interval_spin.Enable(False)  # Disabled - not implemented
         sizer.Add(self.interval_spin, 0, wx.ALL | wx.EXPAND, 5)
 
-        # Default digest (placeholder)
+        # Default digest
         digest_label = wx.StaticText(panel, label="Default hash algorithm:")
         sizer.Add(digest_label, 0, wx.ALL, 5)
 
@@ -173,14 +164,6 @@ class SettingsDialog(wx.Dialog):
         self.digest_choice.Enable(False)  # Disabled - not implemented
         sizer.Add(self.digest_choice, 0, wx.ALL | wx.EXPAND, 5)
 
-        # Add note about disabled settings
-        note_text = wx.StaticText(
-            panel,
-            label="Note: TOTP settings are placeholders and not yet implemented.",
-        )
-        note_text.SetForegroundColour(wx.Colour(128, 128, 128))
-        sizer.Add(note_text, 0, wx.ALL, 10)
-
         panel.SetSizer(sizer)
         self.notebook.AddPage(panel, "TOTP Defaults")
 
@@ -188,11 +171,6 @@ class SettingsDialog(wx.Dialog):
         """Create the audio settings page."""
         panel = wx.Panel(self.notebook)
         sizer = wx.BoxSizer(wx.VERTICAL)
-
-        # Section label
-        audio_label = wx.StaticText(panel, label="Sound Settings:")
-        audio_label.SetFont(audio_label.GetFont().Bold())
-        sizer.Add(audio_label, 0, wx.ALL, 5)
 
         # Play password copied sound checkbox
         self.play_password_copied_check = wx.CheckBox(
@@ -206,39 +184,29 @@ class SettingsDialog(wx.Dialog):
         )
         sizer.Add(self.play_warning_check, 0, wx.ALL, 5)
 
-        # Warning sound seconds
-        warning_seconds_label = wx.StaticText(
+        # Warning sound seconds - label and spinctrl in horizontal layout
+        warning_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.warning_seconds_label = wx.StaticText(
             panel, label="Play warning sound (seconds before expiration):"
         )
-        sizer.Add(warning_seconds_label, 0, wx.ALL, 5)
-
-        self.warning_seconds_spin = wx.SpinCtrl(panel, value="5", min=1, max=15)
-        sizer.Add(self.warning_seconds_spin, 0, wx.ALL | wx.EXPAND, 5)
-
-        # Auto-copy section
-        sizer.Add(wx.StaticLine(panel), 0, wx.ALL | wx.EXPAND, 10)
-
-        auto_copy_label = wx.StaticText(panel, label="Auto-copy Settings:")
-        auto_copy_label.SetFont(auto_copy_label.GetFont().Bold())
-        sizer.Add(auto_copy_label, 0, wx.ALL, 5)
-
-        # Auto-copy on update checkbox
-        self.auto_copy_on_update_check = wx.CheckBox(
-            panel,
-            label="Automatically copy password to clipboard when it updates",
+        warning_sizer.Add(
+            self.warning_seconds_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5
         )
-        sizer.Add(self.auto_copy_on_update_check, 0, wx.ALL, 5)
 
-        # Help text
-        help_text = wx.StaticText(
-            panel,
-            label="Note: Auto-copy only works when TOTP dialog is open.",
+        self.warning_seconds_spin = wx.SpinCtrl(
+            panel, value="5", min=1, max=15, size=wx.Size(60, -1)
         )
-        help_text.SetForegroundColour(wx.Colour(128, 128, 128))
-        sizer.Add(help_text, 0, wx.ALL, 5)
+        warning_sizer.Add(self.warning_seconds_spin, 0, wx.ALL, 5)
+
+        sizer.Add(warning_sizer, 0, wx.ALL, 0)
+
+        # Bind checkbox to enable/disable spin control
+        self.play_warning_check.Bind(
+            wx.EVT_CHECKBOX, self._on_warning_check_changed
+        )
 
         panel.SetSizer(sizer)
-        self.notebook.AddPage(panel, "Audio & Auto-copy")
+        self.notebook.AddPage(panel, "Audio")
 
     def _load_settings(self):
         """Load settings from the settings manager into the UI controls."""
@@ -283,6 +251,11 @@ class SettingsDialog(wx.Dialog):
         warning_seconds = self.settings_manager.get("audio.warning_sound_seconds", 5)
         self.warning_seconds_spin.SetValue(warning_seconds)
 
+        # Enable/disable warning spin control based on checkbox
+        self.warning_seconds_spin.Enable(play_warning)
+        self.warning_seconds_label.Enable(play_warning)
+
+        # Security - Auto-copy settings
         auto_copy_on_update = self.settings_manager.get(
             "audio.auto_copy_on_update", False
         )
@@ -358,3 +331,9 @@ class SettingsDialog(wx.Dialog):
                 "Settings Reset",
                 wx.OK | wx.ICON_INFORMATION,
             )
+
+    def _on_warning_check_changed(self, event):
+        """Handle warning sound checkbox change to enable/disable spin control."""
+        enabled = self.play_warning_check.GetValue()
+        self.warning_seconds_spin.Enable(enabled)
+        self.warning_seconds_label.Enable(enabled)

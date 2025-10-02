@@ -62,7 +62,7 @@ class TestSettingsDialog:
         assert dialog.notebook.GetPageText(0) == "User Interface"
         assert dialog.notebook.GetPageText(1) == "Security"
         assert dialog.notebook.GetPageText(2) == "TOTP Defaults"
-        assert dialog.notebook.GetPageText(3) == "Audio & Auto-copy"
+        assert dialog.notebook.GetPageText(3) == "Audio"
 
     def test_dialog_has_buttons(self, dialog):
         """Test that dialog has required buttons."""

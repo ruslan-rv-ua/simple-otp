@@ -15,9 +15,9 @@
     "default_digest": "SHA1"
   },
   "audio": {
-    "play_password_copied_sound": true,
+    "play_password_copied_sound": false,
     "play_warning_sound": true,
-    "warning_sound_seconds": 5,
+    "warning_sound_seconds": 1,
     "auto_copy_on_update": false
   }
 }
