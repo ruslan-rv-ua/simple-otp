@@ -70,7 +70,7 @@ class TOTPDialog(wx.Dialog):
 
         current_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.current_text = wx.TextCtrl(
-            panel, style=wx.TE_READONLY | wx.TE_CENTER, size=(200, -1)
+            panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
         self.current_text.AcceptsFocusFromKeyboard = lambda: True
         # Make text larger and bold
@@ -92,7 +92,7 @@ class TOTPDialog(wx.Dialog):
 
         next_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.next_text = wx.TextCtrl(
-            panel, style=wx.TE_READONLY | wx.TE_CENTER, size=(200, -1)
+            panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
         self.next_text.AcceptsFocusFromKeyboard = lambda: True
         self.next_text.SetName("next")

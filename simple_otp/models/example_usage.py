@@ -50,7 +50,8 @@ def example_create_custom_account():
 
     print(f"Created account: {account.get_display_name()}")
     print(
-        f"Digits: {account.digits}, Digest: {account.digest}, Interval: {account.interval}s"
+        f"Digits: {account.digits}, Digest: {account.digest}, "
+        f"Interval: {account.interval}s"
     )
     return account, user_password
 

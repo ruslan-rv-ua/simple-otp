@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import List, Optional
 
 from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
 
@@ -15,14 +14,16 @@ class AccountsManager:
     If the file doesn't exist on initialization, an example account is created.
     """
 
-    def __init__(self, storage_path: Optional[Path] = None, auto_create: bool = True):
+    def __init__(self, storage_path: Path | None = None, auto_create: bool = True):
         """
         Initialize the accounts manager.
 
         Args:
             storage_path: Optional custom path for the JSON file.
-                         If None, defaults to ../accounts.json (one level up from project).
-            auto_create: If True, automatically create initial storage with example account.
+                         If None, defaults to ../accounts.json
+                         (one level up from project).
+            auto_create: If True, automatically create initial storage
+                        with example account.
                         If False, storage must be created manually.
         """
         if storage_path is None:
@@ -58,7 +59,7 @@ class AccountsManager:
         # Save to file
         self._save_accounts([example_account])
 
-    def _load_accounts(self) -> List[TOTPAccount]:
+    def _load_accounts(self) -> list[TOTPAccount]:
         """
         Load all accounts from the JSON file.
 
@@ -69,7 +70,7 @@ class AccountsManager:
             FileNotFoundError: If the storage file doesn't exist
             json.JSONDecodeError: If the file contains invalid JSON
         """
-        with open(self._storage_path, "r", encoding="utf-8") as f:
+        with open(self._storage_path, encoding="utf-8") as f:
             data = json.load(f)
 
         accounts = []
@@ -83,7 +84,7 @@ class AccountsManager:
 
         return accounts
 
-    def _save_accounts(self, accounts: List[TOTPAccount]) -> None:
+    def _save_accounts(self, accounts: list[TOTPAccount]) -> None:
         """
         Save all accounts to the JSON file.
 
@@ -164,7 +165,7 @@ class AccountsManager:
 
         return False
 
-    def get_account(self, name: str, issuer: str = "") -> Optional[TOTPAccount]:
+    def get_account(self, name: str, issuer: str = "") -> TOTPAccount | None:
         """
         Get a specific account by name and issuer.
 
@@ -183,7 +184,7 @@ class AccountsManager:
 
         return None
 
-    def list_accounts(self) -> List[TOTPAccount]:
+    def list_accounts(self) -> list[TOTPAccount]:
         """
         Get all accounts from storage.
 
@@ -209,7 +210,8 @@ class AccountsManager:
             True if account was updated, False if not found
 
         Raises:
-            ValueError: If the new account name/issuer conflicts with another existing account
+            ValueError: If the new account name/issuer conflicts with
+                       another existing account
         """
         accounts = self._load_accounts()
         account_found = False
@@ -227,7 +229,8 @@ class AccountsManager:
                             and other_account is not account
                         ):
                             raise ValueError(
-                                f"Account already exists: {new_account.get_display_name()}"
+                                "Account already exists: "
+                                f"{new_account.get_display_name()}"
                             )
 
                 # Update the account
@@ -302,11 +305,14 @@ class AccountsManager:
         if self.has_accounts():
             raise ValueError("Accounts already exist")
 
-        # Create a default test account from https://authenticationtest.com/totpChallenge
-        # This allows users to test the TOTP implementation with a publicly available test account
+        # Create a default test account from
+        # https://authenticationtest.com/totpChallenge
+        # This allows users to test the TOTP implementation with
+        # a publicly available test account
         # Email: totp@authenticationtest.com
         # Secret: I65VU7K5ZQL7WB4E
-        # Users can verify the generated codes against the website: https://authenticationtest.com/totpChallenge
+        # Users can verify the generated codes against the website:
+        # https://authenticationtest.com/totpChallenge
         default_account = TOTPAccount.from_secret(
             name="totp@authenticationtest.com",
             secret="I65VU7K5ZQL7WB4E",  # Test secret from authenticationtest.com

@@ -100,7 +100,7 @@ class TestAccountsManagerInitialization:
         manager.add_account(sample_account)
 
         # Read raw JSON
-        with open(temp_storage, "r", encoding="utf-8") as f:
+        with open(temp_storage, encoding="utf-8") as f:
             content = f.read()
             data = json.loads(content)
 
@@ -398,7 +398,7 @@ class TestUpdateAccount:
             )
 
     def test_update_same_name_is_allowed(self, manager, sample_account):
-        """Test that updating an account while keeping the same name/issuer is allowed."""
+        """Test updating an account while keeping the same name/issuer."""
         manager.clear_all_accounts()
         manager.add_account(sample_account)
 
@@ -486,7 +486,7 @@ class TestJSONFormat:
             manager.add_account(account)
 
         # Read raw JSON
-        with open(manager.get_storage_path(), "r", encoding="utf-8") as f:
+        with open(manager.get_storage_path(), encoding="utf-8") as f:
             data = json.load(f)
 
         # Check that digest values are stored as strings
