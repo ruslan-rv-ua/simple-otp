@@ -1,13 +1,12 @@
 """TOTP Dialog for displaying current and next OTP codes."""
 
 import time
-from pathlib import Path
 
 import pyperclip
 import wx
 
 from simple_otp.models.totp_account import TOTPAccount
-from simple_otp.ui.audio_player import AudioPlayer
+from simple_otp.ui.audio_player import audio_player
 
 TIMER_INTERVAL_MS = 100  # Update every 100ms for smooth progress bar
 
@@ -47,12 +46,8 @@ class TOTPDialog(wx.Dialog):
         self.password = password
         self.totp = account.get_totp(password)
 
-        # Initialize audio player
-        sounds_dir = Path(__file__).parent.parent / "assets" / "sounds"
-        try:
-            self.audio_player = AudioPlayer(sounds_dir)
-        except (FileNotFoundError, NotADirectoryError, OSError):
-            self.audio_player = None
+        # Use global audio player instance
+        self.audio_player = audio_player
         self.sound_played_for_interval = False
 
         # Create UI

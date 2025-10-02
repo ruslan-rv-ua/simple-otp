@@ -57,22 +57,33 @@ The audio player (`audio_player.py`) provides sound playback for UI events:
 - **Error handling**: Raises clear exceptions with helpful messages
 
 ### Usage
+
+#### Option 1: Use global instance (recommended)
+```python
+from simple_otp.ui.audio_player import audio_player
+
+# Use global instance directly (already initialized)
+if audio_player:
+    audio_player.play("sound.wav")
+    
+    # Get available files
+    files = audio_player.get_available_files()
+    
+    # Stop all sounds
+    audio_player.stop()
+```
+
+#### Option 2: Create custom instance
 ```python
 from pathlib import Path
 from simple_otp.ui.audio_player import AudioPlayer
 
-# Initialize
+# Initialize custom instance
 sounds_dir = Path(__file__).parent / "assets" / "sounds"
 player = AudioPlayer(sounds_dir)
 
 # Play sound (always async)
 player.play("sound.wav")
-
-# Get available files
-files = player.get_available_files()
-
-# Stop all sounds
-player.stop()
 ```
 
 ### Technical Details

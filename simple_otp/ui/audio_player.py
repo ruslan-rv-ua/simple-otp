@@ -126,3 +126,21 @@ class AudioPlayer:
             OSError: If there are problems reading WAV files
         """
         self._load_all_wav_files()
+
+
+# Global audio player instance
+# Initialized once when module is imported
+def _create_audio_player() -> AudioPlayer | None:
+    """
+    Create global AudioPlayer instance.
+
+    Returns None if sounds directory doesn't exist (graceful degradation).
+    """
+    sounds_dir = Path(__file__).parent.parent / "assets" / "sounds"
+    try:
+        return AudioPlayer(sounds_dir)
+    except (FileNotFoundError, NotADirectoryError, OSError):
+        return None
+
+
+audio_player = _create_audio_player()
