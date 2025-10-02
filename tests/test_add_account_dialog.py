@@ -1,8 +1,12 @@
 """Tests for Add Account Dialog."""
 
+import tempfile
+from pathlib import Path
+
 import pytest
 import wx
 
+from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import DigestAlgorithm
 from simple_otp.ui.add_account_dialog import AddAccountDialog
 
@@ -18,9 +22,21 @@ class TestAddAccountDialog:
         app.Destroy()
 
     @pytest.fixture
-    def dialog(self, app):
+    def settings_manager(self):
+        """Create a SettingsManager instance with defaults."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            temp_file = Path(f.name)
+        if temp_file.exists():
+            temp_file.unlink()
+        settings_manager = SettingsManager(temp_file)
+        yield settings_manager
+        if temp_file.exists():
+            temp_file.unlink()
+
+    @pytest.fixture
+    def dialog(self, app, settings_manager):
         """Create an AddAccountDialog instance."""
-        dialog = AddAccountDialog(None)
+        dialog = AddAccountDialog(None, settings_manager)
         yield dialog
         dialog.Destroy()
 
@@ -49,7 +65,7 @@ class TestAddAccountDialog:
         dialog.name_ctrl.SetValue("user@test.com")
         dialog.secret_ctrl.SetValue("JBSWY3DPEHPK3PXP")
         dialog.issuer_ctrl.SetValue("GitHub")
-        dialog.digits_ctrl.SetSelection(1)  # 8 digits
+        dialog.digits_ctrl.SetSelection(2)  # 8 digits (index 2 = "8")
         dialog.digest_ctrl.SetSelection(1)  # SHA256
         dialog.interval_ctrl.SetValue(60)
 

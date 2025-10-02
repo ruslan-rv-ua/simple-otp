@@ -56,13 +56,12 @@ class TestSettingsDialog:
     def test_dialog_has_notebook(self, dialog):
         """Test that dialog contains a notebook with pages."""
         assert hasattr(dialog, "notebook")
-        assert dialog.notebook.GetPageCount() == 4
+        assert dialog.notebook.GetPageCount() == 3
 
         # Check page titles
-        assert dialog.notebook.GetPageText(0) == "User Interface"
-        assert dialog.notebook.GetPageText(1) == "Security"
+        assert dialog.notebook.GetPageText(0) == "Behavior"
+        assert dialog.notebook.GetPageText(1) == "Audio"
         assert dialog.notebook.GetPageText(2) == "TOTP Defaults"
-        assert dialog.notebook.GetPageText(3) == "Audio"
 
     def test_dialog_has_buttons(self, dialog):
         """Test that dialog has required buttons."""
@@ -78,58 +77,57 @@ class TestSettingsDialog:
     def test_load_settings_into_ui(self, app, settings_manager):
         """Test that settings are loaded into UI controls."""
         # Set specific values
-        settings_manager.set("ui.theme", "default")
-        settings_manager.set("ui.font_size", 12)
-        settings_manager.set("security.auto_copy", False)
         settings_manager.set("totp.default_digits", 8)
+        settings_manager.set("totp.default_interval", 60)
+        settings_manager.set("audio.play_warning_sound", False)
 
         # Create dialog (app fixture ensures wx.App exists)
         dialog = SettingsDialog(None, settings_manager)
 
         # Verify UI reflects settings
-        assert dialog.font_size_spin.GetValue() == 12
-        assert dialog.auto_copy_check.GetValue() is False
         assert dialog.digits_choice.GetSelection() == 2  # 8 digits -> index 2
+        assert dialog.interval_spin.GetValue() == 60
+        assert dialog.play_warning_check.GetValue() is False
 
         dialog.Destroy()
 
     def test_save_settings_from_ui(self, dialog, settings_manager):
         """Test that settings are saved from UI controls."""
-        # Modify UI controls (only those that are enabled)
-        # Note: Most controls are disabled as placeholders,
-        # so we test the save mechanism itself
+        # Modify UI controls
+        dialog.digits_choice.SetSelection(1)  # 7 digits
+        dialog.interval_spin.SetValue(45)
+        dialog.play_warning_check.SetValue(False)
+
         dialog._save_settings()
 
-        # Verify save was called (settings should be written to file)
-        # The actual values don't matter since controls are disabled
-        all_settings = settings_manager.get_all()
-        assert "ui" in all_settings
-        assert "security" in all_settings
-        assert "totp" in all_settings
+        # Verify settings were saved
+        assert settings_manager.get("totp.default_digits") == 7
+        assert settings_manager.get("totp.default_interval") == 45
+        assert settings_manager.get("audio.play_warning_sound") is False
 
     def test_reset_to_defaults_with_confirmation(self, dialog):
         """Test reset to defaults functionality with user confirmation."""
         # Modify settings
-        dialog.settings_manager.set("ui.theme", "dark")
+        dialog.settings_manager.set("totp.default_digits", 8)
 
         # Mock MessageBox to return YES
         with patch("wx.MessageBox", return_value=wx.YES):
             dialog._on_reset(None)
 
         # Verify settings were reset
-        assert dialog.settings_manager.get("ui.theme") == "default"
+        assert dialog.settings_manager.get("totp.default_digits") == 6
 
     def test_reset_to_defaults_cancelled(self, dialog):
         """Test that reset can be cancelled."""
         # Modify settings
-        dialog.settings_manager.set("ui.theme", "dark")
+        dialog.settings_manager.set("totp.default_digits", 8)
 
         # Mock MessageBox to return NO
         with patch("wx.MessageBox", return_value=wx.NO):
             dialog._on_reset(None)
 
         # Verify settings were NOT reset
-        assert dialog.settings_manager.get("ui.theme") == "dark"
+        assert dialog.settings_manager.get("totp.default_digits") == 8
 
     def test_ok_button_saves_settings(self, dialog, temp_settings_file):
         """Test that OK button saves settings to file."""
@@ -145,21 +143,17 @@ class TestSettingsDialog:
         # Verify EndModal was called with ID_OK
         dialog.EndModal.assert_called_once_with(wx.ID_OK)
 
-    def test_ui_controls_are_disabled(self, dialog):
-        """Test that placeholder UI controls are disabled."""
-        # UI page controls
-        assert not dialog.theme_choice.IsEnabled()
-        assert not dialog.font_size_spin.IsEnabled()
-
-        # Security page controls
-        assert not dialog.auto_copy_check.IsEnabled()
-        assert not dialog.clear_clipboard_check.IsEnabled()
-        assert not dialog.clipboard_timeout_spin.IsEnabled()
-
+    def test_ui_controls_are_enabled(self, dialog):
+        """Test that all UI controls are enabled."""
         # TOTP page controls
-        assert not dialog.digits_choice.IsEnabled()
-        assert not dialog.interval_spin.IsEnabled()
-        assert not dialog.digest_choice.IsEnabled()
+        assert dialog.digits_choice.IsEnabled()
+        assert dialog.interval_spin.IsEnabled()
+        assert dialog.digest_choice.IsEnabled()
+
+        # Audio page controls
+        assert dialog.play_password_copied_check.IsEnabled()
+        assert dialog.play_warning_check.IsEnabled()
+        assert dialog.auto_copy_on_update_check.IsEnabled()
 
     def test_dialog_centering(self, dialog):
         """Test that dialog can be centered (without actual parent)."""
@@ -173,19 +167,18 @@ class TestSettingsDialog:
 
     def test_default_values_in_ui(self, dialog):
         """Test that UI controls show default values on first load."""
-        # UI defaults
-        assert dialog.theme_choice.GetSelection() == 0  # "Default"
-        assert dialog.font_size_spin.GetValue() == 10
-
-        # Security defaults
-        assert dialog.auto_copy_check.GetValue() is True
-        assert dialog.clear_clipboard_check.GetValue() is True
-        assert dialog.clipboard_timeout_spin.GetValue() == 30
-
         # TOTP defaults
         assert dialog.digits_choice.GetSelection() == 0  # 6 digits
         assert dialog.interval_spin.GetValue() == 30
         assert dialog.digest_choice.GetSelection() == 0  # SHA1
+
+        # Behavior defaults
+        assert dialog.auto_copy_on_update_check.GetValue() is False
+
+        # Audio defaults
+        assert dialog.play_password_copied_check.GetValue() is True
+        assert dialog.play_warning_check.GetValue() is True
+        assert dialog.warning_seconds_spin.GetValue() == 5
 
     def test_digits_choice_mapping(self, dialog):
         """Test correct mapping between digits value and choice index."""

@@ -19,7 +19,7 @@ The `SettingsManager` class (`simple_otp/core/settings_manager.py`) handles all 
 
 The `SettingsDialog` class (`simple_otp/ui/settings_dialog.py`) provides a user interface for viewing and modifying settings:
 
-- **Tabbed Interface**: Settings organized into categories (UI, Security, TOTP)
+- **Tabbed Interface**: Settings organized into categories (Behavior, Audio, TOTP Defaults)
 - **Validation**: Ensures valid values before saving
 - **Reset Functionality**: Allows restoring defaults with confirmation
 
@@ -28,47 +28,47 @@ The `SettingsDialog` class (`simple_otp/ui/settings_dialog.py`) provides a user 
 ```json
 {
   "version": "1.0",
-  "ui": {
-    "theme": "default",
-    "font_size": 10
-  },
-  "security": {
-    "auto_copy": true,
-    "clear_clipboard": true,
-    "clipboard_timeout": 30
-  },
   "totp": {
     "default_digits": 6,
     "default_interval": 30,
     "default_digest": "SHA1"
+  },
+  "behavior": {
+    "auto_copy_on_update": false
+  },
+  "audio": {
+    "play_password_copied_sound": true,
+    "play_warning_sound": true,
+    "warning_sound_seconds": 5
   }
 }
 ```
 
 ## Settings Categories
 
-### User Interface Settings
-
-Currently placeholders for future implementation:
-
-- **theme**: Visual theme (currently only "default")
-- **font_size**: Font size for UI elements (8-24)
-
-### Security Settings
-
-Currently placeholders for future implementation:
-
-- **auto_copy**: Automatically copy TOTP to clipboard when displayed
-- **clear_clipboard**: Clear clipboard after timeout
-- **clipboard_timeout**: Seconds before clipboard is cleared (5-300)
-
 ### TOTP Default Settings
 
-Currently placeholders for future implementation:
+Default values used when adding new TOTP accounts:
 
 - **default_digits**: Default number of digits for new accounts (6, 7, or 8)
 - **default_interval**: Default time interval in seconds (15-120)
 - **default_digest**: Default hash algorithm (SHA1, SHA256, SHA512)
+
+These settings are automatically applied when opening the Add Account dialog, providing convenient defaults while still allowing users to customize each account individually.
+
+### Behavior Settings
+
+Controls application behavior:
+
+- **auto_copy_on_update**: Automatically copy new password to clipboard when it updates
+
+### Audio Settings
+
+Controls sound effects:
+
+- **play_password_copied_sound**: Play sound when password is copied to clipboard
+- **play_warning_sound**: Play warning sound before password expires
+- **warning_sound_seconds**: Seconds before expiration to play warning (1-15)
 
 ## Usage
 
@@ -81,15 +81,15 @@ from simple_otp.core.settings_manager import SettingsManager
 settings = SettingsManager()
 
 # Get a setting value (dot notation for nested settings)
-theme = settings.get("ui.theme")
-auto_copy = settings.get("security.auto_copy")
+digits = settings.get("totp.default_digits")
+play_sound = settings.get("audio.play_password_copied_sound")
 
 # Get with default value if not found
 custom_setting = settings.get("custom.key", "default_value")
 
 # Set a setting value
-settings.set("ui.theme", "dark")
-settings.set("security.clipboard_timeout", 60)
+settings.set("totp.default_digits", 8)
+settings.set("audio.warning_sound_seconds", 10)
 
 # Save changes to file
 settings.save()
@@ -180,7 +180,7 @@ uv run pytest tests/test_settings_dialog.py -v
 
 ## Current Implementation Status
 
-### Implemented ✅
+### Fully Implemented ✅
 
 - Settings persistence (JSON file storage)
 - Settings manager with get/set/reset functionality
@@ -188,16 +188,20 @@ uv run pytest tests/test_settings_dialog.py -v
 - Integration with main window (Tools menu)
 - Default settings structure
 - Unit tests for manager and dialog
-- Placeholder UI for all planned settings
+- **TOTP Defaults** - Applied when adding new accounts
+- **Audio Settings** - Controls sound effects and auto-copy behavior
 
-### Not Yet Implemented ⚠️
+### Key Features
 
-All settings are currently **placeholders** - the UI controls are disabled and changing them has no effect on application behavior. Future implementation will:
+#### TOTP Defaults
+When opening the "Add Account" dialog, the default values for digits, interval, and digest algorithm are automatically loaded from settings. This provides a convenient starting point while still allowing per-account customization.
 
-- Connect UI settings to actual theme/font changes
-- Implement auto-copy and clipboard management
-- Use TOTP defaults when creating new accounts
-- Enable all placeholder controls
+#### Behavior Settings
+- **Auto-Copy on Update**: Automatically copy new TOTP code to clipboard when it refreshes
+
+#### Audio Settings
+- **Sound Effects**: Enable/disable sounds for password copy and expiration warning
+- **Warning Timing**: Configure how many seconds before expiration to play the warning sound
 
 ## Future Enhancements
 

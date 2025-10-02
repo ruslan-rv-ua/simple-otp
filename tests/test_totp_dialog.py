@@ -191,7 +191,7 @@ class TestTOTPDialog:
 
         # Verify setting is False by default
         auto_copy_enabled = dialog.settings_manager.get(
-            "audio.auto_copy_on_update", False
+            "behavior.auto_copy_on_update", False
         )
         assert auto_copy_enabled is False
 

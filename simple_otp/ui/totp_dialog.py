@@ -183,7 +183,7 @@ class TOTPDialog(wx.Dialog):
 
         # Auto-copy on password update
         auto_copy_enabled = self.settings_manager.get(
-            "audio.auto_copy_on_update", False
+            "behavior.auto_copy_on_update", False
         )
         if auto_copy_enabled and current_otp != self.last_copied_otp:
             # New OTP generated, auto-copy it

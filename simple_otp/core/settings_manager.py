@@ -12,25 +12,18 @@ class SettingsManager:
     # Default settings structure
     DEFAULT_SETTINGS = {
         "version": "1.0",
-        "ui": {
-            "theme": "default",
-            "font_size": 10,
-        },
-        "security": {
-            "auto_copy": True,
-            "clear_clipboard": True,
-            "clipboard_timeout": 30,
-        },
         "totp": {
             "default_digits": 6,
             "default_interval": 30,
             "default_digest": "SHA1",
         },
+        "behavior": {
+            "auto_copy_on_update": False,
+        },
         "audio": {
             "play_password_copied_sound": True,
             "play_warning_sound": True,
             "warning_sound_seconds": 5,
-            "auto_copy_on_update": False,
         },
     }
 

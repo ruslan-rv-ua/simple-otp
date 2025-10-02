@@ -41,18 +41,17 @@ class TestSettingsManager:
         with open(temp_settings_file, encoding="utf-8") as f:
             data = json.load(f)
             assert "version" in data
-            assert "ui" in data
-            assert "security" in data
             assert "totp" in data
+            assert "audio" in data
 
     def test_get_existing_setting(self, settings_manager):
         """Test getting an existing setting."""
-        value = settings_manager.get("ui.theme")
-        assert value == "default"
+        value = settings_manager.get("totp.default_digits")
+        assert value == 6
 
     def test_get_nested_setting(self, settings_manager):
         """Test getting a nested setting."""
-        value = settings_manager.get("security.auto_copy")
+        value = settings_manager.get("audio.play_password_copied_sound")
         assert value is True
 
     def test_get_nonexistent_setting_returns_default(self, settings_manager):
@@ -62,13 +61,13 @@ class TestSettingsManager:
 
     def test_set_existing_setting(self, settings_manager):
         """Test setting an existing setting."""
-        settings_manager.set("ui.theme", "dark")
-        assert settings_manager.get("ui.theme") == "dark"
+        settings_manager.set("totp.default_digits", 8)
+        assert settings_manager.get("totp.default_digits") == 8
 
     def test_set_nested_setting(self, settings_manager):
         """Test setting a nested setting."""
-        settings_manager.set("security.clipboard_timeout", 60)
-        assert settings_manager.get("security.clipboard_timeout") == 60
+        settings_manager.set("audio.warning_sound_seconds", 10)
+        assert settings_manager.get("audio.warning_sound_seconds") == 10
 
     def test_set_new_setting(self, settings_manager):
         """Test setting a new setting that doesn't exist."""
@@ -78,8 +77,8 @@ class TestSettingsManager:
     def test_save_and_load(self, settings_manager, temp_settings_file):
         """Test saving and loading settings."""
         # Modify settings
-        settings_manager.set("ui.theme", "dark")
-        settings_manager.set("security.auto_copy", False)
+        settings_manager.set("totp.default_digits", 8)
+        settings_manager.set("audio.play_warning_sound", False)
 
         # Save to file
         settings_manager.save()
@@ -88,8 +87,8 @@ class TestSettingsManager:
         new_manager = SettingsManager(temp_settings_file)
 
         # Verify settings were persisted
-        assert new_manager.get("ui.theme") == "dark"
-        assert new_manager.get("security.auto_copy") is False
+        assert new_manager.get("totp.default_digits") == 8
+        assert new_manager.get("audio.play_warning_sound") is False
 
     def test_get_all(self, settings_manager):
         """Test getting all settings."""
@@ -97,22 +96,21 @@ class TestSettingsManager:
 
         assert isinstance(all_settings, dict)
         assert "version" in all_settings
-        assert "ui" in all_settings
-        assert "security" in all_settings
         assert "totp" in all_settings
+        assert "audio" in all_settings
 
     def test_reset_to_defaults(self, settings_manager):
         """Test resetting settings to defaults."""
         # Modify settings
-        settings_manager.set("ui.theme", "dark")
-        settings_manager.set("security.auto_copy", False)
+        settings_manager.set("totp.default_digits", 8)
+        settings_manager.set("audio.play_warning_sound", False)
 
         # Reset to defaults
         settings_manager.reset_to_defaults()
 
         # Verify defaults are restored
-        assert settings_manager.get("ui.theme") == "default"
-        assert settings_manager.get("security.auto_copy") is True
+        assert settings_manager.get("totp.default_digits") == 6
+        assert settings_manager.get("audio.play_warning_sound") is True
 
     def test_load_corrupted_file_uses_defaults(self, temp_settings_file):
         """Test that corrupted settings file falls back to defaults."""
@@ -124,13 +122,13 @@ class TestSettingsManager:
         manager = SettingsManager(temp_settings_file)
 
         # Verify defaults are used
-        assert manager.get("ui.theme") == "default"
-        assert manager.get("security.auto_copy") is True
+        assert manager.get("totp.default_digits") == 6
+        assert manager.get("audio.play_password_copied_sound") is True
 
     def test_merge_settings_with_missing_keys(self, temp_settings_file):
         """Test that loading settings with missing keys merges with defaults."""
         # Write partial settings
-        partial_settings = {"ui": {"theme": "dark"}}
+        partial_settings = {"totp": {"default_digits": 8}}
         with open(temp_settings_file, "w", encoding="utf-8") as f:
             json.dump(partial_settings, f)
 
@@ -138,11 +136,11 @@ class TestSettingsManager:
         manager = SettingsManager(temp_settings_file)
 
         # Verify loaded setting
-        assert manager.get("ui.theme") == "dark"
+        assert manager.get("totp.default_digits") == 8
 
         # Verify missing settings use defaults
-        assert manager.get("security.auto_copy") is True
-        assert manager.get("totp.default_digits") == 6
+        assert manager.get("audio.play_password_copied_sound") is True
+        assert manager.get("totp.default_interval") == 30
 
     def test_default_settings_structure(self):
         """Test that default settings have expected structure."""
@@ -151,29 +149,21 @@ class TestSettingsManager:
         # Check version
         assert "version" in defaults
 
-        # Check UI settings
-        assert "ui" in defaults
-        assert "theme" in defaults["ui"]
-        assert "font_size" in defaults["ui"]
-
-        # Check security settings
-        assert "security" in defaults
-        assert "auto_copy" in defaults["security"]
-        assert "clear_clipboard" in defaults["security"]
-        assert "clipboard_timeout" in defaults["security"]
-
         # Check TOTP settings
         assert "totp" in defaults
         assert "default_digits" in defaults["totp"]
         assert "default_interval" in defaults["totp"]
         assert "default_digest" in defaults["totp"]
 
+        # Check behavior settings
+        assert "behavior" in defaults
+        assert "auto_copy_on_update" in defaults["behavior"]
+
         # Check audio settings
         assert "audio" in defaults
         assert "play_password_copied_sound" in defaults["audio"]
         assert "play_warning_sound" in defaults["audio"]
         assert "warning_sound_seconds" in defaults["audio"]
-        assert "auto_copy_on_update" in defaults["audio"]
 
     def test_settings_file_encoding(self, settings_manager, temp_settings_file):
         """Test that settings file uses UTF-8 encoding."""
@@ -192,33 +182,39 @@ class TestSettingsManager:
         manager2 = SettingsManager(temp_settings_file)
 
         # Modify in first manager
-        manager1.set("ui.theme", "dark")
+        manager1.set("totp.default_digits", 7)
         manager1.save()
 
         # Load in second manager
         manager2.load()
 
         # Verify second manager sees changes
-        assert manager2.get("ui.theme") == "dark"
+        assert manager2.get("totp.default_digits") == 7
 
     def test_audio_settings_defaults(self, settings_manager):
         """Test audio settings default values."""
         assert settings_manager.get("audio.play_password_copied_sound") is True
         assert settings_manager.get("audio.play_warning_sound") is True
         assert settings_manager.get("audio.warning_sound_seconds") == 5
-        assert settings_manager.get("audio.auto_copy_on_update") is False
+
+    def test_behavior_settings_defaults(self, settings_manager):
+        """Test behavior settings default values."""
+        assert settings_manager.get("behavior.auto_copy_on_update") is False
 
     def test_modify_audio_settings(self, settings_manager):
         """Test modifying audio settings."""
         settings_manager.set("audio.play_password_copied_sound", False)
         settings_manager.set("audio.play_warning_sound", False)
         settings_manager.set("audio.warning_sound_seconds", 10)
-        settings_manager.set("audio.auto_copy_on_update", True)
 
         assert settings_manager.get("audio.play_password_copied_sound") is False
         assert settings_manager.get("audio.play_warning_sound") is False
         assert settings_manager.get("audio.warning_sound_seconds") == 10
-        assert settings_manager.get("audio.auto_copy_on_update") is True
+
+    def test_modify_behavior_settings(self, settings_manager):
+        """Test modifying behavior settings."""
+        settings_manager.set("behavior.auto_copy_on_update", True)
+        assert settings_manager.get("behavior.auto_copy_on_update") is True
 
     def test_audio_settings_persistence(self, settings_manager, temp_settings_file):
         """Test that audio settings persist across save/load."""

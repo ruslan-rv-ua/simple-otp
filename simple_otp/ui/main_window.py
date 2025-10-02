@@ -173,7 +173,7 @@ class MainWindow(wx.Frame):
     def _on_add_account(self, event):
         """Handle Add Account menu item."""
         # Show the add account dialog
-        dialog = AddAccountDialog(self)
+        dialog = AddAccountDialog(self, self.settings_manager)
         result = dialog.ShowModal()
 
         if result == wx.ID_OK:

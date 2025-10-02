@@ -44,10 +44,9 @@ class SettingsDialog(wx.Dialog):
         self.notebook = wx.Notebook(panel)
 
         # Add pages
-        self._create_ui_page()
-        self._create_security_page()
-        self._create_totp_page()
+        self._create_behavior_page()
         self._create_audio_page()
+        self._create_totp_page()
 
         main_sizer.Add(self.notebook, 1, wx.ALL | wx.EXPAND, 10)
 
@@ -71,68 +70,6 @@ class SettingsDialog(wx.Dialog):
 
         panel.SetSizer(main_sizer)
 
-    def _create_ui_page(self):
-        """Create the UI settings page."""
-        panel = wx.Panel(self.notebook)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-
-        # Theme setting
-        theme_label = wx.StaticText(panel, label="Theme:")
-        sizer.Add(theme_label, 0, wx.ALL, 5)
-
-        self.theme_choice = wx.Choice(panel, choices=["Default"])
-        self.theme_choice.SetSelection(0)
-        self.theme_choice.Enable(False)  # Disabled - not implemented
-        sizer.Add(self.theme_choice, 0, wx.ALL | wx.EXPAND, 5)
-
-        # Font size setting
-        font_size_label = wx.StaticText(panel, label="Font Size:")
-        sizer.Add(font_size_label, 0, wx.ALL, 5)
-
-        self.font_size_spin = wx.SpinCtrl(panel, value="10", min=8, max=24)
-        self.font_size_spin.Enable(False)  # Disabled - not implemented
-        sizer.Add(self.font_size_spin, 0, wx.ALL | wx.EXPAND, 5)
-
-        panel.SetSizer(sizer)
-        self.notebook.AddPage(panel, "User Interface")
-
-    def _create_security_page(self):
-        """Create the security settings page."""
-        panel = wx.Panel(self.notebook)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-
-        # Auto-copy on update checkbox
-        self.auto_copy_on_update_check = wx.CheckBox(
-            panel,
-            label="Automatically copy password to clipboard when it updates",
-        )
-        sizer.Add(self.auto_copy_on_update_check, 0, wx.ALL, 5)
-
-        # Auto-copy to clipboard
-        self.auto_copy_check = wx.CheckBox(
-            panel, label="Automatically copy TOTP to clipboard"
-        )
-        self.auto_copy_check.Enable(False)  # Disabled - not implemented
-        sizer.Add(self.auto_copy_check, 0, wx.ALL, 5)
-
-        # Clear clipboard
-        self.clear_clipboard_check = wx.CheckBox(
-            panel, label="Clear clipboard after timeout"
-        )
-        self.clear_clipboard_check.Enable(False)  # Disabled - not implemented
-        sizer.Add(self.clear_clipboard_check, 0, wx.ALL, 5)
-
-        # Clipboard timeout
-        timeout_label = wx.StaticText(panel, label="Clipboard timeout (seconds):")
-        sizer.Add(timeout_label, 0, wx.ALL, 5)
-
-        self.clipboard_timeout_spin = wx.SpinCtrl(panel, value="30", min=5, max=300)
-        self.clipboard_timeout_spin.Enable(False)  # Disabled - not implemented
-        sizer.Add(self.clipboard_timeout_spin, 0, wx.ALL | wx.EXPAND, 5)
-
-        panel.SetSizer(sizer)
-        self.notebook.AddPage(panel, "Security")
-
     def _create_totp_page(self):
         """Create the TOTP settings page."""
         panel = wx.Panel(self.notebook)
@@ -144,7 +81,6 @@ class SettingsDialog(wx.Dialog):
 
         self.digits_choice = wx.Choice(panel, choices=["6", "7", "8"])
         self.digits_choice.SetSelection(0)
-        self.digits_choice.Enable(False)  # Disabled - not implemented
         sizer.Add(self.digits_choice, 0, wx.ALL | wx.EXPAND, 5)
 
         # Default interval
@@ -152,7 +88,6 @@ class SettingsDialog(wx.Dialog):
         sizer.Add(interval_label, 0, wx.ALL, 5)
 
         self.interval_spin = wx.SpinCtrl(panel, value="30", min=15, max=120)
-        self.interval_spin.Enable(False)  # Disabled - not implemented
         sizer.Add(self.interval_spin, 0, wx.ALL | wx.EXPAND, 5)
 
         # Default digest
@@ -161,11 +96,39 @@ class SettingsDialog(wx.Dialog):
 
         self.digest_choice = wx.Choice(panel, choices=["SHA1", "SHA256", "SHA512"])
         self.digest_choice.SetSelection(0)
-        self.digest_choice.Enable(False)  # Disabled - not implemented
         sizer.Add(self.digest_choice, 0, wx.ALL | wx.EXPAND, 5)
 
         panel.SetSizer(sizer)
         self.notebook.AddPage(panel, "TOTP Defaults")
+
+    def _create_behavior_page(self):
+        """Create the behavior settings page."""
+        panel = wx.Panel(self.notebook)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        # Auto-copy on update checkbox
+        self.auto_copy_on_update_check = wx.CheckBox(
+            panel,
+            label="Automatically copy password to clipboard when it updates",
+        )
+        sizer.Add(self.auto_copy_on_update_check, 0, wx.ALL, 5)
+
+        # Add help text
+        help_text = wx.StaticText(
+            panel,
+            label="When enabled, the new TOTP code will be automatically\n"
+            "copied to clipboard each time it refreshes.",
+        )
+        help_text.SetForegroundColour(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+        )
+        font = help_text.GetFont()
+        font.PointSize = 9
+        help_text.SetFont(font)
+        sizer.Add(help_text, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+
+        panel.SetSizer(sizer)
+        self.notebook.AddPage(panel, "Behavior")
 
     def _create_audio_page(self):
         """Create the audio settings page."""
@@ -208,24 +171,6 @@ class SettingsDialog(wx.Dialog):
 
     def _load_settings(self):
         """Load settings from the settings manager into the UI controls."""
-        # UI settings
-        theme = self.settings_manager.get("ui.theme", "default")
-        if theme == "default":
-            self.theme_choice.SetSelection(0)
-
-        font_size = self.settings_manager.get("ui.font_size", 10)
-        self.font_size_spin.SetValue(font_size)
-
-        # Security settings
-        auto_copy = self.settings_manager.get("security.auto_copy", True)
-        self.auto_copy_check.SetValue(auto_copy)
-
-        clear_clipboard = self.settings_manager.get("security.clear_clipboard", True)
-        self.clear_clipboard_check.SetValue(clear_clipboard)
-
-        clipboard_timeout = self.settings_manager.get("security.clipboard_timeout", 30)
-        self.clipboard_timeout_spin.SetValue(clipboard_timeout)
-
         # TOTP settings
         digits = self.settings_manager.get("totp.default_digits", 6)
         self.digits_choice.SetSelection(digits - 6)  # 6->0, 7->1, 8->2
@@ -253,31 +198,14 @@ class SettingsDialog(wx.Dialog):
         self.warning_seconds_spin.Enable(play_warning)
         self.warning_seconds_label.Enable(play_warning)
 
-        # Security - Auto-copy settings
+        # Behavior settings
         auto_copy_on_update = self.settings_manager.get(
-            "audio.auto_copy_on_update", False
+            "behavior.auto_copy_on_update", False
         )
         self.auto_copy_on_update_check.SetValue(auto_copy_on_update)
 
     def _save_settings(self):
         """Save settings from UI controls to the settings manager."""
-        # UI settings
-        theme = "default" if self.theme_choice.GetSelection() == 0 else "default"
-        self.settings_manager.set("ui.theme", theme)
-
-        font_size = self.font_size_spin.GetValue()
-        self.settings_manager.set("ui.font_size", font_size)
-
-        # Security settings
-        auto_copy = self.auto_copy_check.GetValue()
-        self.settings_manager.set("security.auto_copy", auto_copy)
-
-        clear_clipboard = self.clear_clipboard_check.GetValue()
-        self.settings_manager.set("security.clear_clipboard", clear_clipboard)
-
-        clipboard_timeout = self.clipboard_timeout_spin.GetValue()
-        self.settings_manager.set("security.clipboard_timeout", clipboard_timeout)
-
         # TOTP settings
         digits = self.digits_choice.GetSelection() + 6  # 0->6, 1->7, 2->8
         self.settings_manager.set("totp.default_digits", digits)
@@ -301,8 +229,9 @@ class SettingsDialog(wx.Dialog):
         warning_seconds = self.warning_seconds_spin.GetValue()
         self.settings_manager.set("audio.warning_sound_seconds", warning_seconds)
 
+        # Behavior settings
         auto_copy_on_update = self.auto_copy_on_update_check.GetValue()
-        self.settings_manager.set("audio.auto_copy_on_update", auto_copy_on_update)
+        self.settings_manager.set("behavior.auto_copy_on_update", auto_copy_on_update)
 
         # Save to file
         self.settings_manager.save()
