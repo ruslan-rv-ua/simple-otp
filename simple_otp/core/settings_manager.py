@@ -25,6 +25,10 @@ class SettingsManager:
             "play_warning_sound": True,
             "warning_sound_seconds": 5,
         },
+        "files": {
+            "recent_files": [],
+            "open_last_file_on_startup": True,
+        },
     }
 
     def __init__(self, settings_file: Path | None = None):
