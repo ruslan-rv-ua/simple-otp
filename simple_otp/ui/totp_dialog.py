@@ -5,6 +5,7 @@ import time
 import pyperclip
 import wx
 
+from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import TOTPAccount
 from simple_otp.ui.audio_player import audio_player
 
@@ -27,7 +28,13 @@ def format_otp(otp_code: str) -> str:
 class TOTPDialog(wx.Dialog):
     """Dialog displaying current and next TOTP codes with countdown."""
 
-    def __init__(self, parent, account: TOTPAccount, password: str):
+    def __init__(
+        self,
+        parent,
+        account: TOTPAccount,
+        password: str,
+        settings_manager: SettingsManager,
+    ):
         """
         Initialize the TOTP dialog.
 
@@ -35,6 +42,7 @@ class TOTPDialog(wx.Dialog):
             parent: Parent window
             account: The TOTP account to display codes for
             password: Password to decrypt the account secret
+            settings_manager: Settings manager for audio and auto-copy settings
         """
         super().__init__(
             parent,
@@ -45,10 +53,12 @@ class TOTPDialog(wx.Dialog):
         self.account = account
         self.password = password
         self.totp = account.get_totp(password)
+        self.settings_manager = settings_manager
 
         # Use global audio player instance
         self.audio_player = audio_player
         self.sound_played_for_interval = False
+        self.last_copied_otp = None  # Track last auto-copied OTP to avoid duplicates
 
         # Create UI
         self._create_ui()
@@ -151,17 +161,44 @@ class TOTPDialog(wx.Dialog):
         # Update progress bar (it goes down as time progresses)
         self.progress_bar.SetValue(progress_percent)
 
-        # Play sound when less than 5 seconds remain (only once per interval)
-        if time_remaining < 5.0 and not self.sound_played_for_interval:
+        # Get audio settings
+        play_warning = self.settings_manager.get("audio.play_warning_sound", True)
+        warning_seconds = self.settings_manager.get("audio.warning_sound_seconds", 5)
+
+        # Play warning sound when below threshold (only once per interval)
+        if (
+            time_remaining < warning_seconds
+            and not self.sound_played_for_interval
+            and play_warning
+        ):
             if self.audio_player:
                 try:
                     self.audio_player.play("under_5_seconds.wav")
                 except (FileNotFoundError, RuntimeError):
                     pass
             self.sound_played_for_interval = True
-        elif time_remaining >= 5.0:
-            # Reset flag when we're back above 5 seconds (new interval started)
+        elif time_remaining >= warning_seconds:
+            # Reset flag when we're back above threshold (new interval started)
             self.sound_played_for_interval = False
+
+        # Auto-copy on password update
+        auto_copy_enabled = self.settings_manager.get(
+            "audio.auto_copy_on_update", False
+        )
+        if auto_copy_enabled and current_otp != self.last_copied_otp:
+            # New OTP generated, auto-copy it
+            pyperclip.copy(current_otp)
+            self.last_copied_otp = current_otp
+
+            # Play sound if enabled
+            play_copied_sound = self.settings_manager.get(
+                "audio.play_password_copied_sound", True
+            )
+            if play_copied_sound and self.audio_player:
+                try:
+                    self.audio_player.play("password_copied.wav")
+                except (FileNotFoundError, RuntimeError):
+                    pass
 
     def _on_timer(self, event):
         """Handle timer event to update codes and progress."""
@@ -171,8 +208,11 @@ class TOTPDialog(wx.Dialog):
         """Copy current OTP to clipboard (without spaces)."""
         otp_code = self.current_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
-        # Play sound notification
-        if self.audio_player:
+        # Play sound notification if enabled
+        play_sound = self.settings_manager.get(
+            "audio.play_password_copied_sound", True
+        )
+        if play_sound and self.audio_player:
             try:
                 self.audio_player.play("password_copied.wav")
             except (FileNotFoundError, RuntimeError) as e:
@@ -183,8 +223,11 @@ class TOTPDialog(wx.Dialog):
         """Copy next OTP to clipboard (without spaces)."""
         otp_code = self.next_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
-        # Play sound notification
-        if self.audio_player:
+        # Play sound notification if enabled
+        play_sound = self.settings_manager.get(
+            "audio.play_password_copied_sound", True
+        )
+        if play_sound and self.audio_player:
             try:
                 self.audio_player.play("password_copied.wav")
             except (FileNotFoundError, RuntimeError) as e:
