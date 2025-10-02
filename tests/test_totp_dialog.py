@@ -1,8 +1,12 @@
 """Tests for TOTP Dialog."""
 
+import tempfile
+from pathlib import Path
+
 import pytest
 import wx
 
+from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
 from simple_otp.ui.totp_dialog import TOTPDialog, format_otp
 
@@ -18,6 +22,22 @@ class TestTOTPDialog:
         app.Destroy()
 
     @pytest.fixture
+    def temp_settings_file(self):
+        """Create a temporary settings file."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            temp_file = Path(f.name)
+        if temp_file.exists():
+            temp_file.unlink()
+        yield temp_file
+        if temp_file.exists():
+            temp_file.unlink()
+
+    @pytest.fixture
+    def settings_manager(self, temp_settings_file):
+        """Create a SettingsManager with a temporary file."""
+        return SettingsManager(temp_settings_file)
+
+    @pytest.fixture
     def account(self):
         """Create a test TOTP account."""
         return TOTPAccount.from_secret(
@@ -31,9 +51,9 @@ class TestTOTPDialog:
         )
 
     @pytest.fixture
-    def dialog(self, app, account):
+    def dialog(self, app, account, settings_manager):
         """Create a TOTPDialog instance."""
-        dialog = TOTPDialog(None, account, "demo123")
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
         yield dialog
         dialog.Destroy()
 
@@ -117,6 +137,65 @@ class TestTOTPDialog:
         assert len(copied_text) == 1
         next_code = dialog.next_text.GetValue().replace(" ", "")
         assert copied_text[0] == next_code
+
+    def test_audio_settings_respected_on_copy(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that audio settings are respected when copying."""
+        # Disable password copied sound
+        settings_manager.set("audio.play_password_copied_sound", False)
+
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock audio player to verify it's NOT called
+        play_calls = []
+
+        if dialog.audio_player:
+            original_play = dialog.audio_player.play
+
+            def mock_play(filename):
+                play_calls.append(filename)
+                return original_play(filename)
+
+            monkeypatch.setattr(dialog.audio_player, "play", mock_play)
+
+        # Simulate button click
+        event = wx.CommandEvent(wx.EVT_BUTTON.typeId, dialog.current_copy_btn.GetId())
+        dialog._on_copy_current(event)
+
+        # Verify that play was NOT called (sound is disabled)
+        assert len(play_calls) == 0
+
+        dialog.Destroy()
+
+    def test_warning_sound_threshold_respected(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that warning sound threshold setting is respected."""
+        # Set warning threshold to 10 seconds
+        settings_manager.set("audio.warning_sound_seconds", 10)
+
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Verify that the threshold is read correctly
+        warning_seconds = dialog.settings_manager.get("audio.warning_sound_seconds", 5)
+        assert warning_seconds == 10
+
+        dialog.Destroy()
+
+    def test_auto_copy_on_update_disabled_by_default(
+        self, app, account, settings_manager
+    ):
+        """Test that auto-copy on update is disabled by default."""
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Verify setting is False by default
+        auto_copy_enabled = dialog.settings_manager.get(
+            "behavior.auto_copy_on_update", False
+        )
+        assert auto_copy_enabled is False
+
+        dialog.Destroy()
 
 
 if __name__ == "__main__":

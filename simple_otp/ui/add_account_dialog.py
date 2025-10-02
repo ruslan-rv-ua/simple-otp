@@ -5,18 +5,20 @@ import re
 
 import wx
 
+from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import DigestAlgorithm
 
 
 class AddAccountDialog(wx.Dialog):
     """Dialog for adding a new TOTP account."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, settings_manager: SettingsManager):
         """
         Initialize the add account dialog.
 
         Args:
             parent: Parent window
+            settings_manager: SettingsManager instance for loading TOTP defaults
         """
         super().__init__(
             parent,
@@ -24,6 +26,7 @@ class AddAccountDialog(wx.Dialog):
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
 
+        self.settings_manager = settings_manager
         self._create_ui()
         self.Centre()
 
@@ -53,12 +56,14 @@ class AddAccountDialog(wx.Dialog):
         self.issuer_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
         main_sizer.Add(self.issuer_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
-        # Digits field (6 or 8)
+        # Digits field (6, 7, or 8)
         digits_label = wx.StaticText(panel, label="Digits:")
         main_sizer.Add(digits_label, 0, wx.ALL, 5)
 
-        self.digits_ctrl = wx.Choice(panel, choices=["6", "8"])
-        self.digits_ctrl.SetSelection(0)  # Default to 6
+        self.digits_ctrl = wx.Choice(panel, choices=["6", "7", "8"])
+        # Get default from settings
+        default_digits = self.settings_manager.get("totp.default_digits", 6)
+        self.digits_ctrl.SetSelection(default_digits - 6)  # 6->0, 7->1, 8->2
         main_sizer.Add(self.digits_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Digest algorithm field
@@ -66,14 +71,21 @@ class AddAccountDialog(wx.Dialog):
         main_sizer.Add(digest_label, 0, wx.ALL, 5)
 
         self.digest_ctrl = wx.Choice(panel, choices=["SHA1", "SHA256", "SHA512"])
-        self.digest_ctrl.SetSelection(0)  # Default to SHA1
+        # Get default from settings
+        default_digest = self.settings_manager.get("totp.default_digest", "SHA1")
+        digest_map = {"SHA1": 0, "SHA256": 1, "SHA512": 2}
+        self.digest_ctrl.SetSelection(digest_map.get(default_digest, 0))
         main_sizer.Add(self.digest_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Interval field (seconds)
         interval_label = wx.StaticText(panel, label="Interval (seconds):")
         main_sizer.Add(interval_label, 0, wx.ALL, 5)
 
-        self.interval_ctrl = wx.SpinCtrl(panel, value="30", min=1, max=300, initial=30)
+        # Get default from settings
+        default_interval = self.settings_manager.get("totp.default_interval", 30)
+        self.interval_ctrl = wx.SpinCtrl(
+            panel, value=str(default_interval), min=1, max=300, initial=default_interval
+        )
         main_sizer.Add(self.interval_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Required fields note

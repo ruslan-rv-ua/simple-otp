@@ -12,6 +12,9 @@ Provides encryption and decryption utilities for TOTP secrets using:
 ### `accounts_manager.py`
 Manages TOTP accounts with JSON file persistence.
 
+### `settings_manager.py`
+Manages application settings with JSON persistence. See [Settings Documentation](../../docs/SETTINGS.md) for details.
+
 ## AccountsManager
 
 The `AccountsManager` class handles all operations for managing TOTP accounts, including storage, retrieval, and modification.

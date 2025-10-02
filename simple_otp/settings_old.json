@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "ui": {
+    "theme": "default",
+    "font_size": 10
+  },
+  "security": {
+    "auto_copy": true,
+    "clear_clipboard": true,
+    "clipboard_timeout": 30
+  },
+  "totp": {
+    "default_digits": 6,
+    "default_interval": 30,
+    "default_digest": "SHA1"
+  }
+}

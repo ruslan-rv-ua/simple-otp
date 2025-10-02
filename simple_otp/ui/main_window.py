@@ -5,8 +5,10 @@ import wx.adv
 from ObjectListView3 import ColumnDefn, Filter, ObjectListView
 
 from simple_otp.core.accounts_manager import AccountsManager
+from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import TOTPAccount
 from simple_otp.ui.add_account_dialog import AddAccountDialog
+from simple_otp.ui.settings_dialog import SettingsDialog
 from simple_otp.ui.totp_dialog import TOTPDialog
 
 
@@ -32,6 +34,9 @@ class MainWindow(wx.Frame):
         # Initialize accounts manager
         self.accounts_manager = AccountsManager()
 
+        # Initialize settings manager
+        self.settings_manager = SettingsManager()
+
         # Create the UI components
         self._create_menu_bar()
         self._create_ui()
@@ -40,7 +45,7 @@ class MainWindow(wx.Frame):
         self._load_accounts()
 
     def _create_menu_bar(self):
-        """Create the menu bar with Account and Help menus."""
+        """Create the menu bar with Account, Tools, and Help menus."""
         menu_bar = wx.MenuBar()
 
         # Account menu
@@ -53,6 +58,13 @@ class MainWindow(wx.Frame):
         exit_item = account_menu.Append(wx.ID_EXIT, "E&xit\tEsc", "Exit application")
         menu_bar.Append(account_menu, "&Account")
 
+        # Tools menu
+        tools_menu = wx.Menu()
+        settings_item = tools_menu.Append(
+            wx.ID_ANY, "&Settings...\tCtrl+,", "Configure application settings"
+        )
+        menu_bar.Append(tools_menu, "&Tools")
+
         # Help menu
         help_menu = wx.Menu()
         about_item = help_menu.Append(wx.ID_ABOUT, "&About", "About Simple OTP")
@@ -64,6 +76,7 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self._on_add_account, add_item)
         self.Bind(wx.EVT_MENU, self._on_delete_account, delete_item)
         self.Bind(wx.EVT_MENU, self._on_exit, exit_item)
+        self.Bind(wx.EVT_MENU, self._on_settings, settings_item)
         self.Bind(wx.EVT_MENU, self._on_about, about_item)
 
     def _create_ui(self):
@@ -146,8 +159,8 @@ class MainWindow(wx.Frame):
             return
 
         try:
-            # Show TOTP dialog using the stored password
-            dialog = TOTPDialog(self, account, self.password)
+            # Show TOTP dialog using the stored password and settings
+            dialog = TOTPDialog(self, account, self.password, self.settings_manager)
             dialog.ShowModal()
             dialog.Destroy()
         except Exception as e:
@@ -160,7 +173,7 @@ class MainWindow(wx.Frame):
     def _on_add_account(self, event):
         """Handle Add Account menu item."""
         # Show the add account dialog
-        dialog = AddAccountDialog(self)
+        dialog = AddAccountDialog(self, self.settings_manager)
         result = dialog.ShowModal()
 
         if result == wx.ID_OK:
@@ -275,6 +288,12 @@ class MainWindow(wx.Frame):
     def _on_exit(self, event):
         """Handle Exit menu item."""
         self.Close()
+
+    def _on_settings(self, event):
+        """Handle Settings menu item."""
+        dialog = SettingsDialog(self, self.settings_manager)
+        dialog.ShowModal()
+        dialog.Destroy()
 
     def _on_about(self, event):
         """Handle About menu item."""
