@@ -209,9 +209,7 @@ class TOTPDialog(wx.Dialog):
         otp_code = self.current_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
         # Play sound notification if enabled
-        play_sound = self.settings_manager.get(
-            "audio.play_password_copied_sound", True
-        )
+        play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
         if play_sound and self.audio_player:
             try:
                 self.audio_player.play("password_copied.wav")
@@ -224,9 +222,7 @@ class TOTPDialog(wx.Dialog):
         otp_code = self.next_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
         # Play sound notification if enabled
-        play_sound = self.settings_manager.get(
-            "audio.play_password_copied_sound", True
-        )
+        play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
         if play_sound and self.audio_player:
             try:
                 self.audio_player.play("password_copied.wav")
