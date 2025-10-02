@@ -78,3 +78,5 @@ Implemented a complete password authentication flow for the Simple OTP applicati
 - Not persisted to disk
 - Application closes after 3 failed login attempts
 - All secrets encrypted using AES-256-GCM with PBKDF2-HMAC-SHA256 key derivation
+- PBKDF2 iterations set project-wide to 600,000 (OWASP recommendation)
+- Iterations constant defined in `simple_otp/constants.py`

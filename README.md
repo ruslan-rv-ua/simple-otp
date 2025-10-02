@@ -5,7 +5,7 @@ Desktop application for generating TOTP (Time-based One-Time Passwords) using wx
 ## Features
 
 - **TOTP Code Generation**: Generate 6 or 8-digit time-based one-time passwords
-- **Encrypted Storage**: All secrets are encrypted using PBKDF2-HMAC-SHA256 (600,000 iterations)
+- **Encrypted Storage**: All secrets are encrypted using PBKDF2-HMAC-SHA256 (600,000 iterations, project-wide constant)
 - **Multiple Accounts**: Manage multiple TOTP accounts with search functionality
 - **Real-time Display**: View current and next codes with countdown timer
 - **Password Protection**: Master password protects all stored secrets

@@ -522,39 +522,30 @@ class TestJSONFormat:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_account_with_minimum_iterations(self, manager):
-        """Test account with minimum allowed iterations."""
+    def test_account_uses_constant_iterations(self, manager):
+        """Test that accounts use the project-wide PBKDF2_ITERATIONS constant."""
+        from simple_otp.constants import PBKDF2_ITERATIONS
+
         manager.clear_all_accounts()
 
         account = TOTPAccount.from_secret(
             name="test@example.com",
             secret="JBSWY3DPEHPK3PXP",
             password="password",
-            iterations=100_000,  # Minimum allowed
         )
 
         manager.add_account(account)
         loaded = manager.get_account("test@example.com", "")
 
         assert loaded is not None
-        assert loaded.iterations == 100_000
+        # Verify that the constant has the expected value
+        assert PBKDF2_ITERATIONS == 600_000
 
-    def test_account_with_high_iterations(self, manager):
-        """Test account with very high iterations."""
-        manager.clear_all_accounts()
-
-        account = TOTPAccount.from_secret(
-            name="test@example.com",
-            secret="JBSWY3DPEHPK3PXP",
-            password="password",
-            iterations=1_000_000,
-        )
-
-        manager.add_account(account)
-        loaded = manager.get_account("test@example.com", "")
-
-        assert loaded is not None
-        assert loaded.iterations == 1_000_000
+        # Test that the account can be decrypted successfully
+        totp = loaded.get_totp("password")
+        code = totp.now()
+        assert len(code) == 6
+        assert code.isdigit()
 
     def test_multiple_accounts_same_name_no_issuer(self, manager):
         """Test that accounts with same name and no issuer are treated as duplicates."""

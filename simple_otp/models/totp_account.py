@@ -43,7 +43,9 @@ class TOTPAccount:
     Encryption parameters:
     - encrypted_secret: base64-encoded encrypted TOTP secret
     - salt: base64-encoded cryptographic salt for key derivation
-    - iterations: number of PBKDF2 iterations for key derivation
+
+    Note:
+        PBKDF2 iterations are defined project-wide in constants.PBKDF2_ITERATIONS
     """
 
     name: str
@@ -51,7 +53,6 @@ class TOTPAccount:
     # Encrypted secret and encryption parameters (base64 encoded strings)
     encrypted_secret: str
     salt: str
-    iterations: int = 600_000  # OWASP recommendation for PBKDF2-HMAC-SHA256
 
     # Public TOTP parameters
     issuer: str = ""
@@ -69,9 +70,6 @@ class TOTPAccount:
 
         if not self.name:
             raise ValueError("name cannot be empty")
-
-        if self.iterations < 100_000:
-            raise ValueError("iterations must be at least 100,000 for security")
 
         if self.digits not in (6, 8):
             raise ValueError("digits must be 6 or 8")
@@ -94,7 +92,6 @@ class TOTPAccount:
         digits: int = 6,
         digest: DigestAlgorithm = DigestAlgorithm.SHA1,
         interval: int = 30,
-        iterations: int = 600_000,
     ) -> "TOTPAccount":
         """
         Create a TOTPAccount from a plain TOTP secret.
@@ -107,13 +104,15 @@ class TOTPAccount:
             digits: Number of digits in TOTP code (6 or 8)
             digest: Hash algorithm (SHA1, SHA256, or SHA512)
             interval: Time interval in seconds (typically 30)
-            iterations: PBKDF2 iterations for key derivation (default 600,000)
 
         Returns:
             TOTPAccount instance with encrypted secret
 
         Raises:
             ValueError: If secret is empty or parameters are invalid
+
+        Note:
+            Uses PBKDF2_ITERATIONS constant for key derivation.
         """
         if not secret:
             raise ValueError("secret cannot be empty")
@@ -122,14 +121,13 @@ class TOTPAccount:
         salt = Encryptor.generate_salt()
 
         # Encrypt the secret
-        encrypted_secret = Encryptor.encrypt(secret, password, salt, iterations)
+        encrypted_secret = Encryptor.encrypt(secret, password, salt)
 
         # Create and return the account instance
         return cls(
             name=name,
             encrypted_secret=encrypted_secret,
             salt=salt,
-            iterations=iterations,
             issuer=issuer,
             digits=digits,
             digest=digest,
@@ -157,11 +155,12 @@ class TOTPAccount:
 
         Raises:
             cryptography.exceptions.InvalidTag: If password is incorrect
+
+        Note:
+            Uses PBKDF2_ITERATIONS constant for key derivation.
         """
         # Decrypt the secret
-        plain_secret = Encryptor.decrypt(
-            self.encrypted_secret, password, self.salt, self.iterations
-        )
+        plain_secret = Encryptor.decrypt(self.encrypted_secret, password, self.salt)
 
         # Create and return PyOTP TOTP instance
         return pyotp.TOTP(

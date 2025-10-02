@@ -75,17 +75,19 @@ class TestEncryptor:
         with pytest.raises(Exception):  # cryptography.exceptions.InvalidTag
             Encryptor.decrypt(encrypted, wrong_password, salt)
 
-    def test_encrypt_with_custom_iterations(self):
-        """Test encryption with custom iteration count."""
+    def test_encrypt_uses_project_constant(self):
+        """Test that encryption uses the project-wide PBKDF2_ITERATIONS constant."""
+        from simple_otp.constants import PBKDF2_ITERATIONS
+
         plain_secret = "JBSWY3DPEHPK3PXP"
         password = "test_password"
         salt = Encryptor.generate_salt()
-        iterations = 100_000
 
-        encrypted = Encryptor.encrypt(plain_secret, password, salt, iterations)
-        decrypted = Encryptor.decrypt(encrypted, password, salt, iterations)
+        encrypted = Encryptor.encrypt(plain_secret, password, salt)
+        decrypted = Encryptor.decrypt(encrypted, password, salt)
 
         assert decrypted == plain_secret
+        assert PBKDF2_ITERATIONS == 600_000  # Verify the constant value
 
 
 class TestTOTPAccount:
@@ -132,7 +134,6 @@ class TestTOTPAccount:
 
         assert account.encrypted_secret == encrypted_account_data["encrypted_secret"]
         assert account.salt == encrypted_account_data["salt"]
-        assert account.iterations == 600_000
         assert account.digits == 6
         assert account.digest == DigestAlgorithm.SHA1
         assert account.interval == 30
@@ -145,7 +146,6 @@ class TestTOTPAccount:
             encrypted_secret=encrypted_account_data["encrypted_secret"],
             salt=encrypted_account_data["salt"],
             name="user@example.com",
-            iterations=100_000,
             issuer="GitHub",
             digits=8,
             digest=DigestAlgorithm.SHA256,
@@ -154,7 +154,6 @@ class TestTOTPAccount:
 
         assert account.encrypted_secret == encrypted_account_data["encrypted_secret"]
         assert account.salt == encrypted_account_data["salt"]
-        assert account.iterations == 100_000
         assert account.name == "user@example.com"
         assert account.issuer == "GitHub"
         assert account.digits == 8
@@ -176,16 +175,6 @@ class TestTOTPAccount:
         with pytest.raises(ValueError, match="name cannot be empty"):
             TOTPAccount(
                 encrypted_secret=valid_encrypted_secret, salt=valid_salt, name=""
-            )
-
-    def test_low_iterations_raises_error(self, valid_encrypted_secret, valid_salt):
-        """Test that iterations < 100,000 raises ValueError."""
-        with pytest.raises(ValueError, match="iterations must be at least 100,000"):
-            TOTPAccount(
-                encrypted_secret=valid_encrypted_secret,
-                salt=valid_salt,
-                name="test",
-                iterations=50_000,
             )
 
     def test_invalid_digits_raises_error(self, valid_encrypted_secret, valid_salt):
@@ -392,7 +381,6 @@ class TestTOTPAccountFromSecret:
         assert account.digits == 6
         assert account.digest == DigestAlgorithm.SHA1
         assert account.interval == 30
-        assert account.iterations == 600_000
         assert account.encrypted_secret  # Should have encrypted secret
         assert account.salt  # Should have generated salt
 
@@ -406,7 +394,6 @@ class TestTOTPAccountFromSecret:
             digits=8,
             digest=DigestAlgorithm.SHA256,
             interval=60,
-            iterations=100_000,
         )
 
         assert account.name == "user@example.com"
@@ -414,7 +401,6 @@ class TestTOTPAccountFromSecret:
         assert account.digits == 8
         assert account.digest == DigestAlgorithm.SHA256
         assert account.interval == 60
-        assert account.iterations == 100_000
 
     def test_from_secret_generates_unique_salts(self, test_secret, test_password):
         """Test that from_secret generates unique salts for each account."""
@@ -457,16 +443,6 @@ class TestTOTPAccountFromSecret:
         with pytest.raises(ValueError, match="digits must be 6 or 8"):
             TOTPAccount.from_secret(
                 name="test", secret=test_secret, password=test_password, digits=4
-            )
-
-    def test_from_secret_low_iterations_raises_error(self, test_secret, test_password):
-        """Test that low iterations value raises ValueError."""
-        with pytest.raises(ValueError, match="iterations must be at least 100,000"):
-            TOTPAccount.from_secret(
-                name="test",
-                secret=test_secret,
-                password=test_password,
-                iterations=50_000,
             )
 
     def test_from_secret_totp_matches_reference(self, test_secret, test_password):

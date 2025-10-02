@@ -52,11 +52,12 @@ is_valid = totp.verify(code, valid_window=1)
 - `name` (str): Account identifier (email, username, etc.) - **REQUIRED**
 
 #### Optional Fields
-- `iterations` (int): PBKDF2 iterations (default: 600,000)
 - `issuer` (str): Service name (e.g., "Google", "GitHub")
 - `digits` (int): Code length - 6 or 8 (default: 6)
 - `digest` (DigestAlgorithm): Hash algorithm (default: SHA1)
 - `interval` (int): Time step in seconds (default: 30)
+
+**Note**: PBKDF2 iterations are now defined project-wide in `simple_otp/constants.py` (600,000 iterations). The `iterations` field has been removed from the dataclass.
 
 ### Methods
 
@@ -87,32 +88,36 @@ Helper class for encrypting and decrypting TOTP secrets.
 #### `generate_salt() -> str`
 Generates a cryptographically secure 16-byte salt (base64-encoded).
 
-#### `encrypt(plain_secret: str, password: str, salt: str, iterations: int = 600_000) -> str`
+#### `encrypt(plain_secret: str, password: str, salt: str) -> str`
 Encrypts a plain text secret using password-based encryption.
 
 **Parameters:**
 - `plain_secret`: Plain TOTP secret (base32 string)
 - `password`: Encryption password
 - `salt`: Base64-encoded salt
-- `iterations`: PBKDF2 iterations (default: 600,000)
 
 **Returns:**
 - Base64-encoded encrypted secret
 
-#### `decrypt(encrypted_secret: str, password: str, salt: str, iterations: int = 600_000) -> str`
+**Note:**
+- Uses `PBKDF2_ITERATIONS` constant (600,000) from `simple_otp.constants`
+
+#### `decrypt(encrypted_secret: str, password: str, salt: str) -> str`
 Decrypts an encrypted secret.
 
 **Parameters:**
 - `encrypted_secret`: Base64-encoded encrypted secret
 - `password`: Decryption password
 - `salt`: Base64-encoded salt (same as used for encryption)
-- `iterations`: PBKDF2 iterations (must match encryption)
 
 **Returns:**
 - Decrypted plain text secret
 
 **Raises:**
 - `cryptography.exceptions.InvalidTag`: If password is incorrect or data is corrupted
+
+**Note:**
+- Uses `PBKDF2_ITERATIONS` constant (600,000) from `simple_otp.constants`
 
 ## DigestAlgorithm
 
@@ -131,9 +136,10 @@ Returns the corresponding hashlib digest function (`sha1`, `sha256`, or `sha512`
 ## Security Notes
 
 1. **Salt Generation**: Always use `Encryptor.generate_salt()` for cryptographically secure salts
-2. **Iterations**: Default 600,000 iterations follows OWASP recommendations for PBKDF2-HMAC-SHA256
+2. **Iterations**: Project-wide constant of 600,000 iterations (defined in `simple_otp/constants.py`) follows OWASP recommendations for PBKDF2-HMAC-SHA256
 3. **Password Storage**: Never store passwords - only use them for encryption/decryption operations
 4. **Secret Protection**: Keep encrypted secrets and salts secure; compromise of both with password allows secret recovery
+5. **Consistency**: All accounts use the same iteration count for encryption, ensuring consistent security across the application
 
 ## Examples
 

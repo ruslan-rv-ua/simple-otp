@@ -7,6 +7,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from simple_otp.constants import PBKDF2_ITERATIONS
+
 
 class Encryptor:
     """
@@ -27,9 +29,7 @@ class Encryptor:
         return base64.b64encode(salt_bytes).decode("utf-8")
 
     @staticmethod
-    def encrypt(
-        plain_secret: str, password: str, salt: str, iterations: int = 600_000
-    ) -> str:
+    def encrypt(plain_secret: str, password: str, salt: str) -> str:
         """
         Encrypt a TOTP secret using a password.
 
@@ -37,10 +37,12 @@ class Encryptor:
             plain_secret: The plain text TOTP secret (base32 encoded string)
             password: User's password for encryption
             salt: Base64-encoded salt string
-            iterations: Number of PBKDF2 iterations (default: 600,000)
 
         Returns:
             Base64-encoded encrypted secret (nonce + ciphertext)
+
+        Note:
+            Uses PBKDF2_ITERATIONS constant for key derivation iterations.
         """
         # Decode salt from base64
         salt_bytes = base64.b64decode(salt)
@@ -50,7 +52,7 @@ class Encryptor:
             algorithm=hashes.SHA256(),
             length=32,  # 256 bits for AES-256
             salt=salt_bytes,
-            iterations=iterations,
+            iterations=PBKDF2_ITERATIONS,
         )
         key = kdf.derive(password.encode("utf-8"))
 
@@ -66,9 +68,7 @@ class Encryptor:
         return base64.b64encode(encrypted_bytes).decode("utf-8")
 
     @staticmethod
-    def decrypt(
-        encrypted_secret: str, password: str, salt: str, iterations: int = 600_000
-    ) -> str:
+    def decrypt(encrypted_secret: str, password: str, salt: str) -> str:
         """
         Decrypt a TOTP secret using a password.
 
@@ -76,7 +76,6 @@ class Encryptor:
             encrypted_secret: Base64-encoded encrypted secret (nonce + ciphertext)
             password: User's password for decryption
             salt: Base64-encoded salt string
-            iterations: Number of PBKDF2 iterations used during encryption
 
         Returns:
             Decrypted plain text TOTP secret
@@ -84,6 +83,9 @@ class Encryptor:
         Raises:
             cryptography.exceptions.InvalidTag: If password is incorrect
                                                 or data is corrupted
+
+        Note:
+            Uses PBKDF2_ITERATIONS constant for key derivation iterations.
         """
         # Decode salt and encrypted secret from base64
         salt_bytes = base64.b64decode(salt)
@@ -94,7 +96,7 @@ class Encryptor:
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt_bytes,
-            iterations=iterations,
+            iterations=PBKDF2_ITERATIONS,
         )
         key = kdf.derive(password.encode("utf-8"))
 

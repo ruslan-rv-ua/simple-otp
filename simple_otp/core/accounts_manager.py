@@ -79,6 +79,9 @@ class AccountsManager:
             digest_str = account_data.get("digest", "sha1")
             account_data["digest"] = DigestAlgorithm(digest_str)
 
+            # Remove iterations field if it exists (legacy field from older versions)
+            account_data.pop("iterations", None)
+
             account = TOTPAccount(**account_data)
             accounts.append(account)
 
@@ -98,7 +101,6 @@ class AccountsManager:
                 "name": account.name,
                 "encrypted_secret": account.encrypted_secret,
                 "salt": account.salt,
-                "iterations": account.iterations,
                 "issuer": account.issuer,
                 "digits": account.digits,
                 "digest": account.digest.value,  # Convert enum to string

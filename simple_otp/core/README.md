@@ -6,7 +6,7 @@ This module contains the core business logic for the simple-otp application.
 
 ### `encryptor.py`
 Provides encryption and decryption utilities for TOTP secrets using:
-- **PBKDF2-HMAC-SHA256** for key derivation
+- **PBKDF2-HMAC-SHA256** for key derivation (600,000 iterations from `constants.PBKDF2_ITERATIONS`)
 - **AES-256-GCM** for encryption
 
 ### `accounts_manager.py`
@@ -133,7 +133,6 @@ The accounts are stored in an indented JSON format for readability:
       "name": "user@example.com",
       "encrypted_secret": "base64_encoded_encrypted_data",
       "salt": "base64_encoded_salt",
-      "iterations": 600000,
       "issuer": "Google",
       "digits": 6,
       "digest": "sha1",
@@ -143,12 +142,15 @@ The accounts are stored in an indented JSON format for readability:
 }
 ```
 
+**Note**: Prior to recent refactoring, JSON files contained an `iterations` field. This field is now obsolete and is automatically removed when loading accounts. All encryption/decryption operations use the project-wide constant `PBKDF2_ITERATIONS` (600,000) defined in `simple_otp/constants.py`.
+
 ### Security Considerations
 
 - **Secrets are encrypted**: All TOTP secrets are encrypted using AES-256-GCM with a password-derived key
-- **Secure key derivation**: Uses PBKDF2-HMAC-SHA256 with 600,000 iterations (OWASP recommendation)
+- **Secure key derivation**: Uses PBKDF2-HMAC-SHA256 with 600,000 iterations (OWASP recommendation, defined in `constants.PBKDF2_ITERATIONS`)
 - **Unique salts**: Each account has its own cryptographically secure salt
 - **Password required**: You must provide the correct password to decrypt secrets and generate TOTP codes
+- **Project-wide iterations**: All accounts use the same iteration count for consistency and security
 
 ### Error Handling
 
