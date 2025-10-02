@@ -51,7 +51,7 @@ class TOTPDialog(wx.Dialog):
         # Start the timer
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self._on_timer, self.timer)
-        self.timer.Start(self.TIMER_INTERVAL_MS)
+        self.timer.Start(TIMER_INTERVAL_MS)
 
         # Initial update
         self._update_codes_and_progress()
