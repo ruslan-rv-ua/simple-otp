@@ -6,6 +6,9 @@ import pyperclip
 import wx
 
 from simple_otp.models.totp_account import TOTPAccount
+from simple_otp.ui.audio_player import audio_player
+
+TIMER_INTERVAL_MS = 100  # Update every 100ms for smooth progress bar
 
 
 def format_otp(otp_code: str) -> str:
@@ -23,8 +26,6 @@ def format_otp(otp_code: str) -> str:
 
 class TOTPDialog(wx.Dialog):
     """Dialog displaying current and next TOTP codes with countdown."""
-
-    TIMER_INTERVAL_MS = 100  # Update every 100ms for smooth progress bar
 
     def __init__(self, parent, account: TOTPAccount, password: str):
         """
@@ -45,13 +46,17 @@ class TOTPDialog(wx.Dialog):
         self.password = password
         self.totp = account.get_totp(password)
 
+        # Use global audio player instance
+        self.audio_player = audio_player
+        self.sound_played_for_interval = False
+
         # Create UI
         self._create_ui()
 
         # Start the timer
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self._on_timer, self.timer)
-        self.timer.Start(self.TIMER_INTERVAL_MS)
+        self.timer.Start(TIMER_INTERVAL_MS)
 
         # Initial update
         self._update_codes_and_progress()
@@ -146,6 +151,18 @@ class TOTPDialog(wx.Dialog):
         # Update progress bar (it goes down as time progresses)
         self.progress_bar.SetValue(progress_percent)
 
+        # Play sound when less than 5 seconds remain (only once per interval)
+        if time_remaining < 5.0 and not self.sound_played_for_interval:
+            if self.audio_player:
+                try:
+                    self.audio_player.play("under_5_seconds.wav")
+                except (FileNotFoundError, RuntimeError):
+                    pass
+            self.sound_played_for_interval = True
+        elif time_remaining >= 5.0:
+            # Reset flag when we're back above 5 seconds (new interval started)
+            self.sound_played_for_interval = False
+
     def _on_timer(self, event):
         """Handle timer event to update codes and progress."""
         self._update_codes_and_progress()
@@ -154,23 +171,25 @@ class TOTPDialog(wx.Dialog):
         """Copy current OTP to clipboard (without spaces)."""
         otp_code = self.current_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
-        wx.MessageBox(
-            "Current password copied to clipboard!",
-            "Copied",
-            wx.OK | wx.ICON_INFORMATION,
-            self,
-        )
+        # Play sound notification
+        if self.audio_player:
+            try:
+                self.audio_player.play("password_copied.wav")
+            except (FileNotFoundError, RuntimeError) as e:
+                # Log the error but don't interrupt the UI
+                print(f"Warning: Failed to play sound: {e}")
 
     def _on_copy_next(self, event):
         """Copy next OTP to clipboard (without spaces)."""
         otp_code = self.next_text.GetValue().replace(" ", "")
         pyperclip.copy(otp_code)
-        wx.MessageBox(
-            "Next password copied to clipboard!",
-            "Copied",
-            wx.OK | wx.ICON_INFORMATION,
-            self,
-        )
+        # Play sound notification
+        if self.audio_player:
+            try:
+                self.audio_player.play("password_copied.wav")
+            except (FileNotFoundError, RuntimeError) as e:
+                # Log the error but don't interrupt the UI
+                print(f"Warning: Failed to play sound: {e}")
 
     def _on_close(self, event):
         """Handle close button click."""

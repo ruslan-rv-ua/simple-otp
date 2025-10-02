@@ -33,6 +33,7 @@ The TOTP dialog (`totp_dialog.py`) is shown when a list item is activated:
 - **Progress Bar**: Visual countdown showing time remaining in current interval
   - Progress bar fills from 100% to 0% as the interval time elapses
 - **Auto-refresh**: Updates every 100ms using wx.Timer for smooth progress
+- **Audio Alert**: Plays sound when less than 5 seconds remain (once per interval)
 
 ### Password Formatting
 - OTP codes are displayed with **digits grouped by 2** (e.g., "12 34 56" or "12 34 56 78")
@@ -44,6 +45,52 @@ The TOTP dialog (`totp_dialog.py`) is shown when a list item is activated:
 - Timer updates display and progress bar every 100ms
 - Dialog is centered on parent window
 - Proper cleanup of timer on dialog close
+- Audio player plays `under_5_seconds.wav` asynchronously
+
+## Audio Player
+The audio player (`audio_player.py`) provides sound playback for UI events:
+
+### Features
+- **Asynchronous playback**: All sounds play in background (non-blocking)
+- **File-based**: WAV files played directly from disk
+- **Auto-discovery**: Scans audio directory on initialization
+- **Error handling**: Raises clear exceptions with helpful messages
+
+### Usage
+
+#### Option 1: Use global instance (recommended)
+```python
+from simple_otp.ui.audio_player import audio_player
+
+# Use global instance directly (already initialized)
+if audio_player:
+    audio_player.play("sound.wav")
+    
+    # Get available files
+    files = audio_player.get_available_files()
+    
+    # Stop all sounds
+    audio_player.stop()
+```
+
+#### Option 2: Create custom instance
+```python
+from pathlib import Path
+from simple_otp.ui.audio_player import AudioPlayer
+
+# Initialize custom instance
+sounds_dir = Path(__file__).parent / "assets" / "sounds"
+player = AudioPlayer(sounds_dir)
+
+# Play sound (always async)
+player.play("sound.wav")
+```
+
+### Technical Details
+- Uses `winsound.PlaySound()` with `SND_FILENAME | SND_ASYNC`
+- No memory caching - lightweight and efficient
+- Validates directory on initialization
+- See `docs/AUDIO_PLAYER_ASYNC_FIX.md` for implementation details
 
 ## Menu Bar
 
