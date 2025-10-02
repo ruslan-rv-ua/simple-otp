@@ -201,9 +201,7 @@ class SettingsDialog(wx.Dialog):
         sizer.Add(warning_sizer, 0, wx.ALL, 0)
 
         # Bind checkbox to enable/disable spin control
-        self.play_warning_check.Bind(
-            wx.EVT_CHECKBOX, self._on_warning_check_changed
-        )
+        self.play_warning_check.Bind(wx.EVT_CHECKBOX, self._on_warning_check_changed)
 
         panel.SetSizer(sizer)
         self.notebook.AddPage(panel, "Audio")
