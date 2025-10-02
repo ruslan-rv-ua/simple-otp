@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import List, Optional
 
 from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
 
@@ -15,7 +14,7 @@ class AccountsManager:
     If the file doesn't exist on initialization, an example account is created.
     """
 
-    def __init__(self, storage_path: Optional[Path] = None, auto_create: bool = True):
+    def __init__(self, storage_path: Path | None = None, auto_create: bool = True):
         """
         Initialize the accounts manager.
 
@@ -58,7 +57,7 @@ class AccountsManager:
         # Save to file
         self._save_accounts([example_account])
 
-    def _load_accounts(self) -> List[TOTPAccount]:
+    def _load_accounts(self) -> list[TOTPAccount]:
         """
         Load all accounts from the JSON file.
 
@@ -69,7 +68,7 @@ class AccountsManager:
             FileNotFoundError: If the storage file doesn't exist
             json.JSONDecodeError: If the file contains invalid JSON
         """
-        with open(self._storage_path, "r", encoding="utf-8") as f:
+        with open(self._storage_path, encoding="utf-8") as f:
             data = json.load(f)
 
         accounts = []
@@ -83,7 +82,7 @@ class AccountsManager:
 
         return accounts
 
-    def _save_accounts(self, accounts: List[TOTPAccount]) -> None:
+    def _save_accounts(self, accounts: list[TOTPAccount]) -> None:
         """
         Save all accounts to the JSON file.
 
@@ -164,7 +163,7 @@ class AccountsManager:
 
         return False
 
-    def get_account(self, name: str, issuer: str = "") -> Optional[TOTPAccount]:
+    def get_account(self, name: str, issuer: str = "") -> TOTPAccount | None:
         """
         Get a specific account by name and issuer.
 
@@ -183,7 +182,7 @@ class AccountsManager:
 
         return None
 
-    def list_accounts(self) -> List[TOTPAccount]:
+    def list_accounts(self) -> list[TOTPAccount]:
         """
         Get all accounts from storage.
 
