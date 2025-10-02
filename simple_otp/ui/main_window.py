@@ -1,13 +1,18 @@
 """Main window for simple-otp application."""
 
+import json
+from pathlib import Path
+
 import wx
 import wx.adv
 from ObjectListView3 import ColumnDefn, Filter, ObjectListView
 
+from simple_otp.constants import MAX_RECENT_FILES
 from simple_otp.core.accounts_manager import AccountsManager
 from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import TOTPAccount
 from simple_otp.ui.add_account_dialog import AddAccountDialog
+from simple_otp.ui.password_dialog import PasswordDialog
 from simple_otp.ui.settings_dialog import SettingsDialog
 from simple_otp.ui.totp_dialog import TOTPDialog
 
@@ -15,13 +20,14 @@ from simple_otp.ui.totp_dialog import TOTPDialog
 class MainWindow(wx.Frame):
     """Main application window with search and accounts list."""
 
-    def __init__(self, parent, password: str):
+    def __init__(self, parent, password: str, accounts_file: Path | None = None):
         """
         Initialize the main window.
 
         Args:
             parent: Parent window (typically None)
             password: Master password for decrypting accounts
+            accounts_file: Optional path to accounts file. If None, uses default
         """
         super().__init__(parent, title="Simple OTP", style=wx.DEFAULT_FRAME_STYLE)
 
@@ -32,21 +38,53 @@ class MainWindow(wx.Frame):
         self.Maximize()
 
         # Initialize accounts manager
-        self.accounts_manager = AccountsManager()
+        if accounts_file:
+            self.accounts_manager = AccountsManager(storage_path=accounts_file)
+            self.current_file = accounts_file
+        else:
+            self.accounts_manager = AccountsManager()
+            # Get the default path from accounts manager
+            self.current_file = self.accounts_manager._storage_path
 
         # Initialize settings manager
         self.settings_manager = SettingsManager()
+
+        # Store reference to Recent Files submenu for dynamic updates
+        self.recent_files_menu = None
 
         # Create the UI components
         self._create_menu_bar()
         self._create_ui()
 
+        # Update window title with filename
+        self._update_title()
+
+        # Add current file to recent files
+        self._update_recent_files(self.current_file)
+
         # Load accounts from storage
         self._load_accounts()
 
     def _create_menu_bar(self):
-        """Create the menu bar with Account, Tools, and Help menus."""
+        """Create the menu bar with File, Account, Tools, and Help menus."""
         menu_bar = wx.MenuBar()
+
+        # File menu
+        file_menu = wx.Menu()
+        new_item = file_menu.Append(
+            wx.ID_ANY, "&New...\tCtrl+N", "Create new accounts file"
+        )
+        open_item = file_menu.Append(
+            wx.ID_ANY, "&Open...\tCtrl+O", "Open existing accounts file"
+        )
+
+        # Recent Files submenu
+        self.recent_files_menu = wx.Menu()
+        file_menu.AppendSubMenu(self.recent_files_menu, "Recent &Files")
+
+        file_menu.AppendSeparator()
+        exit_item = file_menu.Append(wx.ID_EXIT, "E&xit\tEsc", "Exit application")
+        menu_bar.Append(file_menu, "&File")
 
         # Account menu
         account_menu = wx.Menu()
@@ -54,8 +92,6 @@ class MainWindow(wx.Frame):
         delete_item = account_menu.Append(
             wx.ID_ANY, "Delete\tDel", "Delete selected account"
         )
-        account_menu.AppendSeparator()
-        exit_item = account_menu.Append(wx.ID_EXIT, "E&xit\tEsc", "Exit application")
         menu_bar.Append(account_menu, "&Account")
 
         # Tools menu
@@ -73,11 +109,16 @@ class MainWindow(wx.Frame):
         self.SetMenuBar(menu_bar)
 
         # Bind menu events
+        self.Bind(wx.EVT_MENU, self._on_new_file, new_item)
+        self.Bind(wx.EVT_MENU, self._on_open_file, open_item)
         self.Bind(wx.EVT_MENU, self._on_add_account, add_item)
         self.Bind(wx.EVT_MENU, self._on_delete_account, delete_item)
         self.Bind(wx.EVT_MENU, self._on_exit, exit_item)
         self.Bind(wx.EVT_MENU, self._on_settings, settings_item)
         self.Bind(wx.EVT_MENU, self._on_about, about_item)
+
+        # Load recent files menu
+        self._load_recent_files_menu()
 
     def _create_ui(self):
         """Create the main UI layout."""
@@ -314,7 +355,6 @@ class MainWindow(wx.Frame):
         """Get the application version from pyproject.toml."""
         try:
             import tomllib
-            from pathlib import Path
 
             # Get the path to pyproject.toml
             project_root = Path(__file__).parent.parent.parent
@@ -328,3 +368,320 @@ class MainWindow(wx.Frame):
             pass
 
         return "Unknown"
+
+    def _update_title(self):
+        """Update window title to show current file name."""
+        filename = self.current_file.name
+        self.SetTitle(f"Simple OTP - {filename}")
+
+    def _switch_to_file(self, file_path: Path, password: str) -> bool:
+        """
+        Switch to a different accounts file.
+
+        Args:
+            file_path: Path to the accounts file
+            password: Password for decrypting the accounts
+
+        Returns:
+            True if successfully switched, False otherwise
+        """
+        try:
+            # Create a new accounts manager with the specified file
+            new_manager = AccountsManager(storage_path=file_path, auto_create=False)
+
+            # Verify the password by trying to load accounts
+            if not new_manager.verify_password(password):
+                wx.MessageBox(
+                    "Incorrect password for this file.",
+                    "Authentication Failed",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                return False
+
+            # Switch to the new file
+            self.accounts_manager = new_manager
+            self.current_file = file_path
+            self.password = password
+
+            # Update window title
+            self._update_title()
+
+            # Reload accounts list
+            self._load_accounts()
+
+            # Update recent files
+            self._update_recent_files(file_path)
+
+            return True
+
+        except FileNotFoundError:
+            wx.MessageBox(
+                f"File not found: {file_path}",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            return False
+        except Exception as e:
+            wx.MessageBox(
+                f"Failed to open file: {str(e)}",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            return False
+
+    def _update_recent_files(self, file_path: Path):
+        """
+        Add file to recent files list and save settings.
+
+        Args:
+            file_path: Path to the accounts file
+        """
+        # Get current recent files list
+        recent_files = self.settings_manager.get("files.recent_files", [])
+
+        # Convert to string for comparison
+        file_str = str(file_path.resolve())
+
+        # Remove if already exists (to move to front)
+        if file_str in recent_files:
+            recent_files.remove(file_str)
+
+        # Add to front
+        recent_files.insert(0, file_str)
+
+        # Keep only MAX_RECENT_FILES entries
+        recent_files = recent_files[:MAX_RECENT_FILES]
+
+        # Save to settings
+        self.settings_manager.set("files.recent_files", recent_files)
+        self.settings_manager.save()
+
+        # Reload the recent files menu
+        self._load_recent_files_menu()
+
+    def _load_recent_files_menu(self):
+        """Dynamically update the Recent Files submenu."""
+        # Clear existing menu items
+        for item in self.recent_files_menu.GetMenuItems():
+            self.recent_files_menu.Delete(item)
+
+        # Get recent files from settings
+        recent_files = self.settings_manager.get("files.recent_files", [])
+
+        if not recent_files:
+            # Show "No recent files" as disabled item
+            no_files_item = self.recent_files_menu.Append(
+                wx.ID_ANY, "No recent files"
+            )
+            no_files_item.Enable(False)
+        else:
+            # Add each recent file
+            for file_path_str in recent_files:
+                file_path = Path(file_path_str)
+
+                # Format the display text (show shortened path if too long)
+                display_text = self._format_file_path(file_path)
+
+                # Create menu item
+                item = self.recent_files_menu.Append(wx.ID_ANY, display_text)
+
+                # Bind event with lambda to capture file_path
+                self.Bind(
+                    wx.EVT_MENU,
+                    lambda evt, path=file_path: self._on_recent_file_selected(path),
+                    item,
+                )
+
+            # Add separator and "Clear History"
+            self.recent_files_menu.AppendSeparator()
+            clear_item = self.recent_files_menu.Append(wx.ID_ANY, "Clear History")
+            self.Bind(wx.EVT_MENU, self._on_clear_recent_files, clear_item)
+
+    def _format_file_path(self, file_path: Path) -> str:
+        """
+        Format a file path for display in menu (shorten if too long).
+
+        Args:
+            file_path: Path to format
+
+        Returns:
+            Formatted path string
+        """
+        path_str = str(file_path)
+
+        # If path is too long, shorten it
+        max_length = 60
+        if len(path_str) > max_length:
+            # Get drive and filename
+            parts = file_path.parts
+            if len(parts) > 2:
+                # Show drive + ... + filename
+                return f"{parts[0]}\\...\\{file_path.name}"
+
+        return path_str
+
+    def _on_new_file(self, event):
+        """Handle New File menu item."""
+        # Show file dialog
+        with wx.FileDialog(
+            self,
+            "Create New Accounts File",
+            wildcard="JSON files (*.json)|*.json",
+            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+        ) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            file_path = Path(file_dialog.GetPath())
+
+            # Ensure .json extension
+            if file_path.suffix.lower() != ".json":
+                file_path = file_path.with_suffix(".json")
+
+        # Ask for password with confirmation
+        password_dialog = PasswordDialog(
+            self,
+            title="Set Password",
+            message="Enter a password to encrypt the new accounts file:",
+            require_confirmation=True,
+        )
+
+        if password_dialog.ShowModal() != wx.ID_OK:
+            password_dialog.Destroy()
+            return
+
+        new_password = password_dialog.GetPassword()
+        password_dialog.Destroy()
+
+        try:
+            # Create an empty accounts file
+            data = {"accounts": []}
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            # Create new accounts manager with the file (auto_create=False)
+            new_manager = AccountsManager(storage_path=file_path, auto_create=False)
+
+            # Switch to the new file
+            self.accounts_manager = new_manager
+            self.current_file = file_path
+            self.password = new_password
+
+            # Update window title
+            self._update_title()
+
+            # Clear the accounts list (empty file)
+            self.accounts_list.SetObjects([])
+
+            # Update recent files
+            self._update_recent_files(file_path)
+
+            wx.MessageBox(
+                f"New accounts file created: {file_path.name}\n\n"
+                "You can now add your accounts.",
+                "File Created",
+                wx.OK | wx.ICON_INFORMATION,
+            )
+
+        except Exception as e:
+            wx.MessageBox(
+                f"Failed to create file: {str(e)}",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+
+    def _on_open_file(self, event):
+        """Handle Open File menu item."""
+        # Show file dialog
+        with wx.FileDialog(
+            self,
+            "Open Accounts File",
+            wildcard="JSON files (*.json)|*.json",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        ) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            file_path = Path(file_dialog.GetPath())
+
+        # Ask for password (without confirmation)
+        password_dialog = PasswordDialog(
+            self,
+            title="Enter Password",
+            message=f"Enter password for {file_path.name}:",
+            require_confirmation=False,
+        )
+
+        if password_dialog.ShowModal() != wx.ID_OK:
+            password_dialog.Destroy()
+            return
+
+        password = password_dialog.GetPassword()
+        password_dialog.Destroy()
+
+        # Try to switch to the file
+        self._switch_to_file(file_path, password)
+
+    def _on_recent_file_selected(self, file_path: Path):
+        """
+        Handle Recent File selection.
+
+        Args:
+            file_path: Path to the selected file
+        """
+        # Check if file exists
+        if not file_path.exists():
+            wx.MessageBox(
+                f"File not found: {file_path}\n\n"
+                "The file will be removed from recent files.",
+                "File Not Found",
+                wx.OK | wx.ICON_WARNING,
+            )
+
+            # Remove from recent files
+            recent_files = self.settings_manager.get("files.recent_files", [])
+            file_str = str(file_path.resolve())
+            if file_str in recent_files:
+                recent_files.remove(file_str)
+                self.settings_manager.set("files.recent_files", recent_files)
+                self.settings_manager.save()
+                self._load_recent_files_menu()
+
+            return
+
+        # Ask for password
+        password_dialog = PasswordDialog(
+            self,
+            title="Enter Password",
+            message=f"Enter password for {file_path.name}:",
+            require_confirmation=False,
+        )
+
+        if password_dialog.ShowModal() != wx.ID_OK:
+            password_dialog.Destroy()
+            return
+
+        password = password_dialog.GetPassword()
+        password_dialog.Destroy()
+
+        # Try to switch to the file
+        self._switch_to_file(file_path, password)
+
+    def _on_clear_recent_files(self, event):
+        """Handle Clear History menu item."""
+        confirm = wx.MessageBox(
+            "Are you sure you want to clear the recent files history?",
+            "Confirm Clear",
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+        )
+
+        if confirm == wx.YES:
+            self.settings_manager.set("files.recent_files", [])
+            self.settings_manager.save()
+            self._load_recent_files_menu()
+
+            wx.MessageBox(
+                "Recent files history cleared.",
+                "History Cleared",
+                wx.OK | wx.ICON_INFORMATION,
+            )

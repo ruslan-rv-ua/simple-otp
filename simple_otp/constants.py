@@ -6,3 +6,6 @@ PBKDF2_ITERATIONS = 600_000
 
 # Minimum allowed iterations for security
 MIN_PBKDF2_ITERATIONS = 100_000
+
+# Maximum number of recent files to remember
+MAX_RECENT_FILES = 16

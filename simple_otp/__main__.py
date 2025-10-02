@@ -104,6 +104,10 @@ def authenticate() -> str | None:
 
 def main():
     """Launch the Simple OTP application."""
+    from pathlib import Path
+
+    from simple_otp.core.settings_manager import SettingsManager
+
     app = wx.App()
 
     # Perform authentication
@@ -113,8 +117,33 @@ def main():
         # User cancelled or failed authentication
         return
 
+    # Load settings to check if we should open last file
+    settings_manager = SettingsManager()
+    accounts_file = None
+
+    # Check if we should open the last file
+    if settings_manager.get("files.open_last_file_on_startup", True):
+        recent_files = settings_manager.get("files.recent_files", [])
+        if recent_files:
+            last_file_path = Path(recent_files[0])
+
+            # Check if the file exists
+            if last_file_path.exists():
+                # Try to open the last file with the authenticated password
+                try:
+                    test_manager = AccountsManager(
+                        storage_path=last_file_path, auto_create=False
+                    )
+                    if test_manager.verify_password(password):
+                        # Password matches - use this file
+                        accounts_file = last_file_path
+                    # If password doesn't match, fall back to default file
+                except Exception:
+                    # If any error occurs, fall back to default file
+                    pass
+
     # Create and show main window with the validated password
-    frame = MainWindow(None, password)
+    frame = MainWindow(None, password, accounts_file)
     frame.Show()
     app.MainLoop()
 

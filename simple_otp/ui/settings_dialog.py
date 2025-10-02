@@ -127,6 +127,30 @@ class SettingsDialog(wx.Dialog):
         help_text.SetFont(font)
         sizer.Add(help_text, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
 
+        # Add spacer
+        sizer.AddSpacer(10)
+
+        # Open last file on startup checkbox
+        self.open_last_file_check = wx.CheckBox(
+            panel,
+            label="Open last file on startup",
+        )
+        sizer.Add(self.open_last_file_check, 0, wx.ALL, 5)
+
+        # Add help text for open last file
+        help_text2 = wx.StaticText(
+            panel,
+            label="When enabled, the application will automatically open\n"
+            "the most recently used accounts file on startup.",
+        )
+        help_text2.SetForegroundColour(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+        )
+        font2 = help_text2.GetFont()
+        font2.PointSize = 9
+        help_text2.SetFont(font2)
+        sizer.Add(help_text2, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+
         panel.SetSizer(sizer)
         self.notebook.AddPage(panel, "Behavior")
 
@@ -204,6 +228,11 @@ class SettingsDialog(wx.Dialog):
         )
         self.auto_copy_on_update_check.SetValue(auto_copy_on_update)
 
+        open_last_file = self.settings_manager.get(
+            "files.open_last_file_on_startup", True
+        )
+        self.open_last_file_check.SetValue(open_last_file)
+
     def _save_settings(self):
         """Save settings from UI controls to the settings manager."""
         # TOTP settings
@@ -232,6 +261,9 @@ class SettingsDialog(wx.Dialog):
         # Behavior settings
         auto_copy_on_update = self.auto_copy_on_update_check.GetValue()
         self.settings_manager.set("behavior.auto_copy_on_update", auto_copy_on_update)
+
+        open_last_file = self.open_last_file_check.GetValue()
+        self.settings_manager.set("files.open_last_file_on_startup", open_last_file)
 
         # Save to file
         self.settings_manager.save()
