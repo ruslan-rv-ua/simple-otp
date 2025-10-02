@@ -20,14 +20,19 @@ from simple_otp.ui.totp_dialog import TOTPDialog
 class MainWindow(wx.Frame):
     """Main application window with search and accounts list."""
 
-    def __init__(self, parent, password: str, accounts_file: Path | None = None):
+    def __init__(
+        self,
+        parent,
+        password: str | None = None,
+        accounts_file: Path | None = None,
+    ):
         """
         Initialize the main window.
 
         Args:
             parent: Parent window (typically None)
-            password: Master password for decrypting accounts
-            accounts_file: Optional path to accounts file. If None, uses default
+            password: Master password for decrypting accounts (None if no file open)
+            accounts_file: Optional path to accounts file (None if no file open)
         """
         super().__init__(parent, title="Simple OTP", style=wx.DEFAULT_FRAME_STYLE)
 
@@ -37,14 +42,13 @@ class MainWindow(wx.Frame):
         # Maximize the window
         self.Maximize()
 
-        # Initialize accounts manager
-        if accounts_file:
+        # Initialize accounts manager (None if no file open)
+        self.accounts_manager = None
+        self.current_file = None
+
+        if accounts_file and password:
             self.accounts_manager = AccountsManager(storage_path=accounts_file)
             self.current_file = accounts_file
-        else:
-            self.accounts_manager = AccountsManager()
-            # Get the default path from accounts manager
-            self.current_file = self.accounts_manager._storage_path
 
         # Initialize settings manager
         self.settings_manager = SettingsManager()
@@ -59,11 +63,16 @@ class MainWindow(wx.Frame):
         # Update window title with filename
         self._update_title()
 
-        # Add current file to recent files
-        self._update_recent_files(self.current_file)
+        # Add current file to recent files (if we have one)
+        if self.current_file:
+            self._update_recent_files(self.current_file)
 
-        # Load accounts from storage
-        self._load_accounts()
+        # Load accounts from storage (if we have a file)
+        if self.accounts_manager:
+            self._load_accounts()
+        else:
+            # Show empty state message
+            self._show_no_file_message()
 
     def _create_menu_bar(self):
         """Create the menu bar with File, Account, Tools, and Help menus."""
@@ -164,8 +173,11 @@ class MainWindow(wx.Frame):
 
     def _load_accounts(self):
         """Load accounts from the accounts manager."""
-        accounts = self.accounts_manager.list_accounts()
-        self.accounts_list.SetObjects(accounts)
+        if self.accounts_manager:
+            accounts = self.accounts_manager.list_accounts()
+            self.accounts_list.SetObjects(accounts)
+        else:
+            self.accounts_list.SetObjects([])
 
     def _on_search(self, event):
         """Handle search text change."""
@@ -195,6 +207,14 @@ class MainWindow(wx.Frame):
 
     def _on_item_activated(self, event):
         """Handle list item activation (double-click or Enter)."""
+        if not self.accounts_manager or not self.password:
+            wx.MessageBox(
+                "No accounts file is open.",
+                "No File",
+                wx.OK | wx.ICON_WARNING,
+            )
+            return
+
         account = self.accounts_list.GetSelectedObject()
         if account is None:
             return
@@ -213,6 +233,15 @@ class MainWindow(wx.Frame):
 
     def _on_add_account(self, event):
         """Handle Add Account menu item."""
+        if not self.accounts_manager or not self.password:
+            wx.MessageBox(
+                "No accounts file is open.\n\n"
+                "Please create or open a file first.",
+                "No File",
+                wx.OK | wx.ICON_WARNING,
+            )
+            return
+
         # Show the add account dialog
         dialog = AddAccountDialog(self, self.settings_manager)
         result = dialog.ShowModal()
@@ -265,6 +294,14 @@ class MainWindow(wx.Frame):
 
     def _on_delete_account(self, event):
         """Handle Delete Account menu item."""
+        if not self.accounts_manager:
+            wx.MessageBox(
+                "No accounts file is open.",
+                "No File",
+                wx.OK | wx.ICON_WARNING,
+            )
+            return
+
         selected = self.accounts_list.GetSelectedObject()
         if selected is None:
             wx.MessageBox(
@@ -281,7 +318,7 @@ class MainWindow(wx.Frame):
         if is_last_account:
             confirm_msg += (
                 "\n\nThis is the last account. "
-                "The application will close after deletion."
+                "The file will remain open but empty."
             )
 
         confirm = wx.MessageBox(
@@ -296,23 +333,13 @@ class MainWindow(wx.Frame):
         # Delete the account
         try:
             if self.accounts_manager.delete_account(selected.name, selected.issuer):
-                # If this was the last account, show message and close the app
-                if is_last_account:
-                    wx.MessageBox(
-                        f"Account deleted: {selected.get_display_name()}\n\n"
-                        "The application will now close.",
-                        "Last Account Deleted",
-                        wx.OK | wx.ICON_INFORMATION,
-                    )
-                    self.Close()
-                else:
-                    # Refresh the list
-                    self._load_accounts()
-                    wx.MessageBox(
-                        f"Account deleted: {selected.get_display_name()}",
-                        "Account Deleted",
-                        wx.OK | wx.ICON_INFORMATION,
-                    )
+                # Refresh the list
+                self._load_accounts()
+                wx.MessageBox(
+                    f"Account deleted: {selected.get_display_name()}",
+                    "Account Deleted",
+                    wx.OK | wx.ICON_INFORMATION,
+                )
             else:
                 wx.MessageBox(
                     "Failed to delete account (not found)",
@@ -371,8 +398,26 @@ class MainWindow(wx.Frame):
 
     def _update_title(self):
         """Update window title to show current file name."""
-        filename = self.current_file.name
-        self.SetTitle(f"Simple OTP - {filename}")
+        if self.current_file:
+            filename = self.current_file.name
+            self.SetTitle(f"Simple OTP - {filename}")
+        else:
+            self.SetTitle("Simple OTP - No file opened")
+
+    def _show_no_file_message(self):
+        """Show message when no file is opened."""
+        # Clear the accounts list
+        self.accounts_list.SetObjects([])
+
+        # Show informational message
+        wx.CallAfter(
+            wx.MessageBox,
+            "No accounts file is currently open.\n\n"
+            "Please create a new file (File > New) or\n"
+            "open an existing one (File > Open).",
+            "No File Opened",
+            wx.OK | wx.ICON_INFORMATION,
+        )
 
     def _switch_to_file(self, file_path: Path, password: str) -> bool:
         """
@@ -470,9 +515,7 @@ class MainWindow(wx.Frame):
 
         if not recent_files:
             # Show "No recent files" as disabled item
-            no_files_item = self.recent_files_menu.Append(
-                wx.ID_ANY, "No recent files"
-            )
+            no_files_item = self.recent_files_menu.Append(wx.ID_ANY, "No recent files")
             no_files_item.Enable(False)
         else:
             # Add each recent file
