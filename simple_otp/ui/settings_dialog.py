@@ -2,6 +2,7 @@
 
 import wx
 
+from simple_otp.core.i18n import _
 from simple_otp.core.settings_manager import SettingsManager
 
 
@@ -18,7 +19,7 @@ class SettingsDialog(wx.Dialog):
         """
         super().__init__(
             parent,
-            title="Settings",
+            title=_("settings.title"),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
 
@@ -53,17 +54,17 @@ class SettingsDialog(wx.Dialog):
         # Buttons
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.reset_button = wx.Button(panel, label="Reset to Defaults")
+        self.reset_button = wx.Button(panel, label=_("settings.button_reset"))
         self.reset_button.Bind(wx.EVT_BUTTON, self._on_reset)
         button_sizer.Add(self.reset_button, 0, wx.ALL, 5)
 
         button_sizer.AddStretchSpacer()
 
-        ok_button = wx.Button(panel, wx.ID_OK, "OK")
+        ok_button = wx.Button(panel, wx.ID_OK, _("settings.button_ok"))
         ok_button.Bind(wx.EVT_BUTTON, self._on_ok)
         button_sizer.Add(ok_button, 0, wx.ALL, 5)
 
-        cancel_button = wx.Button(panel, wx.ID_CANCEL, "Cancel")
+        cancel_button = wx.Button(panel, wx.ID_CANCEL, _("settings.button_cancel"))
         button_sizer.Add(cancel_button, 0, wx.ALL, 5)
 
         main_sizer.Add(button_sizer, 0, wx.ALL | wx.EXPAND, 10)
@@ -76,7 +77,7 @@ class SettingsDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Default digits
-        digits_label = wx.StaticText(panel, label="Default number of digits:")
+        digits_label = wx.StaticText(panel, label=_("settings.totp.default_digits"))
         sizer.Add(digits_label, 0, wx.ALL, 5)
 
         self.digits_choice = wx.Choice(panel, choices=["6", "7", "8"])
@@ -84,14 +85,14 @@ class SettingsDialog(wx.Dialog):
         sizer.Add(self.digits_choice, 0, wx.ALL | wx.EXPAND, 5)
 
         # Default interval
-        interval_label = wx.StaticText(panel, label="Default interval (seconds):")
+        interval_label = wx.StaticText(panel, label=_("settings.totp.default_interval"))
         sizer.Add(interval_label, 0, wx.ALL, 5)
 
         self.interval_spin = wx.SpinCtrl(panel, value="30", min=15, max=120)
         sizer.Add(self.interval_spin, 0, wx.ALL | wx.EXPAND, 5)
 
         # Default digest
-        digest_label = wx.StaticText(panel, label="Default hash algorithm:")
+        digest_label = wx.StaticText(panel, label=_("settings.totp.default_digest"))
         sizer.Add(digest_label, 0, wx.ALL, 5)
 
         self.digest_choice = wx.Choice(panel, choices=["SHA1", "SHA256", "SHA512"])
@@ -99,7 +100,7 @@ class SettingsDialog(wx.Dialog):
         sizer.Add(self.digest_choice, 0, wx.ALL | wx.EXPAND, 5)
 
         panel.SetSizer(sizer)
-        self.notebook.AddPage(panel, "TOTP Defaults")
+        self.notebook.AddPage(panel, _("settings.tab_totp"))
 
     def _create_behavior_page(self):
         """Create the behavior settings page."""
@@ -109,15 +110,14 @@ class SettingsDialog(wx.Dialog):
         # Auto-copy on update checkbox
         self.auto_copy_on_update_check = wx.CheckBox(
             panel,
-            label="Automatically copy password to clipboard when it updates",
+            label=_("settings.behavior.auto_copy"),
         )
         sizer.Add(self.auto_copy_on_update_check, 0, wx.ALL, 5)
 
         # Add help text
         help_text = wx.StaticText(
             panel,
-            label="When enabled, the new TOTP code will be automatically\n"
-            "copied to clipboard each time it refreshes.",
+            label=_("settings.behavior.auto_copy_help"),
         )
         help_text.SetForegroundColour(
             wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
@@ -133,15 +133,14 @@ class SettingsDialog(wx.Dialog):
         # Open last file on startup checkbox
         self.open_last_file_check = wx.CheckBox(
             panel,
-            label="Open last file on startup",
+            label=_("settings.behavior.open_last_file"),
         )
         sizer.Add(self.open_last_file_check, 0, wx.ALL, 5)
 
         # Add help text for open last file
         help_text2 = wx.StaticText(
             panel,
-            label="When enabled, the application will automatically open\n"
-            "the most recently used accounts file on startup.",
+            label=_("settings.behavior.open_last_file_help"),
         )
         help_text2.SetForegroundColour(
             wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
@@ -152,7 +151,7 @@ class SettingsDialog(wx.Dialog):
         sizer.Add(help_text2, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
 
         panel.SetSizer(sizer)
-        self.notebook.AddPage(panel, "Behavior")
+        self.notebook.AddPage(panel, _("settings.tab_behavior"))
 
     def _create_audio_page(self):
         """Create the audio settings page."""
@@ -161,20 +160,20 @@ class SettingsDialog(wx.Dialog):
 
         # Play password copied sound checkbox
         self.play_password_copied_check = wx.CheckBox(
-            panel, label="Play sound when password is copied"
+            panel, label=_("settings.audio.play_password_copied")
         )
         sizer.Add(self.play_password_copied_check, 0, wx.ALL, 5)
 
         # Play warning sound checkbox
         self.play_warning_check = wx.CheckBox(
-            panel, label="Play warning sound before password expires"
+            panel, label=_("settings.audio.play_warning")
         )
         sizer.Add(self.play_warning_check, 0, wx.ALL, 5)
 
         # Warning sound seconds - label and spinctrl in horizontal layout
         warning_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.warning_seconds_label = wx.StaticText(
-            panel, label="Play warning sound (seconds before expiration):"
+            panel, label=_("settings.audio.warning_seconds")
         )
         warning_sizer.Add(
             self.warning_seconds_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5
@@ -191,7 +190,7 @@ class SettingsDialog(wx.Dialog):
         self.play_warning_check.Bind(wx.EVT_CHECKBOX, self._on_warning_check_changed)
 
         panel.SetSizer(sizer)
-        self.notebook.AddPage(panel, "Audio")
+        self.notebook.AddPage(panel, _("settings.tab_audio"))
 
     def _load_settings(self):
         """Load settings from the settings manager into the UI controls."""
@@ -276,8 +275,8 @@ class SettingsDialog(wx.Dialog):
     def _on_reset(self, event):
         """Handle Reset to Defaults button click."""
         confirm = wx.MessageBox(
-            "Are you sure you want to reset all settings to their default values?",
-            "Confirm Reset",
+            _("settings.messages.reset_confirm"),
+            _("settings.messages.confirm_reset"),
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
 
@@ -285,9 +284,8 @@ class SettingsDialog(wx.Dialog):
             self.settings_manager.reset_to_defaults()
             self._load_settings()
             wx.MessageBox(
-                "Settings have been reset to defaults.\n\n"
-                "Click OK to save, or Cancel to discard changes.",
-                "Settings Reset",
+                _("settings.messages.reset_success"),
+                _("settings.messages.settings_reset"),
                 wx.OK | wx.ICON_INFORMATION,
             )
 

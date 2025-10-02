@@ -1,0 +1,165 @@
+{
+    "main": {
+        "title": "Simple OTP",
+        "title_with_file": "Simple OTP - {filename}",
+        "title_no_file": "Simple OTP - No file opened",
+        "search": "Fast Search:",
+        "account_column_name": "Name",
+        "menu": {
+            "file": {
+                "file": "&File",
+                "new": "&New...\tCtrl+N",
+                "new_hint": "Create new accounts file",
+                "open": "&Open...\tCtrl+O",
+                "open_hint": "Open existing accounts file",
+                "recent_files": "Recent &Files",
+                "exit": "E&xit\tEsc",
+                "exit_hint": "Exit application",
+                "no_recent_files": "No recent files",
+                "clear_history": "Clear History"
+            },
+            "account": {
+                "account": "&Account",
+                "add": "Add\tF7",
+                "add_hint": "Add new account",
+                "delete": "Delete\tDel",
+                "delete_hint": "Delete selected account"
+            },
+            "tools": {
+                "tools": "&Tools",
+                "settings": "&Settings...\tCtrl+,",
+                "settings_hint": "Configure application settings"
+            },
+            "help": {
+                "help": "&Help",
+                "about": "&About",
+                "about_hint": "About Simple OTP"
+            }
+        },
+        "messages": {
+            "no_file_open": "No accounts file is open.",
+            "no_file_open_create": "No accounts file is open.\n\nPlease create or open a file first.",
+            "no_file_opened_info": "No accounts file is currently open.\n\nPlease create a new file (File > New) or\nopen an existing one (File > Open).",
+            "no_account_selected": "No account selected",
+            "account_added": "Account added successfully: {name}",
+            "account_deleted": "Account deleted: {name}",
+            "delete_confirm": "Are you sure you want to delete {name}?",
+            "delete_last_account": "\n\nThis is the last account. The file will remain open but empty.",
+            "file_not_found": "File not found: {path}\n\nThe file will be removed from recent files.",
+            "clear_history_confirm": "Are you sure you want to clear the recent files history?",
+            "history_cleared": "Recent files history cleared.",
+            "file_created": "New accounts file created: {filename}\n\nYou can now add your accounts.",
+            "incorrect_password": "Incorrect password for this file.",
+            "failed_to_open_file": "Failed to open file: {error}",
+            "failed_to_add_account": "Failed to add account: {error}",
+            "unexpected_error": "An unexpected error occurred: {error}",
+            "failed_to_delete_account": "Failed to delete account: {error}",
+            "failed_to_delete_not_found": "Failed to delete account (not found)",
+            "failed_to_display_totp": "Failed to display TOTP: {error}"
+        },
+        "dialogs": {
+            "no_file": "No File",
+            "error": "Error",
+            "account_added": "Account Added",
+            "account_deleted": "Account Deleted",
+            "confirm_delete": "Confirm Delete",
+            "file_not_found": "File Not Found",
+            "confirm_clear": "Confirm Clear",
+            "history_cleared": "History Cleared",
+            "file_created": "File Created",
+            "authentication_failed": "Authentication Failed",
+            "create_new_file": "Create New Accounts File",
+            "open_file": "Open Accounts File",
+            "file_filter": "JSON files (*.json)|*.json"
+        }
+    },
+    "add_account": {
+        "title": "Add Account",
+        "name_label": "Name (e.g., user@example.com) *:",
+        "secret_label": "Secret (Base32) *:",
+        "issuer_label": "Issuer (e.g., Google, GitHub):",
+        "digits_label": "Digits:",
+        "digest_label": "Digest Algorithm:",
+        "interval_label": "Interval (seconds):",
+        "required_note": "* Required fields",
+        "button_add": "Add",
+        "button_cancel": "Cancel",
+        "validation": {
+            "name_required": "Name is required.",
+            "secret_required": "Secret is required.",
+            "invalid_base32": "Secret must be a valid Base32 string (A-Z, 2-7, optional padding with '=').",
+            "invalid_base32_decode": "Invalid Base32 secret: {error}",
+            "validation_error": "Validation Error"
+        }
+    },
+    "password_dialog": {
+        "title_required": "Password Required",
+        "title_set": "Set Password",
+        "title_enter": "Enter Password",
+        "message_enter": "Enter password:",
+        "message_set": "Enter a password to encrypt the new accounts file:",
+        "message_for_file": "Enter password for {filename}:",
+        "password_label": "Password:",
+        "confirm_label": "Confirm Password:",
+        "button_ok": "OK",
+        "button_cancel": "Cancel",
+        "validation": {
+            "password_empty": "Password cannot be empty",
+            "passwords_mismatch": "Passwords do not match",
+            "invalid_password": "Invalid Password",
+            "password_mismatch": "Password Mismatch"
+        }
+    },
+    "totp_dialog": {
+        "title": "TOTP - {name}",
+        "current_label": "Current",
+        "next_label": "Next",
+        "time_remaining_label": "Time Remaining:",
+        "button_copy_current": "Copy Current",
+        "button_copy_next": "Copy Next",
+        "button_close": "Close"
+    },
+    "settings": {
+        "title": "Settings",
+        "button_reset": "Reset to Defaults",
+        "button_ok": "OK",
+        "button_cancel": "Cancel",
+        "tab_behavior": "Behavior",
+        "tab_audio": "Audio",
+        "tab_totp": "TOTP Defaults",
+        "behavior": {
+            "auto_copy": "Automatically copy password to clipboard when it updates",
+            "auto_copy_help": "When enabled, the new TOTP code will be automatically\ncopied to clipboard each time it refreshes.",
+            "open_last_file": "Open last file on startup",
+            "open_last_file_help": "When enabled, the application will automatically open\nthe most recently used accounts file on startup."
+        },
+        "audio": {
+            "play_password_copied": "Play sound when password is copied",
+            "play_warning": "Play warning sound before password expires",
+            "warning_seconds": "Play warning sound (seconds before expiration):"
+        },
+        "totp": {
+            "default_digits": "Default number of digits:",
+            "default_interval": "Default interval (seconds):",
+            "default_digest": "Default hash algorithm:"
+        },
+        "messages": {
+            "reset_confirm": "Are you sure you want to reset all settings to their default values?",
+            "reset_success": "Settings have been reset to defaults.\n\nClick OK to save, or Cancel to discard changes.",
+            "confirm_reset": "Confirm Reset",
+            "settings_reset": "Settings Reset"
+        }
+    },
+    "about": {
+        "description": "Desktop application for generating TOTP codes",
+        "website": "https://github.com/yourusername/simple-otp",
+        "developer": "Ruslan Iskov"
+    },
+    "authentication": {
+        "title": "Authentication Required",
+        "enter_password": "Enter password for {filename}:",
+        "incorrect_password": "Incorrect password. {remaining} attempt(s) remaining.\n\nEnter password for {filename}:",
+        "max_attempts_exceeded": "Maximum login attempts exceeded.\n\nThe application will now close.",
+        "failed": "Authentication Failed"
+    }
+}

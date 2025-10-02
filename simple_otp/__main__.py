@@ -5,8 +5,12 @@ from pathlib import Path
 import wx
 
 from simple_otp.core.accounts_manager import AccountsManager
+from simple_otp.core.i18n import _, set_locale
 from simple_otp.ui.main_window import MainWindow
 from simple_otp.ui.password_dialog import PasswordDialog
+
+# Set locale at module load
+set_locale("uk-UA")  # TODO: make dynamic based on user settings
 
 
 def authenticate(file_path: Path) -> str | None:
@@ -30,16 +34,15 @@ def authenticate(file_path: Path) -> str | None:
         remaining = max_attempts - attempt + 1
 
         if attempt == 1:
-            message = f"Enter password for {file_path.name}:"
+            message = _("authentication.enter_password").format(filename=file_path.name)
         else:
-            message = (
-                f"Incorrect password. {remaining} attempt(s) remaining.\n\n"
-                f"Enter password for {file_path.name}:"
+            message = _("authentication.incorrect_password").format(
+                remaining=remaining, filename=file_path.name
             )
 
         dialog = PasswordDialog(
             None,
-            title="Authentication Required",
+            title=_("authentication.title"),
             message=message,
             require_confirmation=False,
         )
@@ -58,8 +61,8 @@ def authenticate(file_path: Path) -> str | None:
         # If this was the last attempt, show error
         if attempt == max_attempts:
             wx.MessageBox(
-                "Maximum login attempts exceeded.\n\nThe application will now close.",
-                "Authentication Failed",
+                _("authentication.max_attempts_exceeded"),
+                _("authentication.failed"),
                 wx.OK | wx.ICON_ERROR,
             )
 

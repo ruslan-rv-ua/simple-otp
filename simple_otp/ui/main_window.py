@@ -9,6 +9,7 @@ from ObjectListView3 import ColumnDefn, Filter, ObjectListView
 
 from simple_otp.constants import MAX_RECENT_FILES
 from simple_otp.core.accounts_manager import AccountsManager
+from simple_otp.core.i18n import _
 from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import TOTPAccount
 from simple_otp.ui.add_account_dialog import AddAccountDialog
@@ -34,7 +35,7 @@ class MainWindow(wx.Frame):
             password: Master password for decrypting accounts (None if no file open)
             accounts_file: Optional path to accounts file (None if no file open)
         """
-        super().__init__(parent, title="Simple OTP", style=wx.DEFAULT_FRAME_STYLE)
+        super().__init__(parent, title=_("main.title"), style=wx.DEFAULT_FRAME_STYLE)
 
         # Store the password for decrypting accounts
         self.password = password
@@ -81,39 +82,53 @@ class MainWindow(wx.Frame):
         # File menu
         file_menu = wx.Menu()
         new_item = file_menu.Append(
-            wx.ID_ANY, "&New...\tCtrl+N", "Create new accounts file"
+            wx.ID_ANY, _("main.menu.file.new"), _("main.menu.file.new_hint")
         )
         open_item = file_menu.Append(
-            wx.ID_ANY, "&Open...\tCtrl+O", "Open existing accounts file"
+            wx.ID_ANY, _("main.menu.file.open"), _("main.menu.file.open_hint")
         )
 
         # Recent Files submenu
         self.recent_files_menu = wx.Menu()
-        file_menu.AppendSubMenu(self.recent_files_menu, "Recent &Files")
+        file_menu.AppendSubMenu(
+            self.recent_files_menu, _("main.menu.file.recent_files")
+        )
 
         file_menu.AppendSeparator()
-        exit_item = file_menu.Append(wx.ID_EXIT, "E&xit\tEsc", "Exit application")
-        menu_bar.Append(file_menu, "&File")
+        exit_item = file_menu.Append(
+            wx.ID_EXIT, _("main.menu.file.exit"), _("main.menu.file.exit_hint")
+        )
+        menu_bar.Append(file_menu, _("main.menu.file.file"))
 
         # Account menu
         account_menu = wx.Menu()
-        add_item = account_menu.Append(wx.ID_ANY, "Add\tF7", "Add new account")
-        delete_item = account_menu.Append(
-            wx.ID_ANY, "Delete\tDel", "Delete selected account"
+        add_item = account_menu.Append(
+            wx.ID_ANY,
+            _("main.menu.account.add"),
+            _("main.menu.account.add_hint"),
         )
-        menu_bar.Append(account_menu, "&Account")
+        delete_item = account_menu.Append(
+            wx.ID_ANY,
+            _("main.menu.account.delete"),
+            _("main.menu.account.delete_hint"),
+        )
+        menu_bar.Append(account_menu, _("main.menu.account.account"))
 
         # Tools menu
         tools_menu = wx.Menu()
         settings_item = tools_menu.Append(
-            wx.ID_ANY, "&Settings...\tCtrl+,", "Configure application settings"
+            wx.ID_ANY, _("main.menu.tools.settings"), _("main.menu.tools.settings_hint")
         )
-        menu_bar.Append(tools_menu, "&Tools")
+        menu_bar.Append(tools_menu, _("main.menu.tools.tools"))
 
         # Help menu
         help_menu = wx.Menu()
-        about_item = help_menu.Append(wx.ID_ABOUT, "&About", "About Simple OTP")
-        menu_bar.Append(help_menu, "&Help")
+        about_item = help_menu.Append(
+            wx.ID_ABOUT,
+            _("main.menu.help.about"),
+            _("main.menu.help.about_hint"),
+        )
+        menu_bar.Append(help_menu, _("main.menu.help.help"))
 
         self.SetMenuBar(menu_bar)
 
@@ -138,7 +153,7 @@ class MainWindow(wx.Frame):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Search editor at the top
-        search_label = wx.StaticText(panel, label="Search:")
+        search_label = wx.StaticText(panel, label=_("main.search"))
         main_sizer.Add(search_label, 0, wx.ALL | wx.EXPAND, 5)
 
         self.search_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
@@ -156,7 +171,7 @@ class MainWindow(wx.Frame):
         self.accounts_list.SetColumns(
             [
                 ColumnDefn(
-                    title="Name",
+                    title=_("main.account_column_name"),
                     valueGetter="get_display_name",
                     width=1000,
                 )
@@ -209,8 +224,8 @@ class MainWindow(wx.Frame):
         """Handle list item activation (double-click or Enter)."""
         if not self.accounts_manager or not self.password:
             wx.MessageBox(
-                "No accounts file is open.",
-                "No File",
+                _("main.messages.no_file_open"),
+                _("main.dialogs.no_file"),
                 wx.OK | wx.ICON_WARNING,
             )
             return
@@ -226,8 +241,8 @@ class MainWindow(wx.Frame):
             dialog.Destroy()
         except Exception as e:
             wx.MessageBox(
-                f"Failed to display TOTP: {str(e)}",
-                "Error",
+                _("main.messages.failed_to_display_totp").format(error=str(e)),
+                _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
 
@@ -235,8 +250,8 @@ class MainWindow(wx.Frame):
         """Handle Add Account menu item."""
         if not self.accounts_manager or not self.password:
             wx.MessageBox(
-                "No accounts file is open.\n\nPlease create or open a file first.",
-                "No File",
+                _("main.messages.no_file_open_create"),
+                _("main.dialogs.no_file"),
                 wx.OK | wx.ICON_WARNING,
             )
             return
@@ -269,23 +284,25 @@ class MainWindow(wx.Frame):
 
                 # Show success message
                 wx.MessageBox(
-                    f"Account added successfully: {new_account.get_display_name()}",
-                    "Account Added",
+                    _("main.messages.account_added").format(
+                        name=new_account.get_display_name()
+                    ),
+                    _("main.dialogs.account_added"),
                     wx.OK | wx.ICON_INFORMATION,
                 )
 
             except ValueError as e:
                 # Handle duplicate account or validation errors
                 wx.MessageBox(
-                    f"Failed to add account: {str(e)}",
-                    "Error",
+                    _("main.messages.failed_to_add_account").format(error=str(e)),
+                    _("main.dialogs.error"),
                     wx.OK | wx.ICON_ERROR,
                 )
             except Exception as e:
                 # Handle any other errors
                 wx.MessageBox(
-                    f"An unexpected error occurred: {str(e)}",
-                    "Error",
+                    _("main.messages.unexpected_error").format(error=str(e)),
+                    _("main.dialogs.error"),
                     wx.OK | wx.ICON_ERROR,
                 )
 
@@ -295,8 +312,8 @@ class MainWindow(wx.Frame):
         """Handle Delete Account menu item."""
         if not self.accounts_manager:
             wx.MessageBox(
-                "No accounts file is open.",
-                "No File",
+                _("main.messages.no_file_open"),
+                _("main.dialogs.no_file"),
                 wx.OK | wx.ICON_WARNING,
             )
             return
@@ -304,7 +321,9 @@ class MainWindow(wx.Frame):
         selected = self.accounts_list.GetSelectedObject()
         if selected is None:
             wx.MessageBox(
-                "No account selected", "Delete Account", wx.OK | wx.ICON_WARNING
+                _("main.messages.no_account_selected"),
+                _("main.dialogs.confirm_delete"),
+                wx.OK | wx.ICON_WARNING,
             )
             return
 
@@ -313,15 +332,15 @@ class MainWindow(wx.Frame):
         is_last_account = len(accounts) == 1
 
         # Confirm deletion
-        confirm_msg = f"Are you sure you want to delete {selected.get_display_name()}?"
+        confirm_msg = _("main.messages.delete_confirm").format(
+            name=selected.get_display_name()
+        )
         if is_last_account:
-            confirm_msg += (
-                "\n\nThis is the last account. The file will remain open but empty."
-            )
+            confirm_msg += _("main.messages.delete_last_account")
 
         confirm = wx.MessageBox(
             confirm_msg,
-            "Confirm Delete",
+            _("main.dialogs.confirm_delete"),
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
 
@@ -334,20 +353,22 @@ class MainWindow(wx.Frame):
                 # Refresh the list
                 self._load_accounts()
                 wx.MessageBox(
-                    f"Account deleted: {selected.get_display_name()}",
-                    "Account Deleted",
+                    _("main.messages.account_deleted").format(
+                        name=selected.get_display_name()
+                    ),
+                    _("main.dialogs.account_deleted"),
                     wx.OK | wx.ICON_INFORMATION,
                 )
             else:
                 wx.MessageBox(
-                    "Failed to delete account (not found)",
-                    "Error",
+                    _("main.messages.failed_to_delete_not_found"),
+                    _("main.dialogs.error"),
                     wx.OK | wx.ICON_ERROR,
                 )
         except Exception as e:
             wx.MessageBox(
-                f"Failed to delete account: {str(e)}",
-                "Error",
+                _("main.messages.failed_to_delete_account").format(error=str(e)),
+                _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
 
@@ -368,11 +389,11 @@ class MainWindow(wx.Frame):
         version = self._get_app_version()
 
         info = wx.adv.AboutDialogInfo()
-        info.SetName("Simple OTP")
+        info.SetName(_("main.title"))
         info.SetVersion(version)
-        info.SetDescription("Desktop application for generating TOTP codes")
-        info.SetWebSite("https://github.com/yourusername/simple-otp")
-        info.AddDeveloper("Ruslan Iskov")
+        info.SetDescription(_("about.description"))
+        info.SetWebSite(_("about.website"))
+        info.AddDeveloper(_("about.developer"))
 
         wx.adv.AboutBox(info)
 
@@ -398,9 +419,9 @@ class MainWindow(wx.Frame):
         """Update window title to show current file name."""
         if self.current_file:
             filename = self.current_file.name
-            self.SetTitle(f"Simple OTP - {filename}")
+            self.SetTitle(_("main.title_with_file").format(filename=filename))
         else:
-            self.SetTitle("Simple OTP - No file opened")
+            self.SetTitle(_("main.title_no_file"))
 
     def _show_no_file_message(self):
         """Show message when no file is opened."""
@@ -410,10 +431,8 @@ class MainWindow(wx.Frame):
         # Show informational message
         wx.CallAfter(
             wx.MessageBox,
-            "No accounts file is currently open.\n\n"
-            "Please create a new file (File > New) or\n"
-            "open an existing one (File > Open).",
-            "No File Opened",
+            _("main.messages.no_file_opened_info"),
+            _("main.dialogs.no_file"),
             wx.OK | wx.ICON_INFORMATION,
         )
 
@@ -435,8 +454,8 @@ class MainWindow(wx.Frame):
             # Verify the password by trying to load accounts
             if not new_manager.verify_password(password):
                 wx.MessageBox(
-                    "Incorrect password for this file.",
-                    "Authentication Failed",
+                    _("main.messages.incorrect_password"),
+                    _("main.dialogs.authentication_failed"),
                     wx.OK | wx.ICON_ERROR,
                 )
                 return False
@@ -459,15 +478,15 @@ class MainWindow(wx.Frame):
 
         except FileNotFoundError:
             wx.MessageBox(
-                f"File not found: {file_path}",
-                "Error",
+                _("main.messages.file_not_found").format(path=file_path),
+                _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
             return False
         except Exception as e:
             wx.MessageBox(
-                f"Failed to open file: {str(e)}",
-                "Error",
+                _("main.messages.failed_to_open_file").format(error=str(e)),
+                _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
             return False
@@ -513,7 +532,9 @@ class MainWindow(wx.Frame):
 
         if not recent_files:
             # Show "No recent files" as disabled item
-            no_files_item = self.recent_files_menu.Append(wx.ID_ANY, "No recent files")
+            no_files_item = self.recent_files_menu.Append(
+                wx.ID_ANY, _("main.menu.file.no_recent_files")
+            )
             no_files_item.Enable(False)
         else:
             # Add each recent file
@@ -535,7 +556,9 @@ class MainWindow(wx.Frame):
 
             # Add separator and "Clear History"
             self.recent_files_menu.AppendSeparator()
-            clear_item = self.recent_files_menu.Append(wx.ID_ANY, "Clear History")
+            clear_item = self.recent_files_menu.Append(
+                wx.ID_ANY, _("main.menu.file.clear_history")
+            )
             self.Bind(wx.EVT_MENU, self._on_clear_recent_files, clear_item)
 
     def _format_file_path(self, file_path: Path) -> str:
@@ -566,8 +589,8 @@ class MainWindow(wx.Frame):
         # Show file dialog
         with wx.FileDialog(
             self,
-            "Create New Accounts File",
-            wildcard="JSON files (*.json)|*.json",
+            _("main.dialogs.create_new_file"),
+            wildcard=_("main.dialogs.file_filter"),
             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
         ) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
@@ -582,8 +605,8 @@ class MainWindow(wx.Frame):
         # Ask for password with confirmation
         password_dialog = PasswordDialog(
             self,
-            title="Set Password",
-            message="Enter a password to encrypt the new accounts file:",
+            title=_("password_dialog.title_set"),
+            message=_("password_dialog.message_set"),
             require_confirmation=True,
         )
 
@@ -618,16 +641,15 @@ class MainWindow(wx.Frame):
             self._update_recent_files(file_path)
 
             wx.MessageBox(
-                f"New accounts file created: {file_path.name}\n\n"
-                "You can now add your accounts.",
-                "File Created",
+                _("main.messages.file_created").format(filename=file_path.name),
+                _("main.dialogs.file_created"),
                 wx.OK | wx.ICON_INFORMATION,
             )
 
         except Exception as e:
             wx.MessageBox(
-                f"Failed to create file: {str(e)}",
-                "Error",
+                _("main.messages.failed_to_open_file").format(error=str(e)),
+                _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
 
@@ -636,8 +658,8 @@ class MainWindow(wx.Frame):
         # Show file dialog
         with wx.FileDialog(
             self,
-            "Open Accounts File",
-            wildcard="JSON files (*.json)|*.json",
+            _("main.dialogs.open_file"),
+            wildcard=_("main.dialogs.file_filter"),
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
         ) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
@@ -648,8 +670,10 @@ class MainWindow(wx.Frame):
         # Ask for password (without confirmation)
         password_dialog = PasswordDialog(
             self,
-            title="Enter Password",
-            message=f"Enter password for {file_path.name}:",
+            title=_("password_dialog.title_enter"),
+            message=_("password_dialog.message_for_file").format(
+                filename=file_path.name
+            ),
             require_confirmation=False,
         )
 
@@ -673,9 +697,8 @@ class MainWindow(wx.Frame):
         # Check if file exists
         if not file_path.exists():
             wx.MessageBox(
-                f"File not found: {file_path}\n\n"
-                "The file will be removed from recent files.",
-                "File Not Found",
+                _("main.messages.file_not_found").format(path=file_path),
+                _("main.dialogs.file_not_found"),
                 wx.OK | wx.ICON_WARNING,
             )
 
@@ -693,8 +716,10 @@ class MainWindow(wx.Frame):
         # Ask for password
         password_dialog = PasswordDialog(
             self,
-            title="Enter Password",
-            message=f"Enter password for {file_path.name}:",
+            title=_("password_dialog.title_enter"),
+            message=_("password_dialog.message_for_file").format(
+                filename=file_path.name
+            ),
             require_confirmation=False,
         )
 
@@ -711,8 +736,8 @@ class MainWindow(wx.Frame):
     def _on_clear_recent_files(self, event):
         """Handle Clear History menu item."""
         confirm = wx.MessageBox(
-            "Are you sure you want to clear the recent files history?",
-            "Confirm Clear",
+            _("main.messages.clear_history_confirm"),
+            _("main.dialogs.confirm_clear"),
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
 
@@ -722,7 +747,7 @@ class MainWindow(wx.Frame):
             self._load_recent_files_menu()
 
             wx.MessageBox(
-                "Recent files history cleared.",
-                "History Cleared",
+                _("main.messages.history_cleared"),
+                _("main.dialogs.history_cleared"),
                 wx.OK | wx.ICON_INFORMATION,
             )

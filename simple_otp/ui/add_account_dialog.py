@@ -5,6 +5,7 @@ import re
 
 import wx
 
+from simple_otp.core.i18n import _
 from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import DigestAlgorithm
 
@@ -22,7 +23,7 @@ class AddAccountDialog(wx.Dialog):
         """
         super().__init__(
             parent,
-            title="Add Account",
+            title=_("add_account.title"),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
 
@@ -36,28 +37,28 @@ class AddAccountDialog(wx.Dialog):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Name field (required)
-        name_label = wx.StaticText(panel, label="Name (e.g., user@example.com) *:")
+        name_label = wx.StaticText(panel, label=_("add_account.name_label"))
         main_sizer.Add(name_label, 0, wx.ALL, 5)
 
         self.name_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
         main_sizer.Add(self.name_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Secret field (required)
-        secret_label = wx.StaticText(panel, label="Secret (Base32) *:")
+        secret_label = wx.StaticText(panel, label=_("add_account.secret_label"))
         main_sizer.Add(secret_label, 0, wx.ALL, 5)
 
         self.secret_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
         main_sizer.Add(self.secret_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Issuer field (optional)
-        issuer_label = wx.StaticText(panel, label="Issuer (e.g., Google, GitHub):")
+        issuer_label = wx.StaticText(panel, label=_("add_account.issuer_label"))
         main_sizer.Add(issuer_label, 0, wx.ALL, 5)
 
         self.issuer_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
         main_sizer.Add(self.issuer_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Digits field (6, 7, or 8)
-        digits_label = wx.StaticText(panel, label="Digits:")
+        digits_label = wx.StaticText(panel, label=_("add_account.digits_label"))
         main_sizer.Add(digits_label, 0, wx.ALL, 5)
 
         self.digits_ctrl = wx.Choice(panel, choices=["6", "7", "8"])
@@ -67,7 +68,7 @@ class AddAccountDialog(wx.Dialog):
         main_sizer.Add(self.digits_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Digest algorithm field
-        digest_label = wx.StaticText(panel, label="Digest Algorithm:")
+        digest_label = wx.StaticText(panel, label=_("add_account.digest_label"))
         main_sizer.Add(digest_label, 0, wx.ALL, 5)
 
         self.digest_ctrl = wx.Choice(panel, choices=["SHA1", "SHA256", "SHA512"])
@@ -78,7 +79,7 @@ class AddAccountDialog(wx.Dialog):
         main_sizer.Add(self.digest_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Interval field (seconds)
-        interval_label = wx.StaticText(panel, label="Interval (seconds):")
+        interval_label = wx.StaticText(panel, label=_("add_account.interval_label"))
         main_sizer.Add(interval_label, 0, wx.ALL, 5)
 
         # Get default from settings
@@ -89,7 +90,7 @@ class AddAccountDialog(wx.Dialog):
         main_sizer.Add(self.interval_ctrl, 0, wx.ALL | wx.EXPAND, 5)
 
         # Required fields note
-        note_label = wx.StaticText(panel, label="* Required fields")
+        note_label = wx.StaticText(panel, label=_("add_account.required_note"))
         font = note_label.GetFont()
         font.PointSize = 8
         note_label.SetFont(font)
@@ -98,11 +99,11 @@ class AddAccountDialog(wx.Dialog):
         # Buttons
         button_sizer = wx.StdDialogButtonSizer()
 
-        ok_button = wx.Button(panel, wx.ID_OK, "Add")
+        ok_button = wx.Button(panel, wx.ID_OK, _("add_account.button_add"))
         ok_button.SetDefault()
         button_sizer.AddButton(ok_button)
 
-        cancel_button = wx.Button(panel, wx.ID_CANCEL)
+        cancel_button = wx.Button(panel, wx.ID_CANCEL, _("add_account.button_cancel"))
         button_sizer.AddButton(cancel_button)
 
         button_sizer.Realize()
@@ -140,8 +141,8 @@ class AddAccountDialog(wx.Dialog):
         name = self.name_ctrl.GetValue().strip()
         if not name:
             wx.MessageBox(
-                "Name is required.",
-                "Validation Error",
+                _("add_account.validation.name_required"),
+                _("add_account.validation.validation_error"),
                 wx.OK | wx.ICON_ERROR,
             )
             self.name_ctrl.SetFocus()
@@ -151,8 +152,8 @@ class AddAccountDialog(wx.Dialog):
         secret = self.secret_ctrl.GetValue().strip()
         if not secret:
             wx.MessageBox(
-                "Secret is required.",
-                "Validation Error",
+                _("add_account.validation.secret_required"),
+                _("add_account.validation.validation_error"),
                 wx.OK | wx.ICON_ERROR,
             )
             self.secret_ctrl.SetFocus()
@@ -161,9 +162,8 @@ class AddAccountDialog(wx.Dialog):
         # Validate base32 format
         if not self._is_valid_base32(secret):
             wx.MessageBox(
-                "Secret must be a valid Base32 string "
-                "(A-Z, 2-7, optional padding with '=').",
-                "Validation Error",
+                _("add_account.validation.invalid_base32"),
+                _("add_account.validation.validation_error"),
                 wx.OK | wx.ICON_ERROR,
             )
             self.secret_ctrl.SetFocus()
@@ -176,8 +176,8 @@ class AddAccountDialog(wx.Dialog):
             base64.b32decode(clean_secret)
         except Exception as e:
             wx.MessageBox(
-                f"Invalid Base32 secret: {str(e)}",
-                "Validation Error",
+                _("add_account.validation.invalid_base32_decode").format(error=str(e)),
+                _("add_account.validation.validation_error"),
                 wx.OK | wx.ICON_ERROR,
             )
             self.secret_ctrl.SetFocus()

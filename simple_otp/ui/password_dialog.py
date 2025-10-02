@@ -2,6 +2,8 @@
 
 import wx
 
+from simple_otp.core.i18n import _
+
 
 class PasswordDialog(wx.Dialog):
     """
@@ -13,8 +15,8 @@ class PasswordDialog(wx.Dialog):
     def __init__(
         self,
         parent,
-        title: str = "Password Required",
-        message: str = "Enter password:",
+        title: str | None = None,
+        message: str | None = None,
         require_confirmation: bool = False,
     ):
         """
@@ -26,6 +28,12 @@ class PasswordDialog(wx.Dialog):
             message: Message to display above password field
             require_confirmation: If True, show password confirmation field
         """
+        # Use default title and message if not provided
+        if title is None:
+            title = _("password_dialog.title_required")
+        if message is None:
+            message = _("password_dialog.message_enter")
+
         super().__init__(parent, title=title, style=wx.DEFAULT_DIALOG_STYLE)
 
         self.require_confirmation = require_confirmation
@@ -44,7 +52,7 @@ class PasswordDialog(wx.Dialog):
         sizer.Add(message_text, 0, wx.ALL | wx.EXPAND, 10)
 
         # Password field
-        password_label = wx.StaticText(self, label="Password:")
+        password_label = wx.StaticText(self, label=_("password_dialog.password_label"))
         sizer.Add(password_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 10)
 
         self.password_ctrl = wx.TextCtrl(
@@ -54,7 +62,9 @@ class PasswordDialog(wx.Dialog):
 
         # Confirmation field (if required)
         if self.require_confirmation:
-            confirm_label = wx.StaticText(self, label="Confirm Password:")
+            confirm_label = wx.StaticText(
+                self, label=_("password_dialog.confirm_label")
+            )
             sizer.Add(confirm_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 10)
 
             self.confirm_ctrl = wx.TextCtrl(
@@ -102,8 +112,8 @@ class PasswordDialog(wx.Dialog):
         # Validate password is not empty
         if not password:
             wx.MessageBox(
-                "Password cannot be empty",
-                "Invalid Password",
+                _("password_dialog.validation.password_empty"),
+                _("password_dialog.validation.invalid_password"),
                 wx.OK | wx.ICON_WARNING,
                 self,
             )
@@ -115,8 +125,8 @@ class PasswordDialog(wx.Dialog):
             confirm = self.confirm_ctrl.GetValue()
             if password != confirm:
                 wx.MessageBox(
-                    "Passwords do not match",
-                    "Password Mismatch",
+                    _("password_dialog.validation.passwords_mismatch"),
+                    _("password_dialog.validation.password_mismatch"),
                     wx.OK | wx.ICON_WARNING,
                     self,
                 )
