@@ -7,7 +7,8 @@ from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
 def main():
     """Demonstrate AccountsManager usage."""
 
-    # Initialize the manager (creates accounts.json one level up from project if not exists)
+    # Initialize the manager (creates accounts.json one level up from
+    # project if not exists)
     manager = AccountsManager()
 
     print(f"Storage location: {manager.get_storage_path()}\n")

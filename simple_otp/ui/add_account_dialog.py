@@ -149,7 +149,8 @@ class AddAccountDialog(wx.Dialog):
         # Validate base32 format
         if not self._is_valid_base32(secret):
             wx.MessageBox(
-                "Secret must be a valid Base32 string (A-Z, 2-7, optional padding with '=').",
+                "Secret must be a valid Base32 string "
+                "(A-Z, 2-7, optional padding with '=').",
                 "Validation Error",
                 wx.OK | wx.ICON_ERROR,
             )

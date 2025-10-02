@@ -82,7 +82,8 @@ class Encryptor:
             Decrypted plain text TOTP secret
 
         Raises:
-            cryptography.exceptions.InvalidTag: If password is incorrect or data is corrupted
+            cryptography.exceptions.InvalidTag: If password is incorrect
+                                                or data is corrupted
         """
         # Decode salt and encrypted secret from base64
         salt_bytes = base64.b64decode(salt)

@@ -20,8 +20,10 @@ class AccountsManager:
 
         Args:
             storage_path: Optional custom path for the JSON file.
-                         If None, defaults to ../accounts.json (one level up from project).
-            auto_create: If True, automatically create initial storage with example account.
+                         If None, defaults to ../accounts.json
+                         (one level up from project).
+            auto_create: If True, automatically create initial storage
+                        with example account.
                         If False, storage must be created manually.
         """
         if storage_path is None:
@@ -208,7 +210,8 @@ class AccountsManager:
             True if account was updated, False if not found
 
         Raises:
-            ValueError: If the new account name/issuer conflicts with another existing account
+            ValueError: If the new account name/issuer conflicts with
+                       another existing account
         """
         accounts = self._load_accounts()
         account_found = False
@@ -226,7 +229,8 @@ class AccountsManager:
                             and other_account is not account
                         ):
                             raise ValueError(
-                                f"Account already exists: {new_account.get_display_name()}"
+                                "Account already exists: "
+                                f"{new_account.get_display_name()}"
                             )
 
                 # Update the account
@@ -301,11 +305,14 @@ class AccountsManager:
         if self.has_accounts():
             raise ValueError("Accounts already exist")
 
-        # Create a default test account from https://authenticationtest.com/totpChallenge
-        # This allows users to test the TOTP implementation with a publicly available test account
+        # Create a default test account from
+        # https://authenticationtest.com/totpChallenge
+        # This allows users to test the TOTP implementation with
+        # a publicly available test account
         # Email: totp@authenticationtest.com
         # Secret: I65VU7K5ZQL7WB4E
-        # Users can verify the generated codes against the website: https://authenticationtest.com/totpChallenge
+        # Users can verify the generated codes against the website:
+        # https://authenticationtest.com/totpChallenge
         default_account = TOTPAccount.from_secret(
             name="totp@authenticationtest.com",
             secret="I65VU7K5ZQL7WB4E",  # Test secret from authenticationtest.com

@@ -398,7 +398,7 @@ class TestUpdateAccount:
             )
 
     def test_update_same_name_is_allowed(self, manager, sample_account):
-        """Test that updating an account while keeping the same name/issuer is allowed."""
+        """Test updating an account while keeping the same name/issuer."""
         manager.clear_all_accounts()
         manager.add_account(sample_account)
 

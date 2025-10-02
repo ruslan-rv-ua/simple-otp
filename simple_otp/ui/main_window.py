@@ -225,7 +225,10 @@ class MainWindow(wx.Frame):
         # Confirm deletion
         confirm_msg = f"Are you sure you want to delete {selected.get_display_name()}?"
         if is_last_account:
-            confirm_msg += "\n\nThis is the last account. The application will close after deletion."
+            confirm_msg += (
+                "\n\nThis is the last account. "
+                "The application will close after deletion."
+            )
 
         confirm = wx.MessageBox(
             confirm_msg,
@@ -242,7 +245,8 @@ class MainWindow(wx.Frame):
                 # If this was the last account, show message and close the app
                 if is_last_account:
                     wx.MessageBox(
-                        f"Account deleted: {selected.get_display_name()}\n\nThe application will now close.",
+                        f"Account deleted: {selected.get_display_name()}\n\n"
+                        "The application will now close.",
                         "Last Account Deleted",
                         wx.OK | wx.ICON_INFORMATION,
                     )

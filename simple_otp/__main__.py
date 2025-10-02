@@ -12,7 +12,8 @@ def authenticate() -> str | None:
     Perform authentication flow.
 
     Returns:
-        The validated password if successful, None if user cancelled or failed authentication
+        The validated password if successful, None if user cancelled
+        or failed authentication
     """
     # Create accounts manager without auto-creating storage
     accounts_manager = AccountsManager(auto_create=False)
@@ -23,7 +24,10 @@ def authenticate() -> str | None:
         dialog = PasswordDialog(
             None,
             title="Initial Setup",
-            message="Welcome to Simple OTP!\n\nPlease create a master password to encrypt your accounts:",
+            message=(
+                "Welcome to Simple OTP!\n\n"
+                "Please create a master password to encrypt your accounts:"
+            ),
             require_confirmation=True,
         )
 
@@ -61,7 +65,10 @@ def authenticate() -> str | None:
             if attempt == 1:
                 message = "Enter your master password to unlock Simple OTP:"
             else:
-                message = f"Incorrect password. {remaining} attempt(s) remaining.\n\nEnter your master password:"
+                message = (
+                    f"Incorrect password. {remaining} attempt(s) remaining.\n\n"
+                    "Enter your master password:"
+                )
 
             dialog = PasswordDialog(
                 None,
@@ -84,7 +91,10 @@ def authenticate() -> str | None:
             # If this was the last attempt, show error
             if attempt == max_attempts:
                 wx.MessageBox(
-                    "Maximum login attempts exceeded.\n\nThe application will now close.",
+                    (
+                        "Maximum login attempts exceeded.\n\n"
+                        "The application will now close."
+                    ),
                     "Authentication Failed",
                     wx.OK | wx.ICON_ERROR,
                 )

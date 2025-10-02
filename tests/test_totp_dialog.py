@@ -19,7 +19,7 @@ def test_format_otp():
 
 def test_totp_dialog_manual():
     """Manual test for TOTP dialog - opens a GUI window."""
-    app = wx.App()
+    _app = wx.App()
 
     # Create a test account
     demo_password = "demo123"
