@@ -11,3 +11,6 @@ wheels/
 
 # Application settings
 simple_otp/settings.json
+
+# Other files
+combicode.txt
