@@ -51,9 +51,7 @@ class TOTPDialog(wx.Dialog):
         sounds_dir = Path(__file__).parent.parent / "assets" / "sounds"
         try:
             self.audio_player = AudioPlayer(sounds_dir)
-        except (FileNotFoundError, NotADirectoryError, OSError) as e:
-            # Log the error but allow dialog to continue without audio
-            print(f"Warning: Failed to initialize audio player: {e}")
+        except (FileNotFoundError, NotADirectoryError, OSError):
             self.audio_player = None
         self.sound_played_for_interval = False
 
@@ -163,9 +161,8 @@ class TOTPDialog(wx.Dialog):
             if self.audio_player:
                 try:
                     self.audio_player.play("under_5_seconds.wav")
-                except (FileNotFoundError, RuntimeError) as e:
-                    # Log the error but don't interrupt the UI
-                    print(f"Warning: Failed to play sound: {e}")
+                except (FileNotFoundError, RuntimeError):
+                    pass
             self.sound_played_for_interval = True
         elif time_remaining >= 5.0:
             # Reset flag when we're back above 5 seconds (new interval started)
