@@ -133,15 +133,52 @@ class TOTPDialog(wx.Dialog):
         main_sizer.Add(self.progress_bar, 0, wx.ALL | wx.EXPAND, 5)
 
         # Close button
-        close_btn = wx.Button(panel, wx.ID_CLOSE, _("totp_dialog.button_close"))
-        close_btn.Bind(wx.EVT_BUTTON, self._on_close)
-        main_sizer.Add(close_btn, 0, wx.ALL | wx.ALIGN_CENTER, 5)
+        self.close_btn = wx.Button(panel, wx.ID_CLOSE, _("totp_dialog.button_close"))
+        self.close_btn.Bind(wx.EVT_BUTTON, self._on_close)
+        main_sizer.Add(self.close_btn, 0, wx.ALL | wx.ALIGN_CENTER, 5)
 
         panel.SetSizer(main_sizer)
 
         # Fit dialog to content
         main_sizer.Fit(self)
         self.SetMinSize(self.GetSize())
+
+        # Create unique IDs for accelerators
+        self.ID_PRONOUNCE_CURRENT = wx.NewIdRef()
+        self.ID_PRONOUNCE_NEXT = wx.NewIdRef()
+        self.ID_COPY_CURRENT_ACCEL = wx.NewIdRef()
+        self.ID_COPY_NEXT_ACCEL = wx.NewIdRef()
+
+        # Set up accelerator table for keyboard shortcuts
+        accel_tbl = wx.AcceleratorTable(
+            [
+                # J - pronounce current OTP (stub)
+                (wx.ACCEL_NORMAL, ord("J"), self.ID_PRONOUNCE_CURRENT),
+                # F - pronounce next OTP (stub)
+                (wx.ACCEL_NORMAL, ord("F"), self.ID_PRONOUNCE_NEXT),
+                # K - copy current OTP
+                (wx.ACCEL_NORMAL, ord("K"), self.ID_COPY_CURRENT_ACCEL),
+                # D - copy next OTP
+                (wx.ACCEL_NORMAL, ord("D"), self.ID_COPY_NEXT_ACCEL),
+                # ESC - close dialog
+                (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL),
+            ]
+        )
+        self.SetAcceleratorTable(accel_tbl)
+
+        # Bind accelerator events
+        self.Bind(wx.EVT_MENU, self._on_pronounce_current, id=self.ID_PRONOUNCE_CURRENT)
+        self.Bind(wx.EVT_MENU, self._on_pronounce_next, id=self.ID_PRONOUNCE_NEXT)
+        self.Bind(
+            wx.EVT_MENU,
+            self._on_copy_current_accel,
+            id=self.ID_COPY_CURRENT_ACCEL,
+        )
+        self.Bind(wx.EVT_MENU, self._on_copy_next_accel, id=self.ID_COPY_NEXT_ACCEL)
+        self.Bind(wx.EVT_MENU, self._on_close, id=wx.ID_CANCEL)
+
+        # Set focus on close button
+        self.close_btn.SetFocus()
 
     def _update_codes_and_progress(self):
         """Update the OTP codes and progress bar."""
@@ -234,6 +271,24 @@ class TOTPDialog(wx.Dialog):
             except (FileNotFoundError, RuntimeError) as e:
                 # Log the error but don't interrupt the UI
                 print(f"Warning: Failed to play sound: {e}")
+
+    def _on_pronounce_current(self, event):
+        """Pronounce current OTP (stub implementation)."""
+        # TODO: Implement text-to-speech for current OTP
+        pass
+
+    def _on_pronounce_next(self, event):
+        """Pronounce next OTP (stub implementation)."""
+        # TODO: Implement text-to-speech for next OTP
+        pass
+
+    def _on_copy_current_accel(self, event):
+        """Copy current OTP via keyboard shortcut."""
+        self._on_copy_current(event)
+
+    def _on_copy_next_accel(self, event):
+        """Copy next OTP via keyboard shortcut."""
+        self._on_copy_next(event)
 
     def _on_close(self, event):
         """Handle close button click."""
