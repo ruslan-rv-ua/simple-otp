@@ -56,14 +56,28 @@ def set_locale(locale: str) -> None:
     i18n.set("locale", locale)
 
 
-def init_i18n() -> None:
-    """Initialize i18n configuration for the application."""
+def init_i18n(locale: str | None = None) -> None:
+    """Initialize i18n configuration for the application.
+
+    Args:
+        locale: Optional locale to use. If None, attempts to detect Windows
+                locale or falls back to "en-US".
+    """
     # Configure paths and defaults used by i18n
     i18n.load_path.append(str(locales_dir))
     i18n.set("filename_format", "{locale}.{format}")
     i18n.set("skip_locale_root_data", True)
     i18n.set("fallback", "en")
 
+    # Determine which locale to load
+    if locale is None:
+        locale = get_windows_locale() or "en-US"
+
+    # Load translations for the selected locale
+    set_locale(locale)
+
+
+init_i18n()
 
 # Expose translation function as `_` for convenience
 _ = i18n.t
