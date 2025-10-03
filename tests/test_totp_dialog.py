@@ -149,8 +149,8 @@ class TestTOTPDialog:
         self, app, account, settings_manager, monkeypatch
     ):
         """Test that audio settings are respected when copying."""
-        # Disable password copied sound
-        settings_manager.set("audio.play_password_copied_sound", False)
+        # Disable current password copied sound
+        settings_manager.set("audio.play_current_copied_sound", False)
 
         dialog = TOTPDialog(None, account, "demo123", settings_manager)
 
@@ -483,7 +483,8 @@ class TestTOTPDialog:
 
         # Enable auto-copy and ensure sound is enabled
         settings_manager.set("behavior.auto_copy_on_update", True)
-        settings_manager.set("audio.play_password_copied_sound", True)
+        settings_manager.set("audio.play_current_copied_sound", True)
+        settings_manager.set("audio.play_password_updated_sound", True)
 
         dialog = TOTPDialog(None, account, "demo123", settings_manager)
 
@@ -513,9 +514,11 @@ class TestTOTPDialog:
 
         # Verify that pyperclip.copy was called
         assert len(copied_text) == 1
-        # Verify that _play_sound_safe was called with correct sound file
-        assert len(sound_calls) == 1
-        assert sound_calls[0] == "current_password_copied.wav"
+        # Verify that _play_sound_safe was called with both sound files
+        # (current_password_copied.wav and password_updated.wav)
+        assert len(sound_calls) == 2
+        assert "current_password_copied.wav" in sound_calls
+        assert "password_updated.wav" in sound_calls
 
         dialog.Destroy()
 
@@ -525,9 +528,10 @@ class TestTOTPDialog:
         """Test that sound is NOT played during auto-copy when disabled."""
         import pyperclip
 
-        # Enable auto-copy but disable sound
+        # Enable auto-copy but disable sounds
         settings_manager.set("behavior.auto_copy_on_update", True)
-        settings_manager.set("audio.play_password_copied_sound", False)
+        settings_manager.set("audio.play_current_copied_sound", False)
+        settings_manager.set("audio.play_password_updated_sound", False)
 
         dialog = TOTPDialog(None, account, "demo123", settings_manager)
 

@@ -204,11 +204,26 @@ class SettingsDialog(wx.Dialog):
         panel = wx.Panel(self.notebook)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Play password copied sound checkbox
-        self.play_password_copied_check = wx.CheckBox(
-            panel, label=_("settings.audio.play_password_copied")
+        # Play current password copied sound checkbox
+        self.play_current_copied_check = wx.CheckBox(
+            panel, label=_("settings.audio.play_current_copied")
         )
-        sizer.Add(self.play_password_copied_check, 0, wx.ALL, 5)
+        sizer.Add(self.play_current_copied_check, 0, wx.ALL, 5)
+
+        # Play next password copied sound checkbox
+        self.play_next_copied_check = wx.CheckBox(
+            panel, label=_("settings.audio.play_next_copied")
+        )
+        sizer.Add(self.play_next_copied_check, 0, wx.ALL, 5)
+
+        # Play password updated sound checkbox
+        self.play_password_updated_check = wx.CheckBox(
+            panel, label=_("settings.audio.play_password_updated")
+        )
+        sizer.Add(self.play_password_updated_check, 0, wx.ALL, 5)
+
+        # Add spacer
+        sizer.AddSpacer(10)
 
         # Play warning sound checkbox
         self.play_warning_check = wx.CheckBox(
@@ -252,10 +267,20 @@ class SettingsDialog(wx.Dialog):
         self.digest_choice.SetSelection(digest_map.get(digest, 0))
 
         # Audio settings
-        play_password_copied = self.settings_manager.get(
-            "audio.play_password_copied_sound", True
+        play_current_copied = self.settings_manager.get(
+            "audio.play_current_copied_sound", True
         )
-        self.play_password_copied_check.SetValue(play_password_copied)
+        self.play_current_copied_check.SetValue(play_current_copied)
+
+        play_next_copied = self.settings_manager.get(
+            "audio.play_next_copied_sound", True
+        )
+        self.play_next_copied_check.SetValue(play_next_copied)
+
+        play_password_updated = self.settings_manager.get(
+            "audio.play_password_updated_sound", True
+        )
+        self.play_password_updated_check.SetValue(play_password_updated)
 
         play_warning = self.settings_manager.get("audio.play_warning_sound", True)
         self.play_warning_check.SetValue(play_warning)
@@ -300,9 +325,17 @@ class SettingsDialog(wx.Dialog):
         self.settings_manager.set("totp.default_digest", digest)
 
         # Audio settings
-        play_password_copied = self.play_password_copied_check.GetValue()
+        play_current_copied = self.play_current_copied_check.GetValue()
         self.settings_manager.set(
-            "audio.play_password_copied_sound", play_password_copied
+            "audio.play_current_copied_sound", play_current_copied
+        )
+
+        play_next_copied = self.play_next_copied_check.GetValue()
+        self.settings_manager.set("audio.play_next_copied_sound", play_next_copied)
+
+        play_password_updated = self.play_password_updated_check.GetValue()
+        self.settings_manager.set(
+            "audio.play_password_updated_sound", play_password_updated
         )
 
         play_warning = self.play_warning_check.GetValue()

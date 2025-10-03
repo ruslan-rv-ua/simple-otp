@@ -51,7 +51,7 @@ class TestSettingsManager:
 
     def test_get_nested_setting(self, settings_manager):
         """Test getting a nested setting."""
-        value = settings_manager.get("audio.play_password_copied_sound")
+        value = settings_manager.get("audio.play_current_copied_sound")
         assert value is True
 
     def test_get_nonexistent_setting_returns_default(self, settings_manager):
@@ -123,7 +123,7 @@ class TestSettingsManager:
 
         # Verify defaults are used
         assert manager.get("totp.default_digits") == 6
-        assert manager.get("audio.play_password_copied_sound") is True
+        assert manager.get("audio.play_current_copied_sound") is True
 
     def test_merge_settings_with_missing_keys(self, temp_settings_file):
         """Test that loading settings with missing keys merges with defaults."""
@@ -139,7 +139,7 @@ class TestSettingsManager:
         assert manager.get("totp.default_digits") == 8
 
         # Verify missing settings use defaults
-        assert manager.get("audio.play_password_copied_sound") is True
+        assert manager.get("audio.play_current_copied_sound") is True
         assert manager.get("totp.default_interval") == 30
 
     def test_default_settings_structure(self):
@@ -161,7 +161,9 @@ class TestSettingsManager:
 
         # Check audio settings
         assert "audio" in defaults
-        assert "play_password_copied_sound" in defaults["audio"]
+        assert "play_current_copied_sound" in defaults["audio"]
+        assert "play_next_copied_sound" in defaults["audio"]
+        assert "play_password_updated_sound" in defaults["audio"]
         assert "play_warning_sound" in defaults["audio"]
         assert "warning_sound_seconds" in defaults["audio"]
 
@@ -193,7 +195,9 @@ class TestSettingsManager:
 
     def test_audio_settings_defaults(self, settings_manager):
         """Test audio settings default values."""
-        assert settings_manager.get("audio.play_password_copied_sound") is True
+        assert settings_manager.get("audio.play_current_copied_sound") is True
+        assert settings_manager.get("audio.play_next_copied_sound") is True
+        assert settings_manager.get("audio.play_password_updated_sound") is True
         assert settings_manager.get("audio.play_warning_sound") is True
         assert settings_manager.get("audio.warning_sound_seconds") == 5
 
@@ -204,11 +208,11 @@ class TestSettingsManager:
 
     def test_modify_audio_settings(self, settings_manager):
         """Test modifying audio settings."""
-        settings_manager.set("audio.play_password_copied_sound", False)
+        settings_manager.set("audio.play_current_copied_sound", False)
         settings_manager.set("audio.play_warning_sound", False)
         settings_manager.set("audio.warning_sound_seconds", 10)
 
-        assert settings_manager.get("audio.play_password_copied_sound") is False
+        assert settings_manager.get("audio.play_current_copied_sound") is False
         assert settings_manager.get("audio.play_warning_sound") is False
         assert settings_manager.get("audio.warning_sound_seconds") == 10
 
@@ -222,12 +226,12 @@ class TestSettingsManager:
 
     def test_audio_settings_persistence(self, settings_manager, temp_settings_file):
         """Test that audio settings persist across save/load."""
-        settings_manager.set("audio.play_password_copied_sound", False)
+        settings_manager.set("audio.play_current_copied_sound", False)
         settings_manager.set("audio.warning_sound_seconds", 3)
         settings_manager.save()
 
         new_manager = SettingsManager(temp_settings_file)
-        assert new_manager.get("audio.play_password_copied_sound") is False
+        assert new_manager.get("audio.play_current_copied_sound") is False
         assert new_manager.get("audio.warning_sound_seconds") == 3
 
     def test_locale_default_is_none(self, settings_manager):

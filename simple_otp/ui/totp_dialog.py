@@ -246,15 +246,24 @@ class TOTPDialog(wx.Dialog):
                 # Silently ignore sound errors
                 pass
 
-    def _copy_otp_with_sound(self, otp_code: str, sound_file: str) -> None:
+    def _copy_otp_with_sound(
+        self, otp_code: str, sound_file: str, is_current: bool = True
+    ) -> None:
         """Copy OTP to clipboard and play notification sound.
 
         Args:
             otp_code: The OTP code to copy
             sound_file: Name of the sound file to play
+            is_current: True if copying current password, False for next password
         """
         pyperclip.copy(otp_code)
-        play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
+        # Check appropriate setting based on which password is being copied
+        setting_key = (
+            "audio.play_current_copied_sound"
+            if is_current
+            else "audio.play_next_copied_sound"
+        )
+        play_sound = self.settings_manager.get(setting_key, True)
         if play_sound:
             self._play_sound_safe(sound_file)
 
@@ -326,10 +335,18 @@ class TOTPDialog(wx.Dialog):
         if auto_copy_enabled and otp_has_changed:
             pyperclip.copy(current_otp)
             play_copied_sound = self.settings_manager.get(
-                "audio.play_password_copied_sound", True
+                "audio.play_current_copied_sound", True
             )
             if play_copied_sound:
                 self._play_sound_safe("current_password_copied.wav")
+
+        # Play password updated sound if enabled and password has changed
+        if otp_has_changed:
+            play_updated_sound = self.settings_manager.get(
+                "audio.play_password_updated_sound", True
+            )
+            if play_updated_sound:
+                self._play_sound_safe("password_updated.wav")
 
     def _handle_auto_speak(self, current_otp: str, otp_has_changed: bool) -> None:
         """Handle auto-speak functionality.
@@ -386,12 +403,16 @@ class TOTPDialog(wx.Dialog):
     def _on_copy_current(self, event):
         """Copy current OTP to clipboard (without spaces)."""
         otp_code = self._get_current_otp()
-        self._copy_otp_with_sound(otp_code, "current_password_copied.wav")
+        self._copy_otp_with_sound(
+            otp_code, "current_password_copied.wav", is_current=True
+        )
 
     def _on_copy_next(self, event):
         """Copy next OTP to clipboard (without spaces)."""
         otp_code = self._get_next_otp()
-        self._copy_otp_with_sound(otp_code, "next_password_copied.wav")
+        self._copy_otp_with_sound(
+            otp_code, "next_password_copied.wav", is_current=False
+        )
 
     def _speak_otp(self, otp_code: str) -> None:
         """

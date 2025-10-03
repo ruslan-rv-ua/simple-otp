@@ -156,7 +156,9 @@ class TestSettingsDialog:
         assert dialog.digest_choice.IsEnabled()
 
         # Audio page controls
-        assert dialog.play_password_copied_check.IsEnabled()
+        assert dialog.play_current_copied_check.IsEnabled()
+        assert dialog.play_next_copied_check.IsEnabled()
+        assert dialog.play_password_updated_check.IsEnabled()
         assert dialog.play_warning_check.IsEnabled()
         assert dialog.auto_copy_on_update_check.IsEnabled()
 
@@ -182,7 +184,9 @@ class TestSettingsDialog:
         assert dialog.hide_passwords_check.GetValue() is True
 
         # Audio defaults
-        assert dialog.play_password_copied_check.GetValue() is True
+        assert dialog.play_current_copied_check.GetValue() is True
+        assert dialog.play_next_copied_check.GetValue() is True
+        assert dialog.play_password_updated_check.GetValue() is True
         assert dialog.play_warning_check.GetValue() is True
         assert dialog.warning_seconds_spin.GetValue() == 5
 

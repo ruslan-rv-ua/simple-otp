@@ -141,7 +141,9 @@
             "open_last_file_help": "When enabled, the application will automatically open\nthe most recently used accounts file on startup."
         },
         "audio": {
-            "play_password_copied": "Play sound when password is copied",
+            "play_current_copied": "Play sound when current password is copied",
+            "play_next_copied": "Play sound when next password is copied",
+            "play_password_updated": "Play sound when password updates",
             "play_warning": "Play warning sound before password expires",
             "warning_seconds": "Play warning sound (seconds before expiration):"
         },
