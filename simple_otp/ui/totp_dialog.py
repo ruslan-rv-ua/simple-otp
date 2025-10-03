@@ -304,7 +304,7 @@ class TOTPDialog(wx.Dialog):
         play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
         if play_sound and self.audio_player:
             try:
-                self.audio_player.play("password_copied.wav")
+                self.audio_player.play("current_password_copied.wav")
             except (FileNotFoundError, RuntimeError) as e:
                 # Log the error but don't interrupt the UI
                 print(f"Warning: Failed to play sound: {e}")
@@ -319,7 +319,7 @@ class TOTPDialog(wx.Dialog):
         play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
         if play_sound and self.audio_player:
             try:
-                self.audio_player.play("password_copied.wav")
+                self.audio_player.play("next_password_copied.wav")
             except (FileNotFoundError, RuntimeError) as e:
                 # Log the error but don't interrupt the UI
                 print(f"Warning: Failed to play sound: {e}")
