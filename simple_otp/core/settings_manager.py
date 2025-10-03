@@ -12,6 +12,7 @@ class SettingsManager:
     # Default settings structure
     DEFAULT_SETTINGS = {
         "version": "1.0",
+        "locale": None,  # None = auto-detect, or explicit locale like "en-US", "uk-UA"
         "totp": {
             "default_digits": 6,
             "default_interval": 30,

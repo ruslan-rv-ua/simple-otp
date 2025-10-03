@@ -113,6 +113,15 @@ wheels = [
 ]
 
 [[package]]
+name = "i18nice"
+version = "0.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/bf/c4d9528786ac0177e86290f53e67e1365840959edb10cbc7575d149e3f8d/i18nice-0.16.0.tar.gz", hash = "sha256:8e90d042436f4bf0cdf9ab6869eb70946eba094f58121020c350996e45b0be89", size = 22371 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7a/b7/633dcdb800b54501f717b80776f9541d2b3fcffea1c11339fc0074acef5e/i18nice-0.16.0-py3-none-any.whl", hash = "sha256:a8d4c70e8c1b28f867b8a901226fa8c67ab3075b29744e6274cfa2c208fe34fe", size = 19753 },
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -232,6 +241,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
+    { name = "i18nice" },
     { name = "objectlistview3" },
     { name = "pyotp" },
     { name = "pyperclip" },
@@ -247,6 +257,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cryptography", specifier = ">=46.0.2" },
+    { name = "i18nice", specifier = ">=0.16.0" },
     { name = "objectlistview3", specifier = ">=1.3.5" },
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "pyperclip", specifier = ">=1.11.0" },

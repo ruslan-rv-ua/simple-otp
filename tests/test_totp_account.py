@@ -16,27 +16,6 @@ class TestDigestAlgorithm:
         assert DigestAlgorithm.SHA256 == "sha256"
         assert DigestAlgorithm.SHA512 == "sha512"
 
-    def test_get_digest_sha1(self):
-        """Test getting SHA1 digest function."""
-        from hashlib import sha1
-
-        digest = DigestAlgorithm.SHA1.get_digest()
-        assert digest is sha1
-
-    def test_get_digest_sha256(self):
-        """Test getting SHA256 digest function."""
-        from hashlib import sha256
-
-        digest = DigestAlgorithm.SHA256.get_digest()
-        assert digest is sha256
-
-    def test_get_digest_sha512(self):
-        """Test getting SHA512 digest function."""
-        from hashlib import sha512
-
-        digest = DigestAlgorithm.SHA512.get_digest()
-        assert digest is sha512
-
 
 class TestEncryptor:
     """Tests for Encryptor class."""

@@ -1,0 +1,168 @@
+{
+    "main": {
+        "title": "Simple OTP",
+        "title_with_file": "Simple OTP - {filename}",
+        "title_no_file": "Simple OTP - Файл не відкрито",
+        "search": "Швидкий пошук:",
+        "account_column_name": "Назва",
+        "menu": {
+            "file": {
+                "file": "&Файл",
+                "new": "&Створити...\tCtrl+N",
+                "new_hint": "Створити новий файл облікових записів",
+                "open": "&Відкрити...\tCtrl+O",
+                "open_hint": "Відкрити існуючий файл облікових записів",
+                "recent_files": "&Нещодавні файли",
+                "exit": "Ви&хід\tEsc",
+                "exit_hint": "Вийти з програми",
+                "no_recent_files": "Немає нещодавніх файлів",
+                "clear_history": "Очистити історію"
+            },
+            "account": {
+                "account": "&Обліковий запис",
+                "add": "Додати\tF7",
+                "add_hint": "Додати новий обліковий запис",
+                "delete": "Видалити\tDel",
+                "delete_hint": "Видалити вибраний обліковий запис"
+            },
+            "options": {
+                "options": "&Опції",
+                "language": "&Мова",
+                "settings": "&Налаштування...\tCtrl+,",
+                "settings_hint": "Налаштувати параметри програми"
+            },
+            "help": {
+                "help": "&Довідка",
+                "about": "&Про програму",
+                "about_hint": "Про Simple OTP"
+            }
+        },
+        "messages": {
+            "no_file_open": "Файл облікових записів не відкрито.",
+            "no_file_open_create": "Файл облікових записів не відкрито.\n\nБудь ласка, спочатку створіть або відкрийте файл.",
+            "no_file_opened_info": "Наразі не відкрито жодного файлу облікових записів.\n\nБудь ласка, створіть новий файл (Файл > Створити) або\nвідкрийте існуючий (Файл > Відкрити).",
+            "no_account_selected": "Обліковий запис не вибрано",
+            "account_added": "Обліковий запис успішно додано: {name}",
+            "account_deleted": "Обліковий запис видалено: {name}",
+            "delete_confirm": "Ви впевнені, що хочете видалити {name}?",
+            "delete_last_account": "\n\nЦе останній обліковий запис. Файл залишиться відкритим, але порожнім.",
+            "file_not_found": "Файл не знайдено: {path}\n\nФайл буде вилучено зі списку нещодавніх файлів.",
+            "clear_history_confirm": "Ви впевнені, що хочете очистити історію нещодавніх файлів?",
+            "history_cleared": "Історію нещодавніх файлів очищено.",
+            "file_created": "Створено новий файл облікових записів: {filename}\n\nТепер ви можете додавати облікові записи.",
+            "incorrect_password": "Невірний пароль для цього файлу.",
+            "failed_to_open_file": "Не вдалося відкрити файл: {error}",
+            "failed_to_add_account": "Не вдалося додати обліковий запис: {error}",
+            "unexpected_error": "Сталася неочікувана помилка: {error}",
+            "failed_to_delete_account": "Не вдалося видалити обліковий запис: {error}",
+            "failed_to_delete_not_found": "Не вдалося видалити обліковий запис (не знайдено)",
+            "failed_to_display_totp": "Не вдалося відобразити TOTP: {error}",
+            "language_changed": "Програма має бути перезапущена, щоб зміна мови набула повного ефекту."
+        },
+        "dialogs": {
+            "no_file": "Немає файлу",
+            "error": "Помилка",
+            "account_added": "Обліковий запис додано",
+            "account_deleted": "Обліковий запис видалено",
+            "confirm_delete": "Підтвердження видалення",
+            "file_not_found": "Файл не знайдено",
+            "confirm_clear": "Підтвердження очищення",
+            "history_cleared": "Історію очищено",
+            "file_created": "Файл створено",
+            "authentication_failed": "Помилка автентифікації",
+            "language_changed": "Мову змінено",
+            "create_new_file": "Створити новий файл облікових записів",
+            "open_file": "Відкрити файл облікових записів",
+            "file_filter": "Файли JSON (*.json)|*.json"
+        }
+    },
+    "add_account": {
+        "title": "Додати обліковий запис",
+        "name_label": "Назва (напр., user@example.com) *:",
+        "secret_label": "Секрет (Base32) *:",
+        "issuer_label": "Постачальник (напр., Google, GitHub, Binance):",
+        "digits_label": "Кількість цифр:",
+        "digest_label": "Алгоритм хешування:",
+        "interval_label": "Інтервал (секунди):",
+        "required_note": "* Обов'язкові поля",
+        "button_add": "Додати",
+        "button_cancel": "Скасувати",
+        "validation": {
+            "name_required": "Назва є обов'язковою.",
+            "secret_required": "Секрет є обов'язковим.",
+            "invalid_base32": "Секрет повинен бути правильним рядком Base32 (A-Z, 2-7, необов'язкове доповнення '=').",
+            "invalid_base32_decode": "Невірний секрет Base32: {error}",
+            "validation_error": "Помилка валідації"
+        }
+    },
+    "password_dialog": {
+        "title_required": "Потрібен пароль",
+        "title_set": "Встановити пароль",
+        "title_enter": "Введіть пароль",
+        "message_enter": "Введіть пароль:",
+        "message_set": "Введіть пароль для шифрування нового файлу облікових записів:",
+        "message_for_file": "Введіть пароль для {filename}:",
+        "password_label": "Пароль:",
+        "confirm_label": "Підтвердіть пароль:",
+        "button_ok": "OK",
+        "button_cancel": "Скасувати",
+        "validation": {
+            "password_empty": "Пароль не може бути порожнім",
+            "passwords_mismatch": "Паролі не збігаються",
+            "invalid_password": "Невірний пароль",
+            "password_mismatch": "Паролі не збігаються"
+        }
+    },
+    "totp_dialog": {
+        "title": "TOTP - {name}",
+        "current_label": "Поточний",
+        "next_label": "Наступний",
+        "time_remaining_label": "Час, що залишився:",
+        "button_copy_current": "Копіювати поточний",
+        "button_copy_next": "Копіювати наступний",
+        "button_close": "Закрити"
+    },
+    "settings": {
+        "title": "Налаштування",
+        "button_reset": "Скинути до типових",
+        "button_ok": "OK",
+        "button_cancel": "Скасувати",
+        "tab_behavior": "Поведінка",
+        "tab_audio": "Аудіо",
+        "tab_totp": "Типові значення TOTP",
+        "behavior": {
+            "auto_copy": "Автоматично копіювати пароль до буфера обміну при оновленні",
+            "auto_copy_help": "Коли увімкнено, новий код TOTP буде автоматично\nкопіюватися до буфера обміну при кожному оновленні.",
+            "open_last_file": "Відкривати останній файл при запуску",
+            "open_last_file_help": "Коли увімкнено, програма автоматично відкриватиме\nостанній використаний файл облікових записів при запуску."
+        },
+        "audio": {
+            "play_password_copied": "Відтворювати звук при копіюванні пароля",
+            "play_warning": "Відтворювати попереджувальний звук перед закінченням терміну дії пароля",
+            "warning_seconds": "Відтворювати попереджувальний звук (секунд до закінчення):"
+        },
+        "totp": {
+            "default_digits": "Типова кількість цифр:",
+            "default_interval": "Типовий інтервал (секунди):",
+            "default_digest": "Типовий алгоритм хешування:"
+        },
+        "messages": {
+            "reset_confirm": "Ви впевнені, що хочете скинути всі налаштування до типових значень?",
+            "reset_success": "Налаштування скинуто до типових значень.\n\nНатисніть OK, щоб зберегти, або Скасувати, щоб відхилити зміни.",
+            "confirm_reset": "Підтвердження скидання",
+            "settings_reset": "Налаштування скинуто"
+        }
+    },
+    "about": {
+        "description": "Настільна програма для генерації кодів TOTP",
+        "website": "https://github.com/yourusername/simple-otp",
+        "developer": "Руслан Іськов"
+    },
+    "authentication": {
+        "title": "Потрібна автентифікація",
+        "enter_password": "Введіть пароль для {filename}:",
+        "incorrect_password": "Невірний пароль. Залишилось спроб: {remaining}.\n\nВведіть пароль для {filename}:",
+        "max_attempts_exceeded": "Перевищено максимальну кількість спроб входу.\n\nПрограма буде закрита.",
+        "failed": "Помилка автентифікації"
+    }
+}

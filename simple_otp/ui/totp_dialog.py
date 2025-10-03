@@ -5,6 +5,7 @@ import time
 import pyperclip
 import wx
 
+from simple_otp.core.i18n import _
 from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import TOTPAccount
 from simple_otp.ui.audio_player import audio_player
@@ -46,7 +47,7 @@ class TOTPDialog(wx.Dialog):
         """
         super().__init__(
             parent,
-            title=f"TOTP - {account.get_display_name()}",
+            title=_("totp_dialog.title").format(name=account.get_display_name()),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
 
@@ -80,7 +81,7 @@ class TOTPDialog(wx.Dialog):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Current OTP section
-        current_label = wx.StaticText(panel, label="Current")
+        current_label = wx.StaticText(panel, label=_("totp_dialog.current_label"))
         main_sizer.Add(current_label, 0, wx.ALL, 5)
 
         current_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -95,14 +96,16 @@ class TOTPDialog(wx.Dialog):
         self.current_text.SetFont(font)
         current_sizer.Add(self.current_text, 1, wx.ALL | wx.EXPAND, 5)
 
-        self.current_copy_btn = wx.Button(panel, label="Copy Current")
+        self.current_copy_btn = wx.Button(
+            panel, label=_("totp_dialog.button_copy_current")
+        )
         self.current_copy_btn.Bind(wx.EVT_BUTTON, self._on_copy_current)
         current_sizer.Add(self.current_copy_btn, 0, wx.ALL, 5)
 
         main_sizer.Add(current_sizer, 0, wx.ALL | wx.EXPAND, 5)
 
         # Next OTP section
-        next_label = wx.StaticText(panel, label="Next")
+        next_label = wx.StaticText(panel, label=_("totp_dialog.next_label"))
         main_sizer.Add(next_label, 0, wx.ALL, 5)
 
         next_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -114,21 +117,23 @@ class TOTPDialog(wx.Dialog):
         self.next_text.SetFont(font)
         next_sizer.Add(self.next_text, 1, wx.ALL | wx.EXPAND, 5)
 
-        self.next_copy_btn = wx.Button(panel, label="Copy Next")
+        self.next_copy_btn = wx.Button(panel, label=_("totp_dialog.button_copy_next"))
         self.next_copy_btn.Bind(wx.EVT_BUTTON, self._on_copy_next)
         next_sizer.Add(self.next_copy_btn, 0, wx.ALL, 5)
 
         main_sizer.Add(next_sizer, 0, wx.ALL | wx.EXPAND, 5)
 
         # Progress bar
-        progress_label = wx.StaticText(panel, label="Time Remaining:")
+        progress_label = wx.StaticText(
+            panel, label=_("totp_dialog.time_remaining_label")
+        )
         main_sizer.Add(progress_label, 0, wx.ALL, 5)
 
         self.progress_bar = wx.Gauge(panel, range=100, style=wx.GA_HORIZONTAL)
         main_sizer.Add(self.progress_bar, 0, wx.ALL | wx.EXPAND, 5)
 
         # Close button
-        close_btn = wx.Button(panel, wx.ID_CLOSE, "Close")
+        close_btn = wx.Button(panel, wx.ID_CLOSE, _("totp_dialog.button_close"))
         close_btn.Bind(wx.EVT_BUTTON, self._on_close)
         main_sizer.Add(close_btn, 0, wx.ALL | wx.ALIGN_CENTER, 5)
 

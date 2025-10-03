@@ -44,6 +44,11 @@ class TestSettingsDialog:
     @pytest.fixture
     def dialog(self, app, settings_manager):
         """Create a SettingsDialog for tests."""
+        from simple_otp.core.i18n import init_i18n
+
+        # Ensure English locale for consistent test results
+        init_i18n(locale="en-US", auto_detect=False)
+
         dlg = SettingsDialog(None, settings_manager)
         yield dlg
         dlg.Destroy()

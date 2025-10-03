@@ -2,8 +2,6 @@
 
 from dataclasses import dataclass
 from enum import StrEnum
-from hashlib import sha1, sha256, sha512
-from typing import Any
 
 import pyotp
 
@@ -16,16 +14,6 @@ class DigestAlgorithm(StrEnum):
     SHA1 = "sha1"
     SHA256 = "sha256"
     SHA512 = "sha512"
-
-    def get_digest(self) -> Any:  # TODO: remove this method if possible
-        """Get the hashlib digest function for this algorithm."""
-        match self:
-            case DigestAlgorithm.SHA1:
-                return sha1
-            case DigestAlgorithm.SHA256:
-                return sha256
-            case DigestAlgorithm.SHA512:
-                return sha512
 
 
 @dataclass
@@ -166,7 +154,7 @@ class TOTPAccount:
         return pyotp.TOTP(
             s=plain_secret,
             digits=self.digits,
-            digest=self.digest.get_digest(),
+            digest=self.digest,
             name=self.name,
             issuer=self.issuer if self.issuer else None,
             interval=self.interval,
