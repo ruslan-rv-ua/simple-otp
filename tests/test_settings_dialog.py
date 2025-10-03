@@ -179,6 +179,7 @@ class TestSettingsDialog:
 
         # Behavior defaults
         assert dialog.auto_copy_on_update_check.GetValue() is False
+        assert dialog.hide_passwords_check.GetValue() is True
 
         # Audio defaults
         assert dialog.play_password_copied_check.GetValue() is True
@@ -204,3 +205,25 @@ class TestSettingsDialog:
             dialog.settings_manager.set("totp.default_digest", digest)
             dialog._load_settings()
             assert dialog.digest_choice.GetSelection() == expected_index
+
+    def test_hide_passwords_checkbox(self, dialog, settings_manager):
+        """Test hide passwords checkbox loads and saves correctly."""
+        # Test loading True
+        settings_manager.set("behavior.hide_passwords", True)
+        dialog._load_settings()
+        assert dialog.hide_passwords_check.GetValue() is True
+
+        # Test loading False
+        settings_manager.set("behavior.hide_passwords", False)
+        dialog._load_settings()
+        assert dialog.hide_passwords_check.GetValue() is False
+
+        # Test saving True
+        dialog.hide_passwords_check.SetValue(True)
+        dialog._save_settings()
+        assert settings_manager.get("behavior.hide_passwords") is True
+
+        # Test saving False
+        dialog.hide_passwords_check.SetValue(False)
+        dialog._save_settings()
+        assert settings_manager.get("behavior.hide_passwords") is False

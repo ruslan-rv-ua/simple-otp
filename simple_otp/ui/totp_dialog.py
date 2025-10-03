@@ -61,6 +61,9 @@ class TOTPDialog(wx.Dialog):
         self.sound_played_for_interval = False
         self.last_copied_otp = None  # Track last auto-copied OTP to avoid duplicates
 
+        # Get hide_passwords setting
+        self.hide_passwords = self.settings_manager.get("behavior.hide_passwords", True)
+
         # Create UI
         self._create_ui()
 
@@ -88,7 +91,9 @@ class TOTPDialog(wx.Dialog):
         self.current_text = wx.TextCtrl(
             panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
-        self.current_text.AcceptsFocusFromKeyboard = lambda: True
+        # Only allow keyboard focus if passwords are not hidden
+        if not self.hide_passwords:
+            self.current_text.AcceptsFocusFromKeyboard = lambda: True
         # Make text larger and bold
         font = self.current_text.GetFont()
         font.PointSize = 14
@@ -112,7 +117,9 @@ class TOTPDialog(wx.Dialog):
         self.next_text = wx.TextCtrl(
             panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
-        self.next_text.AcceptsFocusFromKeyboard = lambda: True
+        # Only allow keyboard focus if passwords are not hidden
+        if not self.hide_passwords:
+            self.next_text.AcceptsFocusFromKeyboard = lambda: True
         self.next_text.SetName("next")
         self.next_text.SetFont(font)
         next_sizer.Add(self.next_text, 1, wx.ALL | wx.EXPAND, 5)
@@ -133,15 +140,68 @@ class TOTPDialog(wx.Dialog):
         main_sizer.Add(self.progress_bar, 0, wx.ALL | wx.EXPAND, 5)
 
         # Close button
-        close_btn = wx.Button(panel, wx.ID_CLOSE, _("totp_dialog.button_close"))
-        close_btn.Bind(wx.EVT_BUTTON, self._on_close)
-        main_sizer.Add(close_btn, 0, wx.ALL | wx.ALIGN_CENTER, 5)
+        self.close_btn = wx.Button(panel, wx.ID_CLOSE, _("totp_dialog.button_close"))
+        self.close_btn.Bind(wx.EVT_BUTTON, self._on_close)
+        main_sizer.Add(self.close_btn, 0, wx.ALL | wx.ALIGN_CENTER, 5)
 
         panel.SetSizer(main_sizer)
 
         # Fit dialog to content
         main_sizer.Fit(self)
         self.SetMinSize(self.GetSize())
+
+        # Create unique IDs for accelerators
+        self.ID_PRONOUNCE_CURRENT = wx.NewIdRef()
+        self.ID_PRONOUNCE_NEXT = wx.NewIdRef()
+        self.ID_COPY_CURRENT_ACCEL = wx.NewIdRef()
+        self.ID_COPY_NEXT_ACCEL = wx.NewIdRef()
+        self.ID_CLOSE_DIALOG = wx.NewIdRef()
+
+        # Set up accelerator table for keyboard shortcuts
+        accel_tbl = wx.AcceleratorTable(
+            [
+                # J - pronounce current OTP (stub)
+                (wx.ACCEL_NORMAL, ord("J"), self.ID_PRONOUNCE_CURRENT),
+                # F - pronounce next OTP (stub)
+                (wx.ACCEL_NORMAL, ord("F"), self.ID_PRONOUNCE_NEXT),
+                # K - copy current OTP
+                (wx.ACCEL_NORMAL, ord("K"), self.ID_COPY_CURRENT_ACCEL),
+                # D - copy next OTP
+                (wx.ACCEL_NORMAL, ord("D"), self.ID_COPY_NEXT_ACCEL),
+                # ESC - close dialog
+                (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL),
+                # ENTER - pronounce current OTP (stub)
+                (wx.ACCEL_NORMAL, wx.WXK_RETURN, self.ID_PRONOUNCE_CURRENT),
+                # SHIFT+ENTER - pronounce next OTP (stub)
+                (wx.ACCEL_SHIFT, wx.WXK_RETURN, self.ID_PRONOUNCE_NEXT),
+                # CTRL+ENTER - copy current OTP
+                (wx.ACCEL_CTRL, wx.WXK_RETURN, self.ID_COPY_CURRENT_ACCEL),
+                # CTRL+SHIFT+ENTER - copy next OTP
+                (
+                    wx.ACCEL_CTRL | wx.ACCEL_SHIFT,
+                    wx.WXK_RETURN,
+                    self.ID_COPY_NEXT_ACCEL,
+                ),
+                # A - close dialog
+                (wx.ACCEL_NORMAL, ord("A"), self.ID_CLOSE_DIALOG),
+            ]
+        )
+        self.SetAcceleratorTable(accel_tbl)
+
+        # Bind accelerator events
+        self.Bind(wx.EVT_MENU, self._on_pronounce_current, id=self.ID_PRONOUNCE_CURRENT)
+        self.Bind(wx.EVT_MENU, self._on_pronounce_next, id=self.ID_PRONOUNCE_NEXT)
+        self.Bind(
+            wx.EVT_MENU,
+            self._on_copy_current_accel,
+            id=self.ID_COPY_CURRENT_ACCEL,
+        )
+        self.Bind(wx.EVT_MENU, self._on_copy_next_accel, id=self.ID_COPY_NEXT_ACCEL)
+        self.Bind(wx.EVT_MENU, self._on_close, id=wx.ID_CANCEL)
+        self.Bind(wx.EVT_MENU, self._on_close, id=self.ID_CLOSE_DIALOG)
+
+        # Set focus on close button
+        self.close_btn.SetFocus()
 
     def _update_codes_and_progress(self):
         """Update the OTP codes and progress bar."""
@@ -154,9 +214,13 @@ class TOTPDialog(wx.Dialog):
         next_time = int(current_time + self.account.interval)
         next_otp = self.totp.at(next_time)
 
-        # Update text controls with formatted codes
-        self.current_text.SetValue(format_otp(current_otp))
-        self.next_text.SetValue(format_otp(next_otp))
+        # Update text controls with formatted codes or hidden text
+        if self.hide_passwords:
+            self.current_text.SetValue("******")
+            self.next_text.SetValue("******")
+        else:
+            self.current_text.SetValue(format_otp(current_otp))
+            self.next_text.SetValue(format_otp(next_otp))
 
         # Calculate progress (time remaining in current interval)
         time_in_interval = current_time % self.account.interval
@@ -211,7 +275,8 @@ class TOTPDialog(wx.Dialog):
 
     def _on_copy_current(self, event):
         """Copy current OTP to clipboard (without spaces)."""
-        otp_code = self.current_text.GetValue().replace(" ", "")
+        # Get the actual OTP code, not the displayed value
+        otp_code = self.totp.now()
         pyperclip.copy(otp_code)
         # Play sound notification if enabled
         play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
@@ -224,7 +289,9 @@ class TOTPDialog(wx.Dialog):
 
     def _on_copy_next(self, event):
         """Copy next OTP to clipboard (without spaces)."""
-        otp_code = self.next_text.GetValue().replace(" ", "")
+        # Get the actual next OTP code, not the displayed value
+        next_time = int(time.time() + self.account.interval)
+        otp_code = self.totp.at(next_time)
         pyperclip.copy(otp_code)
         # Play sound notification if enabled
         play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
@@ -234,6 +301,24 @@ class TOTPDialog(wx.Dialog):
             except (FileNotFoundError, RuntimeError) as e:
                 # Log the error but don't interrupt the UI
                 print(f"Warning: Failed to play sound: {e}")
+
+    def _on_pronounce_current(self, event):
+        """Pronounce current OTP (stub implementation)."""
+        # TODO: Implement text-to-speech for current OTP
+        pass
+
+    def _on_pronounce_next(self, event):
+        """Pronounce next OTP (stub implementation)."""
+        # TODO: Implement text-to-speech for next OTP
+        pass
+
+    def _on_copy_current_accel(self, event):
+        """Copy current OTP via keyboard shortcut."""
+        self._on_copy_current(event)
+
+    def _on_copy_next_accel(self, event):
+        """Copy next OTP via keyboard shortcut."""
+        self._on_copy_next(event)
 
     def _on_close(self, event):
         """Handle close button click."""

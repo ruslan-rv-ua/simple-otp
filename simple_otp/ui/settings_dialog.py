@@ -130,6 +130,29 @@ class SettingsDialog(wx.Dialog):
         # Add spacer
         sizer.AddSpacer(10)
 
+        # Hide passwords checkbox
+        self.hide_passwords_check = wx.CheckBox(
+            panel,
+            label=_("settings.behavior.hide_passwords"),
+        )
+        sizer.Add(self.hide_passwords_check, 0, wx.ALL, 5)
+
+        # Add help text for hide passwords
+        help_text_hide = wx.StaticText(
+            panel,
+            label=_("settings.behavior.hide_passwords_help"),
+        )
+        help_text_hide.SetForegroundColour(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+        )
+        font_hide = help_text_hide.GetFont()
+        font_hide.PointSize = 9
+        help_text_hide.SetFont(font_hide)
+        sizer.Add(help_text_hide, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+
+        # Add spacer
+        sizer.AddSpacer(10)
+
         # Open last file on startup checkbox
         self.open_last_file_check = wx.CheckBox(
             panel,
@@ -227,6 +250,9 @@ class SettingsDialog(wx.Dialog):
         )
         self.auto_copy_on_update_check.SetValue(auto_copy_on_update)
 
+        hide_passwords = self.settings_manager.get("behavior.hide_passwords", True)
+        self.hide_passwords_check.SetValue(hide_passwords)
+
         open_last_file = self.settings_manager.get(
             "files.open_last_file_on_startup", True
         )
@@ -260,6 +286,9 @@ class SettingsDialog(wx.Dialog):
         # Behavior settings
         auto_copy_on_update = self.auto_copy_on_update_check.GetValue()
         self.settings_manager.set("behavior.auto_copy_on_update", auto_copy_on_update)
+
+        hide_passwords = self.hide_passwords_check.GetValue()
+        self.settings_manager.set("behavior.hide_passwords", hide_passwords)
 
         open_last_file = self.open_last_file_check.GetValue()
         self.settings_manager.set("files.open_last_file_on_startup", open_last_file)
