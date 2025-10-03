@@ -148,6 +148,7 @@ class TOTPDialog(wx.Dialog):
         self.ID_PRONOUNCE_NEXT = wx.NewIdRef()
         self.ID_COPY_CURRENT_ACCEL = wx.NewIdRef()
         self.ID_COPY_NEXT_ACCEL = wx.NewIdRef()
+        self.ID_CLOSE_DIALOG = wx.NewIdRef()
 
         # Set up accelerator table for keyboard shortcuts
         accel_tbl = wx.AcceleratorTable(
@@ -162,6 +163,20 @@ class TOTPDialog(wx.Dialog):
                 (wx.ACCEL_NORMAL, ord("D"), self.ID_COPY_NEXT_ACCEL),
                 # ESC - close dialog
                 (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL),
+                # ENTER - pronounce current OTP (stub)
+                (wx.ACCEL_NORMAL, wx.WXK_RETURN, self.ID_PRONOUNCE_CURRENT),
+                # SHIFT+ENTER - pronounce next OTP (stub)
+                (wx.ACCEL_SHIFT, wx.WXK_RETURN, self.ID_PRONOUNCE_NEXT),
+                # CTRL+ENTER - copy current OTP
+                (wx.ACCEL_CTRL, wx.WXK_RETURN, self.ID_COPY_CURRENT_ACCEL),
+                # CTRL+SHIFT+ENTER - copy next OTP
+                (
+                    wx.ACCEL_CTRL | wx.ACCEL_SHIFT,
+                    wx.WXK_RETURN,
+                    self.ID_COPY_NEXT_ACCEL,
+                ),
+                # A - close dialog
+                (wx.ACCEL_NORMAL, ord("A"), self.ID_CLOSE_DIALOG),
             ]
         )
         self.SetAcceleratorTable(accel_tbl)
@@ -176,6 +191,7 @@ class TOTPDialog(wx.Dialog):
         )
         self.Bind(wx.EVT_MENU, self._on_copy_next_accel, id=self.ID_COPY_NEXT_ACCEL)
         self.Bind(wx.EVT_MENU, self._on_close, id=wx.ID_CANCEL)
+        self.Bind(wx.EVT_MENU, self._on_close, id=self.ID_CLOSE_DIALOG)
 
         # Set focus on close button
         self.close_btn.SetFocus()
