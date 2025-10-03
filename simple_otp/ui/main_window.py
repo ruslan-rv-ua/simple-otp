@@ -132,6 +132,12 @@ class MainWindow(wx.Frame):
 
         # Help menu
         help_menu = wx.Menu()
+        user_guide_item = help_menu.Append(
+            wx.ID_ANY,
+            _("main.menu.help.user_guide"),
+            _("main.menu.help.user_guide_hint"),
+        )
+        help_menu.AppendSeparator()
         about_item = help_menu.Append(
             wx.ID_ABOUT,
             _("main.menu.help.about"),
@@ -148,6 +154,7 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self._on_delete_account, delete_item)
         self.Bind(wx.EVT_MENU, self._on_exit, exit_item)
         self.Bind(wx.EVT_MENU, self._on_settings, settings_item)
+        self.Bind(wx.EVT_MENU, self._on_user_guide, user_guide_item)
         self.Bind(wx.EVT_MENU, self._on_about, about_item)
 
         # Load recent files menu
@@ -450,6 +457,33 @@ class MainWindow(wx.Frame):
             _("main.dialogs.language_changed"),
             wx.OK | wx.ICON_INFORMATION,
         )
+
+    def _on_user_guide(self, event):
+        """Handle User Guide menu item - opens help documentation in browser."""
+        import webbrowser
+
+        # Get current locale to determine which help file to open
+        locale = self.settings_manager.get("locale")
+
+        # Construct path to help file
+        assets_path = Path(__file__).parent.parent / "assets" / "help"
+        help_file_path = assets_path / f"{locale}.html"
+
+        # Fallback to English if locale-specific help doesn't exist
+        if not help_file_path.exists():
+            help_file_path = assets_path / "en-US.html"
+
+        # Open in default browser
+        if help_file_path.exists():
+            # Convert to file:// URL for proper browser opening
+            file_url = help_file_path.as_uri()
+            webbrowser.open(file_url)
+        else:
+            wx.MessageBox(
+                "Help file not found.",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
 
     def _on_about(self, event):
         """Handle About menu item."""

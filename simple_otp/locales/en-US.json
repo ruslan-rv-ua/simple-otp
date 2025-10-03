@@ -33,6 +33,8 @@
             },
             "help": {
                 "help": "&Help",
+                "user_guide": "&User Guide\tF1",
+                "user_guide_hint": "Open complete user guide",
                 "about": "&About",
                 "about_hint": "About Simple OTP"
             }
