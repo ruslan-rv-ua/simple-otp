@@ -77,7 +77,7 @@
         "title": "Додати обліковий запис",
         "name_label": "Назва (напр., user@example.com) *:",
         "secret_label": "Секрет (Base32) *:",
-        "issuer_label": "Постачальник (напр., Google, GitHub):",
+        "issuer_label": "Постачальник (напр., Google, GitHub, Binance):",
         "digits_label": "Кількість цифр:",
         "digest_label": "Алгоритм хешування:",
         "interval_label": "Інтервал (секунди):",
