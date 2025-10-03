@@ -475,6 +475,93 @@ class TestTOTPDialog:
 
         dialog.Destroy()
 
+    def test_auto_copy_plays_sound_when_enabled(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that sound is played during auto-copy when the setting is enabled."""
+        import pyperclip
+
+        # Enable auto-copy and ensure sound is enabled
+        settings_manager.set("behavior.auto_copy_on_update", True)
+        settings_manager.set("audio.play_password_copied_sound", True)
+
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock _play_sound_safe to track if it's called
+        sound_calls = []
+
+        def mock_play_sound_safe(filename):
+            sound_calls.append(filename)
+
+        monkeypatch.setattr(dialog, "_play_sound_safe", mock_play_sound_safe)
+
+        # Mock pyperclip.copy
+        copied_text = []
+        original_copy = pyperclip.copy
+
+        def mock_copy(text):
+            copied_text.append(text)
+            return original_copy(text)
+
+        monkeypatch.setattr(pyperclip, "copy", mock_copy)
+
+        # Reset last_copied_otp to force a new update
+        dialog.last_copied_otp = None
+
+        # Trigger update
+        dialog._update_codes_and_progress()
+
+        # Verify that pyperclip.copy was called
+        assert len(copied_text) == 1
+        # Verify that _play_sound_safe was called with correct sound file
+        assert len(sound_calls) == 1
+        assert sound_calls[0] == "current_password_copied.wav"
+
+        dialog.Destroy()
+
+    def test_auto_copy_does_not_play_sound_when_disabled(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that sound is NOT played during auto-copy when disabled."""
+        import pyperclip
+
+        # Enable auto-copy but disable sound
+        settings_manager.set("behavior.auto_copy_on_update", True)
+        settings_manager.set("audio.play_password_copied_sound", False)
+
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock _play_sound_safe to track if it's called
+        sound_calls = []
+
+        def mock_play_sound_safe(filename):
+            sound_calls.append(filename)
+
+        monkeypatch.setattr(dialog, "_play_sound_safe", mock_play_sound_safe)
+
+        # Mock pyperclip.copy
+        copied_text = []
+        original_copy = pyperclip.copy
+
+        def mock_copy(text):
+            copied_text.append(text)
+            return original_copy(text)
+
+        monkeypatch.setattr(pyperclip, "copy", mock_copy)
+
+        # Reset last_copied_otp to force a new update
+        dialog.last_copied_otp = None
+
+        # Trigger update
+        dialog._update_codes_and_progress()
+
+        # Verify that pyperclip.copy was called
+        assert len(copied_text) == 1
+        # Verify that _play_sound_safe was NOT called
+        assert len(sound_calls) == 0
+
+        dialog.Destroy()
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -329,7 +329,7 @@ class TOTPDialog(wx.Dialog):
                 "audio.play_password_copied_sound", True
             )
             if play_copied_sound:
-                self._play_sound_safe("password_copied.wav")
+                self._play_sound_safe("current_password_copied.wav")
 
     def _handle_auto_speak(self, current_otp: str, otp_has_changed: bool) -> None:
         """Handle auto-speak functionality.
