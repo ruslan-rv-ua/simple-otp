@@ -25,8 +25,9 @@
                 "delete": "Видалити\tDel",
                 "delete_hint": "Видалити вибраний обліковий запис"
             },
-            "tools": {
-                "tools": "&Інструменти",
+            "options": {
+                "options": "&Опції",
+                "language": "&Мова",
                 "settings": "&Налаштування...\tCtrl+,",
                 "settings_hint": "Налаштувати параметри програми"
             },
@@ -55,7 +56,8 @@
             "unexpected_error": "Сталася неочікувана помилка: {error}",
             "failed_to_delete_account": "Не вдалося видалити обліковий запис: {error}",
             "failed_to_delete_not_found": "Не вдалося видалити обліковий запис (не знайдено)",
-            "failed_to_display_totp": "Не вдалося відобразити TOTP: {error}"
+            "failed_to_display_totp": "Не вдалося відобразити TOTP: {error}",
+            "language_changed": "Програма має бути перезапущена, щоб зміна мови набула повного ефекту."
         },
         "dialogs": {
             "no_file": "Немає файлу",
@@ -68,6 +70,7 @@
             "history_cleared": "Історію очищено",
             "file_created": "Файл створено",
             "authentication_failed": "Помилка автентифікації",
+            "language_changed": "Мову змінено",
             "create_new_file": "Створити новий файл облікових записів",
             "open_file": "Відкрити файл облікових записів",
             "file_filter": "Файли JSON (*.json)|*.json"

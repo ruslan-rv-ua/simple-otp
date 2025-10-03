@@ -5,12 +5,9 @@ from pathlib import Path
 import wx
 
 from simple_otp.core.accounts_manager import AccountsManager
-from simple_otp.core.i18n import _, set_locale
+from simple_otp.core.i18n import _, get_windows_locale, init_i18n
 from simple_otp.ui.main_window import MainWindow
 from simple_otp.ui.password_dialog import PasswordDialog
-
-# Set locale at module load
-set_locale("uk-UA")  # TODO: make dynamic based on user settings
 
 
 def authenticate(file_path: Path) -> str | None:
@@ -75,8 +72,21 @@ def main():
 
     app = wx.App()
 
-    # Load settings to determine which file to open
+    # Load settings to determine which file to open and locale
     settings_manager = SettingsManager()
+
+    # Initialize locale from settings
+    saved_locale = settings_manager.get("locale")
+    if saved_locale is None:
+        # Auto-detect Windows locale and save it
+        detected_locale = get_windows_locale() or "en-US"
+        settings_manager.set("locale", detected_locale)
+        settings_manager.save()
+        init_i18n(locale=detected_locale, auto_detect=False)
+    else:
+        # Use saved locale
+        init_i18n(locale=saved_locale, auto_detect=False)
+
     accounts_file = None
     password = None
 

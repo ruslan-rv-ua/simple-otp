@@ -56,12 +56,28 @@ def set_locale(locale: str) -> None:
     i18n.set("locale", locale)
 
 
-def init_i18n(locale: str | None = None) -> None:
+def get_available_locales() -> list[str]:
+    """Return list of available locales based on JSON files in locales directory.
+
+    Returns:
+        List of locale codes (e.g., ["en-US", "uk-UA"])
+    """
+    available = []
+    if locales_dir.exists():
+        for file in locales_dir.glob("*.json"):
+            if file.stem not in ("", "."):
+                available.append(file.stem)
+    return sorted(available)
+
+
+def init_i18n(locale: str | None = None, auto_detect: bool = True) -> None:
     """Initialize i18n configuration for the application.
 
     Args:
-        locale: Optional locale to use. If None, attempts to detect Windows
-                locale or falls back to "en-US".
+        locale: Optional locale to use. If None and auto_detect is True,
+                attempts to detect Windows locale or falls back to "en-US".
+        auto_detect: If True and locale is None, auto-detect Windows locale.
+                     If False and locale is None, use "en-US".
     """
     # Configure paths and defaults used by i18n
     i18n.load_path.append(str(locales_dir))
@@ -71,7 +87,10 @@ def init_i18n(locale: str | None = None) -> None:
 
     # Determine which locale to load
     if locale is None:
-        locale = get_windows_locale() or "en-US"
+        if auto_detect:
+            locale = get_windows_locale() or "en-US"
+        else:
+            locale = "en-US"
 
     # Load translations for the selected locale
     set_locale(locale)

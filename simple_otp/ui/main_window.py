@@ -114,12 +114,21 @@ class MainWindow(wx.Frame):
         )
         menu_bar.Append(account_menu, _("main.menu.account.account"))
 
-        # Tools menu
-        tools_menu = wx.Menu()
-        settings_item = tools_menu.Append(
-            wx.ID_ANY, _("main.menu.tools.settings"), _("main.menu.tools.settings_hint")
+        # Options menu
+        options_menu = wx.Menu()
+
+        # Language submenu
+        language_menu = wx.Menu()
+        self._create_language_menu(language_menu)
+        options_menu.AppendSubMenu(language_menu, _("main.menu.options.language"))
+
+        options_menu.AppendSeparator()
+        settings_item = options_menu.Append(
+            wx.ID_ANY,
+            _("main.menu.options.settings"),
+            _("main.menu.options.settings_hint"),
         )
-        menu_bar.Append(tools_menu, _("main.menu.tools.tools"))
+        menu_bar.Append(options_menu, _("main.menu.options.options"))
 
         # Help menu
         help_menu = wx.Menu()
@@ -143,6 +152,42 @@ class MainWindow(wx.Frame):
 
         # Load recent files menu
         self._load_recent_files_menu()
+
+    def _create_language_menu(self, menu: wx.Menu):
+        """
+        Create the language selection submenu.
+
+        Args:
+            menu: The menu to populate with language items
+        """
+        from simple_otp.core.i18n import get_available_locales
+
+        # Map locale codes to native language names
+        locale_names = {
+            "en-US": "English",
+            "uk-UA": "Українська",
+        }
+
+        available_locales = get_available_locales()
+        current_locale = self.settings_manager.get("locale")
+
+        for locale_code in available_locales:
+            # Get native language name (fallback to locale code if not mapped)
+            language_name = locale_names.get(locale_code, locale_code)
+
+            # Create menu item
+            item = menu.AppendRadioItem(wx.ID_ANY, language_name)
+
+            # Check if this is the current locale
+            if locale_code == current_locale:
+                item.Check()
+
+            # Bind event handler
+            self.Bind(
+                wx.EVT_MENU,
+                lambda event, loc=locale_code: self._on_language_change(event, loc),
+                item,
+            )
 
     def _create_ui(self):
         """Create the main UI layout."""
@@ -381,6 +426,30 @@ class MainWindow(wx.Frame):
         dialog = SettingsDialog(self, self.settings_manager)
         dialog.ShowModal()
         dialog.Destroy()
+
+    def _on_language_change(self, event, locale_code: str):
+        """
+        Handle language selection menu item.
+
+        Args:
+            event: Menu event
+            locale_code: The selected locale code (e.g., "en-US", "uk-UA")
+        """
+        from simple_otp.core.i18n import set_locale
+
+        # Save the new locale to settings
+        self.settings_manager.set("locale", locale_code)
+        self.settings_manager.save()
+
+        # Apply the new locale
+        set_locale(locale_code)
+
+        # Show restart message
+        wx.MessageBox(
+            _("main.messages.language_changed"),
+            _("main.dialogs.language_changed"),
+            wx.OK | wx.ICON_INFORMATION,
+        )
 
     def _on_about(self, event):
         """Handle About menu item."""

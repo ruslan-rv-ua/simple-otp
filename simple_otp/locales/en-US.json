@@ -25,8 +25,9 @@
                 "delete": "Delete\tDel",
                 "delete_hint": "Delete selected account"
             },
-            "tools": {
-                "tools": "&Tools",
+            "options": {
+                "options": "&Options",
+                "language": "&Language",
                 "settings": "&Settings...\tCtrl+,",
                 "settings_hint": "Configure application settings"
             },
@@ -55,7 +56,8 @@
             "unexpected_error": "An unexpected error occurred: {error}",
             "failed_to_delete_account": "Failed to delete account: {error}",
             "failed_to_delete_not_found": "Failed to delete account (not found)",
-            "failed_to_display_totp": "Failed to display TOTP: {error}"
+            "failed_to_display_totp": "Failed to display TOTP: {error}",
+            "language_changed": "The application needs to restart for the language change to take full effect."
         },
         "dialogs": {
             "no_file": "No File",
@@ -68,6 +70,7 @@
             "history_cleared": "History Cleared",
             "file_created": "File Created",
             "authentication_failed": "Authentication Failed",
+            "language_changed": "Language Changed",
             "create_new_file": "Create New Accounts File",
             "open_file": "Open Accounts File",
             "file_filter": "JSON files (*.json)|*.json"

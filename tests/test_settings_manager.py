@@ -225,3 +225,23 @@ class TestSettingsManager:
         new_manager = SettingsManager(temp_settings_file)
         assert new_manager.get("audio.play_password_copied_sound") is False
         assert new_manager.get("audio.warning_sound_seconds") == 3
+
+    def test_locale_default_is_none(self, settings_manager):
+        """Test that locale defaults to None (auto-detect)."""
+        assert settings_manager.get("locale") is None
+
+    def test_set_locale(self, settings_manager):
+        """Test setting and getting locale."""
+        settings_manager.set("locale", "uk-UA")
+        assert settings_manager.get("locale") == "uk-UA"
+
+        settings_manager.set("locale", "en-US")
+        assert settings_manager.get("locale") == "en-US"
+
+    def test_locale_persistence(self, settings_manager, temp_settings_file):
+        """Test that locale setting persists across save/load."""
+        settings_manager.set("locale", "uk-UA")
+        settings_manager.save()
+
+        new_manager = SettingsManager(temp_settings_file)
+        assert new_manager.get("locale") == "uk-UA"
