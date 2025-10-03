@@ -695,6 +695,9 @@ class MainWindow(wx.Frame):
             # Create new accounts manager with the file (auto_create=False)
             new_manager = AccountsManager(storage_path=file_path, auto_create=False)
 
+            # Create the default account with the provided password
+            new_manager.create_initial_account(new_password)
+
             # Switch to the new file
             self.accounts_manager = new_manager
             self.current_file = file_path
@@ -703,8 +706,8 @@ class MainWindow(wx.Frame):
             # Update window title
             self._update_title()
 
-            # Clear the accounts list (empty file)
-            self.accounts_list.SetObjects([])
+            # Load accounts (should have the default account now)
+            self._load_accounts()
 
             # Update recent files
             self._update_recent_files(file_path)
