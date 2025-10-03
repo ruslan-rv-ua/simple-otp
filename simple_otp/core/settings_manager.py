@@ -21,6 +21,7 @@ class SettingsManager:
         "behavior": {
             "auto_copy_on_update": False,
             "hide_passwords": True,
+            "auto_speak_password": False,
         },
         "audio": {
             "play_password_copied_sound": True,

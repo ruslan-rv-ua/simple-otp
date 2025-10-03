@@ -4,6 +4,7 @@ import time
 
 import pyperclip
 import wx
+from vocabraille import ErrorsMode, VocaBraille
 
 from simple_otp.core.i18n import _
 from simple_otp.core.settings_manager import SettingsManager
@@ -60,6 +61,13 @@ class TOTPDialog(wx.Dialog):
         self.audio_player = audio_player
         self.sound_played_for_interval = False
         self.last_copied_otp = None  # Track last auto-copied OTP to avoid duplicates
+
+        # Initialize VocaBraille for screen reader support
+        try:
+            self.vocabraille = VocaBraille(errors=ErrorsMode.IGNORE)
+        except Exception:
+            # If VocaBraille fails to initialize, disable speech
+            self.vocabraille = None
 
         # Get hide_passwords setting
         self.hide_passwords = self.settings_manager.get("behavior.hide_passwords", True)
@@ -250,14 +258,16 @@ class TOTPDialog(wx.Dialog):
             # Reset flag when we're back above threshold (new interval started)
             self.sound_played_for_interval = False
 
+        # Check if OTP has changed
+        otp_has_changed = current_otp != self.last_copied_otp
+
         # Auto-copy on password update
         auto_copy_enabled = self.settings_manager.get(
             "behavior.auto_copy_on_update", False
         )
-        if auto_copy_enabled and current_otp != self.last_copied_otp:
+        if auto_copy_enabled and otp_has_changed:
             # New OTP generated, auto-copy it
             pyperclip.copy(current_otp)
-            self.last_copied_otp = current_otp
 
             # Play sound if enabled
             play_copied_sound = self.settings_manager.get(
@@ -268,6 +278,18 @@ class TOTPDialog(wx.Dialog):
                     self.audio_player.play("password_copied.wav")
                 except (FileNotFoundError, RuntimeError):
                     pass
+
+        # Auto-speak on password update
+        auto_speak_enabled = self.settings_manager.get(
+            "behavior.auto_speak_password", False
+        )
+        if auto_speak_enabled and otp_has_changed:
+            # New OTP generated, speak it
+            self._speak_otp(current_otp)
+
+        # Update last copied OTP if either feature triggered
+        if otp_has_changed and (auto_copy_enabled or auto_speak_enabled):
+            self.last_copied_otp = current_otp
 
     def _on_timer(self, event):
         """Handle timer event to update codes and progress."""
@@ -302,15 +324,35 @@ class TOTPDialog(wx.Dialog):
                 # Log the error but don't interrupt the UI
                 print(f"Warning: Failed to play sound: {e}")
 
+    def _speak_otp(self, otp_code: str) -> None:
+        """
+        Speak OTP code using VocaBraille.
+
+        Args:
+            otp_code: The OTP code to speak (without spaces)
+        """
+        if self.vocabraille:
+            try:
+                # Format OTP code as displayed (grouped by 2 digits)
+                # e.g., "12 34 56" or "12 34 56 78"
+                formatted_code = format_otp(otp_code)
+                self.vocabraille.say(formatted_code, interrupt=True)
+            except Exception:
+                # Silently ignore speech errors
+                pass
+
     def _on_pronounce_current(self, event):
-        """Pronounce current OTP (stub implementation)."""
-        # TODO: Implement text-to-speech for current OTP
-        pass
+        """Pronounce current OTP using screen reader."""
+        # Get the actual OTP code, not the displayed value
+        otp_code = self.totp.now()
+        self._speak_otp(otp_code)
 
     def _on_pronounce_next(self, event):
-        """Pronounce next OTP (stub implementation)."""
-        # TODO: Implement text-to-speech for next OTP
-        pass
+        """Pronounce next OTP using screen reader."""
+        # Get the actual next OTP code, not the displayed value
+        next_time = int(time.time() + self.account.interval)
+        otp_code = self.totp.at(next_time)
+        self._speak_otp(otp_code)
 
     def _on_copy_current_accel(self, event):
         """Copy current OTP via keyboard shortcut."""

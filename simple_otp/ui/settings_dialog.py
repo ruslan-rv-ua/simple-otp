@@ -153,6 +153,29 @@ class SettingsDialog(wx.Dialog):
         # Add spacer
         sizer.AddSpacer(10)
 
+        # Auto-speak password checkbox
+        self.auto_speak_password_check = wx.CheckBox(
+            panel,
+            label=_("settings.behavior.auto_speak_password"),
+        )
+        sizer.Add(self.auto_speak_password_check, 0, wx.ALL, 5)
+
+        # Add help text for auto-speak password
+        help_text_speak = wx.StaticText(
+            panel,
+            label=_("settings.behavior.auto_speak_password_help"),
+        )
+        help_text_speak.SetForegroundColour(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+        )
+        font_speak = help_text_speak.GetFont()
+        font_speak.PointSize = 9
+        help_text_speak.SetFont(font_speak)
+        sizer.Add(help_text_speak, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+
+        # Add spacer
+        sizer.AddSpacer(10)
+
         # Open last file on startup checkbox
         self.open_last_file_check = wx.CheckBox(
             panel,
@@ -253,6 +276,11 @@ class SettingsDialog(wx.Dialog):
         hide_passwords = self.settings_manager.get("behavior.hide_passwords", True)
         self.hide_passwords_check.SetValue(hide_passwords)
 
+        auto_speak_password = self.settings_manager.get(
+            "behavior.auto_speak_password", False
+        )
+        self.auto_speak_password_check.SetValue(auto_speak_password)
+
         open_last_file = self.settings_manager.get(
             "files.open_last_file_on_startup", True
         )
@@ -289,6 +317,9 @@ class SettingsDialog(wx.Dialog):
 
         hide_passwords = self.hide_passwords_check.GetValue()
         self.settings_manager.set("behavior.hide_passwords", hide_passwords)
+
+        auto_speak_password = self.auto_speak_password_check.GetValue()
+        self.settings_manager.set("behavior.auto_speak_password", auto_speak_password)
 
         open_last_file = self.open_last_file_check.GetValue()
         self.settings_manager.set("files.open_last_file_on_startup", open_last_file)
