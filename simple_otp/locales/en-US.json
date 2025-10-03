@@ -135,11 +135,15 @@
             "auto_copy_help": "When enabled, the new TOTP code will be automatically\ncopied to clipboard each time it refreshes.",
             "hide_passwords": "Hide passwords in TOTP dialog",
             "hide_passwords_help": "When enabled, OTP codes are displayed as '******' and\ncannot be focused with keyboard navigation.",
+            "auto_speak_password": "Automatically speak password when it updates",
+            "auto_speak_password_help": "When enabled, the new TOTP code will be automatically\nspoken using your default screen reader each time it refreshes.",
             "open_last_file": "Open last file on startup",
             "open_last_file_help": "When enabled, the application will automatically open\nthe most recently used accounts file on startup."
         },
         "audio": {
-            "play_password_copied": "Play sound when password is copied",
+            "play_current_copied": "Play sound when current password is copied",
+            "play_next_copied": "Play sound when next password is copied",
+            "play_password_updated": "Play sound when password updates",
             "play_warning": "Play warning sound before password expires",
             "warning_seconds": "Play warning sound (seconds before expiration):"
         },

@@ -149,8 +149,8 @@ class TestTOTPDialog:
         self, app, account, settings_manager, monkeypatch
     ):
         """Test that audio settings are respected when copying."""
-        # Disable password copied sound
-        settings_manager.set("audio.play_password_copied_sound", False)
+        # Disable current password copied sound
+        settings_manager.set("audio.play_current_copied_sound", False)
 
         dialog = TOTPDialog(None, account, "demo123", settings_manager)
 
@@ -309,6 +309,260 @@ class TestTOTPDialog:
         assert copied_text[0] != "******"
         assert copied_text[0].isdigit()
         assert len(copied_text[0]) == 6  # Default is 6 digits
+
+        dialog.Destroy()
+
+    def test_vocabraille_initialization(self, app, account, settings_manager):
+        """Test that VocaBraille is initialized correctly."""
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # VocaBraille should be initialized (or None if it fails)
+        assert hasattr(dialog, "vocabraille")
+
+        dialog.Destroy()
+
+    def test_speak_otp_method(self, app, account, settings_manager, monkeypatch):
+        """Test that _speak_otp method works correctly."""
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock VocaBraille say method if it exists
+        if dialog.vocabraille:
+            say_calls = []
+
+            def mock_say(msg, interrupt=True):
+                say_calls.append({"msg": msg, "interrupt": interrupt})
+
+            monkeypatch.setattr(dialog.vocabraille, "say", mock_say)
+
+            # Test speaking OTP
+            dialog._speak_otp("123456")
+
+            # Verify say was called with correct parameters
+            assert len(say_calls) == 1
+            assert say_calls[0]["msg"] == "12 34 56"  # Formatted as displayed
+            assert say_calls[0]["interrupt"] is True  # Should always interrupt
+
+        dialog.Destroy()
+
+    def test_pronounce_current_otp(self, app, account, settings_manager, monkeypatch):
+        """Test pronouncing current OTP."""
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock _speak_otp to verify it's called
+        speak_calls = []
+
+        def mock_speak_otp(otp_code):
+            speak_calls.append(otp_code)
+
+        monkeypatch.setattr(dialog, "_speak_otp", mock_speak_otp)
+
+        # Simulate keyboard shortcut or button press
+        event = wx.MenuEvent(wx.wxEVT_MENU, dialog.ID_PRONOUNCE_CURRENT)
+        dialog._on_pronounce_current(event)
+
+        # Verify _speak_otp was called with current OTP
+        assert len(speak_calls) == 1
+        assert speak_calls[0].isdigit()
+        assert len(speak_calls[0]) == 6
+
+        dialog.Destroy()
+
+    def test_pronounce_next_otp(self, app, account, settings_manager, monkeypatch):
+        """Test pronouncing next OTP."""
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock _speak_otp to verify it's called
+        speak_calls = []
+
+        def mock_speak_otp(otp_code):
+            speak_calls.append(otp_code)
+
+        monkeypatch.setattr(dialog, "_speak_otp", mock_speak_otp)
+
+        # Simulate keyboard shortcut or button press
+        event = wx.MenuEvent(wx.wxEVT_MENU, dialog.ID_PRONOUNCE_NEXT)
+        dialog._on_pronounce_next(event)
+
+        # Verify _speak_otp was called with next OTP
+        assert len(speak_calls) == 1
+        assert speak_calls[0].isdigit()
+        assert len(speak_calls[0]) == 6
+
+        dialog.Destroy()
+
+    def test_auto_speak_password_disabled_by_default(
+        self, app, account, settings_manager
+    ):
+        """Test that auto-speak password is disabled by default."""
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Verify setting is False by default
+        auto_speak_enabled = dialog.settings_manager.get(
+            "behavior.auto_speak_password", False
+        )
+        assert auto_speak_enabled is False
+
+        dialog.Destroy()
+
+    def test_auto_speak_on_password_update(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that OTP is automatically spoken when it updates."""
+        settings_manager.set("behavior.auto_speak_password", True)
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock _speak_otp to verify it's called
+        speak_calls = []
+
+        def mock_speak_otp(otp_code):
+            speak_calls.append(otp_code)
+
+        monkeypatch.setattr(dialog, "_speak_otp", mock_speak_otp)
+
+        # Reset last_copied_otp to force a new update
+        dialog.last_copied_otp = None
+
+        # Trigger update
+        dialog._update_codes_and_progress()
+
+        # Verify _speak_otp was called
+        assert len(speak_calls) == 1
+        assert speak_calls[0].isdigit()
+
+        dialog.Destroy()
+
+    def test_auto_copy_and_auto_speak_work_together(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that auto-copy and auto-speak both work when enabled together."""
+        import pyperclip
+
+        # Enable both features
+        settings_manager.set("behavior.auto_copy_on_update", True)
+        settings_manager.set("behavior.auto_speak_password", True)
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock pyperclip.copy to verify it's called
+        copied_text = []
+        original_copy = pyperclip.copy
+
+        def mock_copy(text):
+            copied_text.append(text)
+            return original_copy(text)
+
+        monkeypatch.setattr(pyperclip, "copy", mock_copy)
+
+        # Mock _speak_otp to verify it's called
+        speak_calls = []
+
+        def mock_speak_otp(otp_code):
+            speak_calls.append(otp_code)
+
+        monkeypatch.setattr(dialog, "_speak_otp", mock_speak_otp)
+
+        # Reset last_copied_otp to force a new update
+        dialog.last_copied_otp = None
+
+        # Trigger update
+        dialog._update_codes_and_progress()
+
+        # Verify both pyperclip.copy and _speak_otp were called
+        assert len(copied_text) == 1
+        assert len(speak_calls) == 1
+        # Both should have the same OTP code
+        assert copied_text[0] == speak_calls[0]
+        assert copied_text[0].isdigit()
+
+        dialog.Destroy()
+
+    def test_auto_copy_plays_sound_when_enabled(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that sound is played during auto-copy when the setting is enabled."""
+        import pyperclip
+
+        # Enable auto-copy and ensure sound is enabled
+        settings_manager.set("behavior.auto_copy_on_update", True)
+        settings_manager.set("audio.play_current_copied_sound", True)
+        settings_manager.set("audio.play_password_updated_sound", True)
+
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock _play_sound_safe to track if it's called
+        sound_calls = []
+
+        def mock_play_sound_safe(filename):
+            sound_calls.append(filename)
+
+        monkeypatch.setattr(dialog, "_play_sound_safe", mock_play_sound_safe)
+
+        # Mock pyperclip.copy
+        copied_text = []
+        original_copy = pyperclip.copy
+
+        def mock_copy(text):
+            copied_text.append(text)
+            return original_copy(text)
+
+        monkeypatch.setattr(pyperclip, "copy", mock_copy)
+
+        # Reset last_copied_otp to force a new update
+        dialog.last_copied_otp = None
+
+        # Trigger update
+        dialog._update_codes_and_progress()
+
+        # Verify that pyperclip.copy was called
+        assert len(copied_text) == 1
+        # Verify that _play_sound_safe was called with both sound files
+        # (current_password_copied.wav and password_updated.wav)
+        assert len(sound_calls) == 2
+        assert "current_password_copied.wav" in sound_calls
+        assert "password_updated.wav" in sound_calls
+
+        dialog.Destroy()
+
+    def test_auto_copy_does_not_play_sound_when_disabled(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that sound is NOT played during auto-copy when disabled."""
+        import pyperclip
+
+        # Enable auto-copy but disable sounds
+        settings_manager.set("behavior.auto_copy_on_update", True)
+        settings_manager.set("audio.play_current_copied_sound", False)
+        settings_manager.set("audio.play_password_updated_sound", False)
+
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock _play_sound_safe to track if it's called
+        sound_calls = []
+
+        def mock_play_sound_safe(filename):
+            sound_calls.append(filename)
+
+        monkeypatch.setattr(dialog, "_play_sound_safe", mock_play_sound_safe)
+
+        # Mock pyperclip.copy
+        copied_text = []
+        original_copy = pyperclip.copy
+
+        def mock_copy(text):
+            copied_text.append(text)
+            return original_copy(text)
+
+        monkeypatch.setattr(pyperclip, "copy", mock_copy)
+
+        # Reset last_copied_otp to force a new update
+        dialog.last_copied_otp = None
+
+        # Trigger update
+        dialog._update_codes_and_progress()
+
+        # Verify that pyperclip.copy was called
+        assert len(copied_text) == 1
+        # Verify that _play_sound_safe was NOT called
+        assert len(sound_calls) == 0
 
         dialog.Destroy()
 

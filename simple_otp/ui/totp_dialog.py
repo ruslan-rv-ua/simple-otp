@@ -4,6 +4,7 @@ import time
 
 import pyperclip
 import wx
+from vocabraille import ErrorsMode, VocaBraille
 
 from simple_otp.core.i18n import _
 from simple_otp.core.settings_manager import SettingsManager
@@ -61,6 +62,13 @@ class TOTPDialog(wx.Dialog):
         self.sound_played_for_interval = False
         self.last_copied_otp = None  # Track last auto-copied OTP to avoid duplicates
 
+        # Initialize VocaBraille for screen reader support
+        try:
+            self.vocabraille = VocaBraille(errors=ErrorsMode.IGNORE)
+        except Exception:
+            # If VocaBraille fails to initialize, disable speech
+            self.vocabraille = None
+
         # Get hide_passwords setting
         self.hide_passwords = self.settings_manager.get("behavior.hide_passwords", True)
 
@@ -78,6 +86,15 @@ class TOTPDialog(wx.Dialog):
         # Center the dialog
         self.CenterOnParent()
 
+    def _configure_text_ctrl_focus(self, text_ctrl: wx.TextCtrl) -> None:
+        """Configure text control keyboard focus based on hide_passwords setting.
+
+        Args:
+            text_ctrl: The text control to configure
+        """
+        if not self.hide_passwords:
+            text_ctrl.AcceptsFocusFromKeyboard = lambda: True
+
     def _create_ui(self):
         """Create the dialog UI layout."""
         panel = wx.Panel(self)
@@ -91,9 +108,7 @@ class TOTPDialog(wx.Dialog):
         self.current_text = wx.TextCtrl(
             panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
-        # Only allow keyboard focus if passwords are not hidden
-        if not self.hide_passwords:
-            self.current_text.AcceptsFocusFromKeyboard = lambda: True
+        self._configure_text_ctrl_focus(self.current_text)
         # Make text larger and bold
         font = self.current_text.GetFont()
         font.PointSize = 14
@@ -117,9 +132,7 @@ class TOTPDialog(wx.Dialog):
         self.next_text = wx.TextCtrl(
             panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
-        # Only allow keyboard focus if passwords are not hidden
-        if not self.hide_passwords:
-            self.next_text.AcceptsFocusFromKeyboard = lambda: True
+        self._configure_text_ctrl_focus(self.next_text)
         self.next_text.SetName("next")
         self.next_text.SetFont(font)
         next_sizer.Add(self.next_text, 1, wx.ALL | wx.EXPAND, 5)
@@ -203,18 +216,64 @@ class TOTPDialog(wx.Dialog):
         # Set focus on close button
         self.close_btn.SetFocus()
 
-    def _update_codes_and_progress(self):
-        """Update the OTP codes and progress bar."""
-        current_time = time.time()
+    def _get_current_otp(self) -> str:
+        """Get current OTP code.
 
-        # Get current and next OTP codes
-        current_otp = self.totp.now()
+        Returns:
+            Current OTP code as a string
+        """
+        return self.totp.now()
 
-        # Calculate next OTP by getting OTP for next interval
-        next_time = int(current_time + self.account.interval)
-        next_otp = self.totp.at(next_time)
+    def _get_next_otp(self) -> str:
+        """Get next OTP code.
 
-        # Update text controls with formatted codes or hidden text
+        Returns:
+            Next OTP code as a string
+        """
+        next_time = int(time.time() + self.account.interval)
+        return self.totp.at(next_time)
+
+    def _play_sound_safe(self, sound_file: str) -> None:
+        """Play sound with error handling.
+
+        Args:
+            sound_file: Name of the sound file to play
+        """
+        if self.audio_player:
+            try:
+                self.audio_player.play(sound_file)
+            except (FileNotFoundError, RuntimeError):
+                # Silently ignore sound errors
+                pass
+
+    def _copy_otp_with_sound(
+        self, otp_code: str, sound_file: str, is_current: bool = True
+    ) -> None:
+        """Copy OTP to clipboard and play notification sound.
+
+        Args:
+            otp_code: The OTP code to copy
+            sound_file: Name of the sound file to play
+            is_current: True if copying current password, False for next password
+        """
+        pyperclip.copy(otp_code)
+        # Check appropriate setting based on which password is being copied
+        setting_key = (
+            "audio.play_current_copied_sound"
+            if is_current
+            else "audio.play_next_copied_sound"
+        )
+        play_sound = self.settings_manager.get(setting_key, True)
+        if play_sound:
+            self._play_sound_safe(sound_file)
+
+    def _update_otp_display(self, current_otp: str, next_otp: str) -> None:
+        """Update the text controls with OTP codes.
+
+        Args:
+            current_otp: Current OTP code
+            next_otp: Next OTP code
+        """
         if self.hide_passwords:
             self.current_text.SetValue("******")
             self.next_text.SetValue("******")
@@ -222,52 +281,120 @@ class TOTPDialog(wx.Dialog):
             self.current_text.SetValue(format_otp(current_otp))
             self.next_text.SetValue(format_otp(next_otp))
 
-        # Calculate progress (time remaining in current interval)
-        time_in_interval = current_time % self.account.interval
-        time_remaining = self.account.interval - time_in_interval
-        progress_percent = int((time_remaining / self.account.interval) * 100)
+    def _calculate_time_remaining(self, current_time: float) -> float:
+        """Calculate time remaining in current interval.
 
-        # Update progress bar (it goes down as time progresses)
+        Args:
+            current_time: Current time in seconds
+
+        Returns:
+            Time remaining in seconds
+        """
+        time_in_interval = current_time % self.account.interval
+        return self.account.interval - time_in_interval
+
+    def _update_progress_bar(self, time_remaining: float) -> None:
+        """Update the progress bar based on time remaining.
+
+        Args:
+            time_remaining: Time remaining in seconds
+        """
+        progress_percent = int((time_remaining / self.account.interval) * 100)
         self.progress_bar.SetValue(progress_percent)
 
-        # Get audio settings
+    def _handle_warning_sound(self, time_remaining: float) -> None:
+        """Play warning sound when time is running out.
+
+        Args:
+            time_remaining: Time remaining in seconds
+        """
         play_warning = self.settings_manager.get("audio.play_warning_sound", True)
         warning_seconds = self.settings_manager.get("audio.warning_sound_seconds", 5)
 
-        # Play warning sound when below threshold (only once per interval)
         if (
             time_remaining < warning_seconds
             and not self.sound_played_for_interval
             and play_warning
         ):
-            if self.audio_player:
-                try:
-                    self.audio_player.play("under_5_seconds.wav")
-                except (FileNotFoundError, RuntimeError):
-                    pass
+            self._play_sound_safe("under_5_seconds.wav")
             self.sound_played_for_interval = True
         elif time_remaining >= warning_seconds:
             # Reset flag when we're back above threshold (new interval started)
             self.sound_played_for_interval = False
 
-        # Auto-copy on password update
+    def _handle_auto_copy(self, current_otp: str, otp_has_changed: bool) -> None:
+        """Handle auto-copy functionality.
+
+        Args:
+            current_otp: Current OTP code
+            otp_has_changed: Whether OTP has changed since last check
+        """
         auto_copy_enabled = self.settings_manager.get(
             "behavior.auto_copy_on_update", False
         )
-        if auto_copy_enabled and current_otp != self.last_copied_otp:
-            # New OTP generated, auto-copy it
+        if auto_copy_enabled and otp_has_changed:
             pyperclip.copy(current_otp)
-            self.last_copied_otp = current_otp
-
-            # Play sound if enabled
             play_copied_sound = self.settings_manager.get(
-                "audio.play_password_copied_sound", True
+                "audio.play_current_copied_sound", True
             )
-            if play_copied_sound and self.audio_player:
-                try:
-                    self.audio_player.play("password_copied.wav")
-                except (FileNotFoundError, RuntimeError):
-                    pass
+            if play_copied_sound:
+                self._play_sound_safe("current_password_copied.wav")
+
+        # Play password updated sound if enabled and password has changed
+        if otp_has_changed:
+            play_updated_sound = self.settings_manager.get(
+                "audio.play_password_updated_sound", True
+            )
+            if play_updated_sound:
+                self._play_sound_safe("password_updated.wav")
+
+    def _handle_auto_speak(self, current_otp: str, otp_has_changed: bool) -> None:
+        """Handle auto-speak functionality.
+
+        Args:
+            current_otp: Current OTP code
+            otp_has_changed: Whether OTP has changed since last check
+        """
+        auto_speak_enabled = self.settings_manager.get(
+            "behavior.auto_speak_password", False
+        )
+        if auto_speak_enabled and otp_has_changed:
+            self._speak_otp(current_otp)
+
+    def _update_codes_and_progress(self):
+        """Update the OTP codes and progress bar."""
+        current_time = time.time()
+
+        # Get current and next OTP codes
+        current_otp = self._get_current_otp()
+        next_otp = self._get_next_otp()
+
+        # Update display
+        self._update_otp_display(current_otp, next_otp)
+
+        # Calculate and update progress
+        time_remaining = self._calculate_time_remaining(current_time)
+        self._update_progress_bar(time_remaining)
+
+        # Handle warning sound
+        self._handle_warning_sound(time_remaining)
+
+        # Check if OTP has changed
+        otp_has_changed = current_otp != self.last_copied_otp
+
+        # Handle auto-features
+        self._handle_auto_copy(current_otp, otp_has_changed)
+        self._handle_auto_speak(current_otp, otp_has_changed)
+
+        # Update tracking variable if OTP changed and auto-features were used
+        auto_copy_enabled = self.settings_manager.get(
+            "behavior.auto_copy_on_update", False
+        )
+        auto_speak_enabled = self.settings_manager.get(
+            "behavior.auto_speak_password", False
+        )
+        if otp_has_changed and (auto_copy_enabled or auto_speak_enabled):
+            self.last_copied_otp = current_otp
 
     def _on_timer(self, event):
         """Handle timer event to update codes and progress."""
@@ -275,42 +402,46 @@ class TOTPDialog(wx.Dialog):
 
     def _on_copy_current(self, event):
         """Copy current OTP to clipboard (without spaces)."""
-        # Get the actual OTP code, not the displayed value
-        otp_code = self.totp.now()
-        pyperclip.copy(otp_code)
-        # Play sound notification if enabled
-        play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
-        if play_sound and self.audio_player:
-            try:
-                self.audio_player.play("password_copied.wav")
-            except (FileNotFoundError, RuntimeError) as e:
-                # Log the error but don't interrupt the UI
-                print(f"Warning: Failed to play sound: {e}")
+        otp_code = self._get_current_otp()
+        self._copy_otp_with_sound(
+            otp_code, "current_password_copied.wav", is_current=True
+        )
 
     def _on_copy_next(self, event):
         """Copy next OTP to clipboard (without spaces)."""
-        # Get the actual next OTP code, not the displayed value
-        next_time = int(time.time() + self.account.interval)
-        otp_code = self.totp.at(next_time)
-        pyperclip.copy(otp_code)
-        # Play sound notification if enabled
-        play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
-        if play_sound and self.audio_player:
+        otp_code = self._get_next_otp()
+        self._copy_otp_with_sound(
+            otp_code, "next_password_copied.wav", is_current=False
+        )
+
+    def _speak_otp(self, otp_code: str) -> None:
+        """
+        Speak OTP code using VocaBraille.
+
+        Args:
+            otp_code: The OTP code to speak (without spaces)
+        """
+        if self.vocabraille:
             try:
-                self.audio_player.play("password_copied.wav")
-            except (FileNotFoundError, RuntimeError) as e:
-                # Log the error but don't interrupt the UI
-                print(f"Warning: Failed to play sound: {e}")
+                # Format OTP code as displayed (grouped by 2 digits)
+                # e.g., "12 34 56" or "12 34 56 78"
+                formatted_code = format_otp(otp_code)
+                self.vocabraille.say(formatted_code, interrupt=True)
+            except Exception:
+                # Silently ignore speech errors
+                pass
 
     def _on_pronounce_current(self, event):
-        """Pronounce current OTP (stub implementation)."""
-        # TODO: Implement text-to-speech for current OTP
-        pass
+        """Pronounce current OTP using screen reader."""
+        # Get the actual OTP code, not the displayed value
+        otp_code = self._get_current_otp()
+        self._speak_otp(otp_code)
 
     def _on_pronounce_next(self, event):
-        """Pronounce next OTP (stub implementation)."""
-        # TODO: Implement text-to-speech for next OTP
-        pass
+        """Pronounce next OTP using screen reader."""
+        # Get the actual next OTP code, not the displayed value
+        otp_code = self._get_next_otp()
+        self._speak_otp(otp_code)
 
     def _on_copy_current_accel(self, event):
         """Copy current OTP via keyboard shortcut."""

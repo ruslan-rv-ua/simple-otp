@@ -156,7 +156,9 @@ class TestSettingsDialog:
         assert dialog.digest_choice.IsEnabled()
 
         # Audio page controls
-        assert dialog.play_password_copied_check.IsEnabled()
+        assert dialog.play_current_copied_check.IsEnabled()
+        assert dialog.play_next_copied_check.IsEnabled()
+        assert dialog.play_password_updated_check.IsEnabled()
         assert dialog.play_warning_check.IsEnabled()
         assert dialog.auto_copy_on_update_check.IsEnabled()
 
@@ -182,7 +184,9 @@ class TestSettingsDialog:
         assert dialog.hide_passwords_check.GetValue() is True
 
         # Audio defaults
-        assert dialog.play_password_copied_check.GetValue() is True
+        assert dialog.play_current_copied_check.GetValue() is True
+        assert dialog.play_next_copied_check.GetValue() is True
+        assert dialog.play_password_updated_check.GetValue() is True
         assert dialog.play_warning_check.GetValue() is True
         assert dialog.warning_seconds_spin.GetValue() == 5
 
@@ -227,3 +231,30 @@ class TestSettingsDialog:
         dialog.hide_passwords_check.SetValue(False)
         dialog._save_settings()
         assert settings_manager.get("behavior.hide_passwords") is False
+
+    def test_auto_speak_password_checkbox(self, dialog, settings_manager):
+        """Test auto-speak password checkbox loads and saves correctly."""
+        # Test loading True
+        settings_manager.set("behavior.auto_speak_password", True)
+        dialog._load_settings()
+        assert dialog.auto_speak_password_check.GetValue() is True
+
+        # Test loading False
+        settings_manager.set("behavior.auto_speak_password", False)
+        dialog._load_settings()
+        assert dialog.auto_speak_password_check.GetValue() is False
+
+        # Test saving True
+        dialog.auto_speak_password_check.SetValue(True)
+        dialog._save_settings()
+        assert settings_manager.get("behavior.auto_speak_password") is True
+
+        # Test saving False
+        dialog.auto_speak_password_check.SetValue(False)
+        dialog._save_settings()
+        assert settings_manager.get("behavior.auto_speak_password") is False
+
+    def test_auto_speak_password_default_value(self, dialog):
+        """Test that auto-speak password defaults to False."""
+        # Should be False by default
+        assert dialog.auto_speak_password_check.GetValue() is False

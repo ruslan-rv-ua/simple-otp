@@ -153,6 +153,29 @@ class SettingsDialog(wx.Dialog):
         # Add spacer
         sizer.AddSpacer(10)
 
+        # Auto-speak password checkbox
+        self.auto_speak_password_check = wx.CheckBox(
+            panel,
+            label=_("settings.behavior.auto_speak_password"),
+        )
+        sizer.Add(self.auto_speak_password_check, 0, wx.ALL, 5)
+
+        # Add help text for auto-speak password
+        help_text_speak = wx.StaticText(
+            panel,
+            label=_("settings.behavior.auto_speak_password_help"),
+        )
+        help_text_speak.SetForegroundColour(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+        )
+        font_speak = help_text_speak.GetFont()
+        font_speak.PointSize = 9
+        help_text_speak.SetFont(font_speak)
+        sizer.Add(help_text_speak, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+
+        # Add spacer
+        sizer.AddSpacer(10)
+
         # Open last file on startup checkbox
         self.open_last_file_check = wx.CheckBox(
             panel,
@@ -181,11 +204,26 @@ class SettingsDialog(wx.Dialog):
         panel = wx.Panel(self.notebook)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Play password copied sound checkbox
-        self.play_password_copied_check = wx.CheckBox(
-            panel, label=_("settings.audio.play_password_copied")
+        # Play current password copied sound checkbox
+        self.play_current_copied_check = wx.CheckBox(
+            panel, label=_("settings.audio.play_current_copied")
         )
-        sizer.Add(self.play_password_copied_check, 0, wx.ALL, 5)
+        sizer.Add(self.play_current_copied_check, 0, wx.ALL, 5)
+
+        # Play next password copied sound checkbox
+        self.play_next_copied_check = wx.CheckBox(
+            panel, label=_("settings.audio.play_next_copied")
+        )
+        sizer.Add(self.play_next_copied_check, 0, wx.ALL, 5)
+
+        # Play password updated sound checkbox
+        self.play_password_updated_check = wx.CheckBox(
+            panel, label=_("settings.audio.play_password_updated")
+        )
+        sizer.Add(self.play_password_updated_check, 0, wx.ALL, 5)
+
+        # Add spacer
+        sizer.AddSpacer(10)
 
         # Play warning sound checkbox
         self.play_warning_check = wx.CheckBox(
@@ -229,10 +267,20 @@ class SettingsDialog(wx.Dialog):
         self.digest_choice.SetSelection(digest_map.get(digest, 0))
 
         # Audio settings
-        play_password_copied = self.settings_manager.get(
-            "audio.play_password_copied_sound", True
+        play_current_copied = self.settings_manager.get(
+            "audio.play_current_copied_sound", True
         )
-        self.play_password_copied_check.SetValue(play_password_copied)
+        self.play_current_copied_check.SetValue(play_current_copied)
+
+        play_next_copied = self.settings_manager.get(
+            "audio.play_next_copied_sound", True
+        )
+        self.play_next_copied_check.SetValue(play_next_copied)
+
+        play_password_updated = self.settings_manager.get(
+            "audio.play_password_updated_sound", True
+        )
+        self.play_password_updated_check.SetValue(play_password_updated)
 
         play_warning = self.settings_manager.get("audio.play_warning_sound", True)
         self.play_warning_check.SetValue(play_warning)
@@ -253,6 +301,11 @@ class SettingsDialog(wx.Dialog):
         hide_passwords = self.settings_manager.get("behavior.hide_passwords", True)
         self.hide_passwords_check.SetValue(hide_passwords)
 
+        auto_speak_password = self.settings_manager.get(
+            "behavior.auto_speak_password", False
+        )
+        self.auto_speak_password_check.SetValue(auto_speak_password)
+
         open_last_file = self.settings_manager.get(
             "files.open_last_file_on_startup", True
         )
@@ -272,9 +325,17 @@ class SettingsDialog(wx.Dialog):
         self.settings_manager.set("totp.default_digest", digest)
 
         # Audio settings
-        play_password_copied = self.play_password_copied_check.GetValue()
+        play_current_copied = self.play_current_copied_check.GetValue()
         self.settings_manager.set(
-            "audio.play_password_copied_sound", play_password_copied
+            "audio.play_current_copied_sound", play_current_copied
+        )
+
+        play_next_copied = self.play_next_copied_check.GetValue()
+        self.settings_manager.set("audio.play_next_copied_sound", play_next_copied)
+
+        play_password_updated = self.play_password_updated_check.GetValue()
+        self.settings_manager.set(
+            "audio.play_password_updated_sound", play_password_updated
         )
 
         play_warning = self.play_warning_check.GetValue()
@@ -289,6 +350,9 @@ class SettingsDialog(wx.Dialog):
 
         hide_passwords = self.hide_passwords_check.GetValue()
         self.settings_manager.set("behavior.hide_passwords", hide_passwords)
+
+        auto_speak_password = self.auto_speak_password_check.GetValue()
+        self.settings_manager.set("behavior.auto_speak_password", auto_speak_password)
 
         open_last_file = self.open_last_file_check.GetValue()
         self.settings_manager.set("files.open_last_file_on_startup", open_last_file)
