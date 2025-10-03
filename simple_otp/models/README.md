@@ -128,10 +128,7 @@ String enum for supported TOTP digest algorithms.
 - `SHA256`: Higher security
 - `SHA512`: Highest security
 
-### Methods
-
-#### `get_digest() -> Any`
-Returns the corresponding hashlib digest function (`sha1`, `sha256`, or `sha512`).
+**Note**: `DigestAlgorithm` is a `StrEnum`, so its values can be used directly as strings (e.g., `"sha1"`, `"sha256"`, `"sha512"`). PyOTP accepts these string values natively.
 
 ## Security Notes
 
