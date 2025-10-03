@@ -51,7 +51,7 @@ def set_locale(locale: str) -> None:
     This unloads and reloads translation data and sets the active locale
     in the `i18n` package.
     """
-    i18n.unload_everything()  # TODO: use reload_everything if available
+    i18n.unload_everything()
     i18n.load_everything(locale=locale, lock=True)
     i18n.set("locale", locale)
 
