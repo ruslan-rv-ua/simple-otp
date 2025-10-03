@@ -200,6 +200,7 @@ class TestSettingsManager:
     def test_behavior_settings_defaults(self, settings_manager):
         """Test behavior settings default values."""
         assert settings_manager.get("behavior.auto_copy_on_update") is False
+        assert settings_manager.get("behavior.hide_passwords") is True
 
     def test_modify_audio_settings(self, settings_manager):
         """Test modifying audio settings."""
@@ -215,6 +216,9 @@ class TestSettingsManager:
         """Test modifying behavior settings."""
         settings_manager.set("behavior.auto_copy_on_update", True)
         assert settings_manager.get("behavior.auto_copy_on_update") is True
+
+        settings_manager.set("behavior.hide_passwords", False)
+        assert settings_manager.get("behavior.hide_passwords") is False
 
     def test_audio_settings_persistence(self, settings_manager, temp_settings_file):
         """Test that audio settings persist across save/load."""

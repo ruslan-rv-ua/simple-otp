@@ -61,6 +61,9 @@ class TOTPDialog(wx.Dialog):
         self.sound_played_for_interval = False
         self.last_copied_otp = None  # Track last auto-copied OTP to avoid duplicates
 
+        # Get hide_passwords setting
+        self.hide_passwords = self.settings_manager.get("behavior.hide_passwords", True)
+
         # Create UI
         self._create_ui()
 
@@ -88,7 +91,9 @@ class TOTPDialog(wx.Dialog):
         self.current_text = wx.TextCtrl(
             panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
-        self.current_text.AcceptsFocusFromKeyboard = lambda: True
+        # Only allow keyboard focus if passwords are not hidden
+        if not self.hide_passwords:
+            self.current_text.AcceptsFocusFromKeyboard = lambda: True
         # Make text larger and bold
         font = self.current_text.GetFont()
         font.PointSize = 14
@@ -112,7 +117,9 @@ class TOTPDialog(wx.Dialog):
         self.next_text = wx.TextCtrl(
             panel, style=wx.TE_READONLY | wx.TE_CENTER, size=wx.Size(200, -1)
         )
-        self.next_text.AcceptsFocusFromKeyboard = lambda: True
+        # Only allow keyboard focus if passwords are not hidden
+        if not self.hide_passwords:
+            self.next_text.AcceptsFocusFromKeyboard = lambda: True
         self.next_text.SetName("next")
         self.next_text.SetFont(font)
         next_sizer.Add(self.next_text, 1, wx.ALL | wx.EXPAND, 5)
@@ -207,9 +214,13 @@ class TOTPDialog(wx.Dialog):
         next_time = int(current_time + self.account.interval)
         next_otp = self.totp.at(next_time)
 
-        # Update text controls with formatted codes
-        self.current_text.SetValue(format_otp(current_otp))
-        self.next_text.SetValue(format_otp(next_otp))
+        # Update text controls with formatted codes or hidden text
+        if self.hide_passwords:
+            self.current_text.SetValue("******")
+            self.next_text.SetValue("******")
+        else:
+            self.current_text.SetValue(format_otp(current_otp))
+            self.next_text.SetValue(format_otp(next_otp))
 
         # Calculate progress (time remaining in current interval)
         time_in_interval = current_time % self.account.interval
@@ -264,7 +275,8 @@ class TOTPDialog(wx.Dialog):
 
     def _on_copy_current(self, event):
         """Copy current OTP to clipboard (without spaces)."""
-        otp_code = self.current_text.GetValue().replace(" ", "")
+        # Get the actual OTP code, not the displayed value
+        otp_code = self.totp.now()
         pyperclip.copy(otp_code)
         # Play sound notification if enabled
         play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)
@@ -277,7 +289,9 @@ class TOTPDialog(wx.Dialog):
 
     def _on_copy_next(self, event):
         """Copy next OTP to clipboard (without spaces)."""
-        otp_code = self.next_text.GetValue().replace(" ", "")
+        # Get the actual next OTP code, not the displayed value
+        next_time = int(time.time() + self.account.interval)
+        otp_code = self.totp.at(next_time)
         pyperclip.copy(otp_code)
         # Play sound notification if enabled
         play_sound = self.settings_manager.get("audio.play_password_copied_sound", True)

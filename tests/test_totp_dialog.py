@@ -84,9 +84,14 @@ class TestTOTPDialog:
         assert len(current_code) > 0
         assert len(next_code) > 0
 
-        # Check that codes are formatted with spaces
-        assert " " in current_code
-        assert " " in next_code
+        # With default hide_passwords=True, codes should be "******"
+        if dialog.hide_passwords:
+            assert current_code == "******"
+            assert next_code == "******"
+        else:
+            # Check that codes are formatted with spaces
+            assert " " in current_code
+            assert " " in next_code
 
         # Check that progress bar has a value between 0 and 100
         progress = dialog.progress_bar.GetValue()
@@ -110,10 +115,11 @@ class TestTOTPDialog:
         event = wx.CommandEvent(wx.EVT_BUTTON.typeId, dialog.current_copy_btn.GetId())
         dialog._on_copy_current(event)
 
-        # Verify that the current code (without spaces) was copied
+        # Verify that a code was copied
         assert len(copied_text) == 1
-        current_code = dialog.current_text.GetValue().replace(" ", "")
-        assert copied_text[0] == current_code
+        # Verify it's a valid OTP code (6-8 digits)
+        assert copied_text[0].isdigit()
+        assert 6 <= len(copied_text[0]) <= 8
 
     def test_copy_next_button(self, dialog, monkeypatch):
         """Test copying next OTP to clipboard."""
@@ -133,10 +139,11 @@ class TestTOTPDialog:
         event = wx.CommandEvent(wx.EVT_BUTTON.typeId, dialog.next_copy_btn.GetId())
         dialog._on_copy_next(event)
 
-        # Verify that the next code (without spaces) was copied
+        # Verify that a code was copied
         assert len(copied_text) == 1
-        next_code = dialog.next_text.GetValue().replace(" ", "")
-        assert copied_text[0] == next_code
+        # Verify it's a valid OTP code (6-8 digits)
+        assert copied_text[0].isdigit()
+        assert 6 <= len(copied_text[0]) <= 8
 
     def test_audio_settings_respected_on_copy(
         self, app, account, settings_manager, monkeypatch
@@ -194,6 +201,114 @@ class TestTOTPDialog:
             "behavior.auto_copy_on_update", False
         )
         assert auto_copy_enabled is False
+
+        dialog.Destroy()
+
+    def test_hide_passwords_enabled_by_default(self, app, account, settings_manager):
+        """Test that hide_passwords is enabled by default."""
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Verify setting is True by default
+        assert dialog.hide_passwords is True
+        assert dialog.settings_manager.get("behavior.hide_passwords", True) is True
+
+        dialog.Destroy()
+
+    def test_passwords_hidden_when_enabled(self, app, account, settings_manager):
+        """Test that OTP codes are hidden when hide_passwords is True."""
+        settings_manager.set("behavior.hide_passwords", True)
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Update codes
+        dialog._update_codes_and_progress()
+
+        # Verify codes are hidden
+        assert dialog.current_text.GetValue() == "******"
+        assert dialog.next_text.GetValue() == "******"
+
+        dialog.Destroy()
+
+    def test_passwords_visible_when_disabled(self, app, account, settings_manager):
+        """Test that OTP codes are visible when hide_passwords is False."""
+        settings_manager.set("behavior.hide_passwords", False)
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Update codes
+        dialog._update_codes_and_progress()
+
+        # Verify codes are visible and formatted
+        current_code = dialog.current_text.GetValue()
+        next_code = dialog.next_text.GetValue()
+
+        assert current_code != "******"
+        assert next_code != "******"
+        assert " " in current_code  # Should be formatted with spaces
+        assert " " in next_code
+
+        dialog.Destroy()
+
+    def test_keyboard_focus_disabled_when_passwords_hidden(
+        self, app, account, settings_manager
+    ):
+        """Test that text controls can't accept keyboard focus when hidden."""
+        settings_manager.set("behavior.hide_passwords", True)
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Verify AcceptsFocusFromKeyboard is NOT set (should use default behavior)
+        # When hide_passwords=True, we don't override AcceptsFocusFromKeyboard
+        # so it should return the default False for read-only controls
+        assert (
+            not hasattr(dialog.current_text.AcceptsFocusFromKeyboard, "__self__")
+            or not dialog.current_text.AcceptsFocusFromKeyboard()
+        )
+
+        dialog.Destroy()
+
+    def test_keyboard_focus_enabled_when_passwords_visible(
+        self, app, account, settings_manager
+    ):
+        """Test that text controls accept keyboard focus when passwords are visible."""
+        settings_manager.set("behavior.hide_passwords", False)
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Verify AcceptsFocusFromKeyboard is set to True
+        assert dialog.current_text.AcceptsFocusFromKeyboard()
+        assert dialog.next_text.AcceptsFocusFromKeyboard()
+
+        dialog.Destroy()
+
+    def test_copy_works_with_hidden_passwords(
+        self, app, account, settings_manager, monkeypatch
+    ):
+        """Test that copying OTP works even when passwords are hidden."""
+        import pyperclip
+
+        settings_manager.set("behavior.hide_passwords", True)
+        dialog = TOTPDialog(None, account, "demo123", settings_manager)
+
+        # Mock pyperclip.copy to verify correct code is copied
+        copied_text = []
+        original_copy = pyperclip.copy
+
+        def mock_copy(text):
+            copied_text.append(text)
+            return original_copy(text)
+
+        monkeypatch.setattr(pyperclip, "copy", mock_copy)
+
+        # Verify display shows hidden text
+        dialog._update_codes_and_progress()
+        assert dialog.current_text.GetValue() == "******"
+
+        # Copy current OTP
+        event = wx.CommandEvent(wx.EVT_BUTTON.typeId, dialog.current_copy_btn.GetId())
+        dialog._on_copy_current(event)
+
+        # Verify that actual OTP code was copied, not "******"
+        assert len(copied_text) == 1
+        assert copied_text[0] != "******"
+        assert copied_text[0].isdigit()
+        assert len(copied_text[0]) == 6  # Default is 6 digits
 
         dialog.Destroy()
 

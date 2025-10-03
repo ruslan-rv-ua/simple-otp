@@ -20,6 +20,7 @@ class SettingsManager:
         },
         "behavior": {
             "auto_copy_on_update": False,
+            "hide_passwords": True,
         },
         "audio": {
             "play_password_copied_sound": True,
