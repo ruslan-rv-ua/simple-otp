@@ -6,6 +6,7 @@ import re
 import wx
 
 from simple_otp.core.i18n import _
+from simple_otp.core.logger import logger
 from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import DigestAlgorithm
 
@@ -21,6 +22,8 @@ class AddAccountDialog(wx.Dialog):
             parent: Parent window
             settings_manager: SettingsManager instance for loading TOTP defaults
         """
+        logger.debug("AddAccountDialog opened")
+
         super().__init__(
             parent,
             title=_("add_account.title"),
@@ -140,6 +143,7 @@ class AddAccountDialog(wx.Dialog):
         # Check name is not empty
         name = self.name_ctrl.GetValue().strip()
         if not name:
+            logger.warning("Account validation failed: name is empty")
             wx.MessageBox(
                 _("add_account.validation.name_required"),
                 _("add_account.validation.validation_error"),
@@ -151,6 +155,7 @@ class AddAccountDialog(wx.Dialog):
         # Check secret is not empty and is valid base32
         secret = self.secret_ctrl.GetValue().strip()
         if not secret:
+            logger.warning("Account validation failed: secret is empty")
             wx.MessageBox(
                 _("add_account.validation.secret_required"),
                 _("add_account.validation.validation_error"),
@@ -161,6 +166,7 @@ class AddAccountDialog(wx.Dialog):
 
         # Validate base32 format
         if not self._is_valid_base32(secret):
+            logger.warning("Account validation failed: invalid Base32 format")
             wx.MessageBox(
                 _("add_account.validation.invalid_base32"),
                 _("add_account.validation.validation_error"),
@@ -175,6 +181,7 @@ class AddAccountDialog(wx.Dialog):
             clean_secret = secret.replace(" ", "").upper()
             base64.b32decode(clean_secret)
         except Exception as e:
+            logger.warning(f"Account validation failed: Base32 decode error - {e}")
             wx.MessageBox(
                 _("add_account.validation.invalid_base32_decode", error=str(e)),
                 _("add_account.validation.validation_error"),
@@ -183,6 +190,7 @@ class AddAccountDialog(wx.Dialog):
             self.secret_ctrl.SetFocus()
             return False
 
+        logger.info(f"Account validation successful for: {name}")
         return True
 
     def _is_valid_base32(self, value: str) -> bool:

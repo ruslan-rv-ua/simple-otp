@@ -3,6 +3,7 @@
 import wx
 
 from simple_otp.core.i18n import _
+from simple_otp.core.logger import logger
 from simple_otp.core.settings_manager import SettingsManager
 
 
@@ -17,6 +18,8 @@ class SettingsDialog(wx.Dialog):
             parent: Parent window
             settings_manager: SettingsManager instance to read/write settings
         """
+        logger.debug("SettingsDialog opened")
+
         super().__init__(
             parent,
             title=_("settings.title"),
@@ -313,6 +316,8 @@ class SettingsDialog(wx.Dialog):
 
     def _save_settings(self):
         """Save settings from UI controls to the settings manager."""
+        logger.debug("Saving settings from SettingsDialog")
+
         # TOTP settings
         digits = self.digits_choice.GetSelection() + 6  # 0->6, 1->7, 2->8
         self.settings_manager.set("totp.default_digits", digits)
@@ -359,6 +364,7 @@ class SettingsDialog(wx.Dialog):
 
         # Save to file
         self.settings_manager.save()
+        logger.info("Settings saved successfully")
 
     def _on_ok(self, event):
         """Handle OK button click."""
@@ -374,6 +380,7 @@ class SettingsDialog(wx.Dialog):
         )
 
         if confirm == wx.YES:
+            logger.info("User confirmed reset to default settings")
             self.settings_manager.reset_to_defaults()
             self._load_settings()
             wx.MessageBox(
@@ -381,6 +388,8 @@ class SettingsDialog(wx.Dialog):
                 _("settings.messages.settings_reset"),
                 wx.OK | wx.ICON_INFORMATION,
             )
+        else:
+            logger.debug("User cancelled reset to defaults")
 
     def _on_warning_check_changed(self, event):
         """Handle warning sound checkbox change to enable/disable spin control."""

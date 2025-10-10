@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from simple_otp.core.logger import logger
+
 
 class SettingsManager:
     """Manages application settings with JSON persistence."""
@@ -51,6 +53,8 @@ class SettingsManager:
         else:
             self.settings_file = Path(settings_file)
 
+        logger.debug(f"SettingsManager initialized with file: {self.settings_file}")
+
         self._settings: dict[str, Any] = {}
         self.load()
 
@@ -68,7 +72,11 @@ class SettingsManager:
                     self._settings = self._merge_settings(
                         copy.deepcopy(self.DEFAULT_SETTINGS), loaded_settings
                     )
-            except (json.JSONDecodeError, OSError):
+                logger.info(f"Settings loaded from {self.settings_file}")
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f"Settings file corrupted (JSON error): {e}, using defaults"
+                )
                 # If file is corrupted or unreadable, use defaults
                 self._settings = copy.deepcopy(self.DEFAULT_SETTINGS)
                 # Try to save defaults
@@ -76,7 +84,11 @@ class SettingsManager:
                     self.save()
                 except OSError:
                     pass  # Ignore save errors during load
+            except OSError as e:
+                logger.error(f"Failed to load settings file: {e}, using defaults")
+                self._settings = copy.deepcopy(self.DEFAULT_SETTINGS)
         else:
+            logger.info("Settings file not found, using defaults and creating file")
             # First run - use defaults and create the file
             self._settings = copy.deepcopy(self.DEFAULT_SETTINGS)
             try:
@@ -91,6 +103,8 @@ class SettingsManager:
 
         with open(self.settings_file, "w", encoding="utf-8") as f:
             json.dump(self._settings, f, indent=2, ensure_ascii=False)
+
+        logger.debug(f"Settings saved to {self.settings_file}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -145,6 +159,7 @@ class SettingsManager:
 
     def reset_to_defaults(self) -> None:
         """Reset all settings to default values."""
+        logger.info("Resetting all settings to default values")
         self._settings = copy.deepcopy(self.DEFAULT_SETTINGS)
 
     def _merge_settings(

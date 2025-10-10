@@ -9,6 +9,7 @@ from ObjectListView3 import ColumnDefn, Filter, ObjectListView
 from simple_otp.core.accounts_manager import AccountsManager
 from simple_otp.core.authenticator import Authenticator
 from simple_otp.core.i18n import _
+from simple_otp.core.logger import logger
 from simple_otp.core.recent_files_manager import RecentFilesManager
 from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.core.version_utils import get_app_version
@@ -30,39 +31,59 @@ class MainWindow(wx.Frame):
         Args:
             parent: Parent window (typically None)
         """
-        super().__init__(parent, title=_("main.title"), style=wx.DEFAULT_FRAME_STYLE)
+        logger.info("Initializing MainWindow")
 
-        # Store the password for decrypting accounts
-        self.password = None
+        try:
+            super().__init__(
+                parent, title=_("main.title"), style=wx.DEFAULT_FRAME_STYLE
+            )
+            logger.debug(f"MainWindow frame created with title: {_('main.title')}")
 
-        # Maximize the window
-        self.Maximize()
+            # Store the password for decrypting accounts
+            self.password = None
 
-        # Initialize accounts manager (None if no file open)
-        self.accounts_manager = None
-        self.current_file = None
+            # Maximize the window
+            self.Maximize()
+            logger.debug("Window maximized")
 
-        # Initialize settings manager
-        self.settings_manager = SettingsManager()
+            # Initialize accounts manager (None if no file open)
+            self.accounts_manager = None
+            self.current_file = None
 
-        # Initialize helper modules
-        self.authenticator = Authenticator(self)
-        self.recent_files_manager = RecentFilesManager(self.settings_manager)
-        self.file_controller = FileController(self, self.authenticator)
+            # Initialize settings manager
+            logger.debug("Initializing SettingsManager")
+            self.settings_manager = SettingsManager()
 
-        # Store reference to Recent Files submenu for dynamic updates
-        self.recent_files_menu = None
+            # Initialize helper modules
+            logger.debug(
+                "Initializing helper modules "
+                "(Authenticator, RecentFilesManager, FileController)"
+            )
+            self.authenticator = Authenticator(self)
+            self.recent_files_manager = RecentFilesManager(self.settings_manager)
+            self.file_controller = FileController(self, self.authenticator)
 
-        # Create the UI components
-        self._create_menu_bar()
-        self._create_ui()
+            # Store reference to Recent Files submenu for dynamic updates
+            self.recent_files_menu = None
 
-        # Update window title with filename
-        self._update_title()
+            # Create the UI components
+            logger.debug("Creating menu bar and UI")
+            self._create_menu_bar()
+            self._create_ui()
 
-        # Schedule opening the last file after the window is shown
-        # This ensures the password dialog appears centered on the main window
-        wx.CallAfter(self._open_last_file_on_startup)
+            # Update window title with filename
+            self._update_title()
+
+            # Schedule opening the last file after the window is shown
+            # This ensures the password dialog appears centered on the main window
+            logger.debug("Scheduling deferred file opening on startup")
+            wx.CallAfter(self._open_last_file_on_startup)
+
+            logger.info("MainWindow initialized successfully")
+
+        except Exception as e:
+            logger.opt(exception=True).critical(f"Failed to initialize MainWindow: {e}")
+            raise
 
     def _create_menu_bar(self):
         """Create the menu bar with File, Account, Tools, and Help menus."""
@@ -117,6 +138,11 @@ class MainWindow(wx.Frame):
             _("main.menu.options.settings"),
             _("main.menu.options.settings_hint"),
         )
+        open_log_item = options_menu.Append(
+            wx.ID_ANY,
+            _("main.menu.options.open_log"),
+            _("main.menu.options.open_log_hint"),
+        )
         menu_bar.Append(options_menu, _("main.menu.options.options"))
 
         # Help menu
@@ -143,6 +169,7 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self._on_delete_account, delete_item)
         self.Bind(wx.EVT_MENU, self._on_exit, exit_item)
         self.Bind(wx.EVT_MENU, self._on_settings, settings_item)
+        self.Bind(wx.EVT_MENU, self._on_open_log, open_log_item)
         self.Bind(wx.EVT_MENU, self._on_user_guide, user_guide_item)
         self.Bind(wx.EVT_MENU, self._on_about, about_item)
 
@@ -311,33 +338,52 @@ class MainWindow(wx.Frame):
 
     def _on_item_activated(self, event):
         """Handle list item activation (double-click or Enter)."""
+        logger.debug("List item activated event triggered")
+
         if not self._ensure_file_open():
+            logger.warning("Cannot activate item: no file open")
             return
 
         account = self.accounts_list.GetSelectedObject()
         if account is None:
+            logger.warning("Cannot activate item: no account selected")
             return
 
         try:
+            logger.info(
+                f"Opening TOTP dialog for account: {account.name} ({account.issuer})"
+            )
             # Show TOTP dialog using the stored password and settings
             dialog = TOTPDialog(self, account, self.password, self.settings_manager)
             dialog.ShowModal()
             dialog.Destroy()
+            logger.debug("TOTP dialog closed")
         except Exception as e:
+            logger.opt(exception=True).error(
+                f"Failed to display TOTP for {account.name}: {e}"
+            )
             self._show_error(_("main.messages.failed_to_display_totp", error=str(e)))
 
     def _on_add_account(self, event):
         """Handle Add Account menu item."""
+        logger.debug("Add account menu item clicked")
+
         if not self._ensure_file_open():
+            logger.warning("Cannot add account: no file open")
             return
 
         # Show the add account dialog
+        logger.debug("Opening AddAccountDialog")
         dialog = AddAccountDialog(self, self.settings_manager)
         result = dialog.ShowModal()
 
         if result == wx.ID_OK:
             # Get the account data from the dialog
             account_data = dialog.get_account_data()
+            logger.info(
+                f"User confirmed adding account: {account_data['name']} "
+                f"({account_data.get('issuer', 'N/A')})"
+            )
 
             try:
                 # Create a new TOTP account with the provided data
@@ -350,9 +396,13 @@ class MainWindow(wx.Frame):
                     digest=account_data["digest"],
                     interval=account_data["interval"],
                 )
+                logger.debug(f"TOTPAccount created: {new_account.get_display_name()}")
 
                 # Add the account to the accounts manager
                 self.accounts_manager.add_account(new_account)
+                logger.info(
+                    f"Account added to manager: {new_account.get_display_name()}"
+                )
 
                 # Refresh the accounts list
                 self._load_accounts()
@@ -368,6 +418,9 @@ class MainWindow(wx.Frame):
 
             except ValueError as e:
                 # Handle duplicate account or validation errors
+                logger.opt(exception=True).error(
+                    f"Failed to add account (ValueError): {e}"
+                )
                 self._show_error(_("main.messages.failed_to_add_account", error=str(e)))
             except Exception as e:
                 # Handle any other errors
@@ -377,20 +430,29 @@ class MainWindow(wx.Frame):
 
     def _on_delete_account(self, event):
         """Handle Delete Account menu item."""
+        logger.debug("Delete account menu item clicked")
+
         if not self._ensure_file_open():
+            logger.warning("Cannot delete account: no file open")
             return
 
         selected = self.accounts_list.GetSelectedObject()
         if selected is None:
+            logger.warning("Cannot delete account: no account selected")
             self._show_warning(
                 _("main.messages.no_account_selected"),
                 _("main.dialogs.confirm_delete"),
             )
             return
 
+        logger.info(f"Delete requested for account: {selected.get_display_name()}")
+
         # Check if this is the last account
         accounts = self.accounts_manager.list_accounts()
         is_last_account = len(accounts) == 1
+        logger.debug(
+            f"Total accounts: {len(accounts)}, Is last account: {is_last_account}"
+        )
 
         # Confirm deletion
         confirm_msg = _(
@@ -399,6 +461,7 @@ class MainWindow(wx.Frame):
         if is_last_account:
             confirm_msg += _("main.messages.delete_last_account")
 
+        logger.debug("Showing delete confirmation dialog")
         confirm = wx.MessageBox(
             confirm_msg,
             _("main.dialogs.confirm_delete"),
@@ -406,11 +469,16 @@ class MainWindow(wx.Frame):
         )
 
         if confirm != wx.YES:
+            logger.info("User cancelled account deletion")
             return
 
         # Delete the account
+        logger.info(f"User confirmed deletion of {selected.get_display_name()}")
         try:
             if self.accounts_manager.delete_account(selected.name, selected.issuer):
+                logger.info(
+                    f"Account deleted successfully: {selected.get_display_name()}"
+                )
                 # Refresh the list
                 self._load_accounts()
                 self._show_success(
@@ -421,8 +489,13 @@ class MainWindow(wx.Frame):
                     _("main.dialogs.account_deleted"),
                 )
             else:
+                logger.error(
+                    f"Failed to delete account (not found): "
+                    f"{selected.get_display_name()}"
+                )
                 self._show_error(_("main.messages.failed_to_delete_not_found"))
         except Exception as e:
+            logger.opt(exception=True).error(f"Failed to delete account: {e}")
             self._show_error(_("main.messages.failed_to_delete_account", error=str(e)))
 
     def _on_exit(self, event):
@@ -434,6 +507,31 @@ class MainWindow(wx.Frame):
         dialog = SettingsDialog(self, self.settings_manager)
         dialog.ShowModal()
         dialog.Destroy()
+
+    def _on_open_log(self, event):
+        """Handle Open Log menu item - opens log file with default editor."""
+        import os
+
+        from simple_otp.core.logger import get_log_file_path
+
+        log_file = get_log_file_path()
+
+        try:
+            logger.info(f"User requested to open log file: {log_file}")
+
+            if not log_file.exists():
+                logger.warning(f"Log file does not exist: {log_file}")
+                self._show_error(_("main.messages.log_file_not_found"))
+                return
+
+            # Open with default editor (Windows: os.startfile)
+            logger.debug(f"Opening log file with default editor: {log_file}")
+            os.startfile(str(log_file))
+            logger.info("Log file opened successfully")
+
+        except Exception as e:
+            logger.opt(exception=True).error(f"Failed to open log file: {e}")
+            self._show_error(_("main.messages.failed_to_open_log", error=str(e)))
 
     def _on_language_change(self, event, locale_code: str):
         """

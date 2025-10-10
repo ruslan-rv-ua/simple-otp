@@ -7,6 +7,7 @@ import wx
 from vocabraille import ErrorsMode, VocaBraille
 
 from simple_otp.core.i18n import _
+from simple_otp.core.logger import logger
 from simple_otp.core.settings_manager import SettingsManager
 from simple_otp.models.totp_account import TOTPAccount
 from simple_otp.ui.audio_player import audio_player
@@ -46,6 +47,8 @@ class TOTPDialog(wx.Dialog):
             password: Password to decrypt the account secret
             settings_manager: Settings manager for audio and auto-copy settings
         """
+        logger.debug(f"TOTPDialog opened for account: {account.get_display_name()}")
+
         super().__init__(
             parent,
             title=_("totp_dialog.title", name=account.get_display_name()),
@@ -256,6 +259,9 @@ class TOTPDialog(wx.Dialog):
             sound_file: Name of the sound file to play
             is_current: True if copying current password, False for next password
         """
+        code_type = "current" if is_current else "next"
+        logger.info(f"User manually copied {code_type} OTP to clipboard")
+
         pyperclip.copy(otp_code)
         # Check appropriate setting based on which password is being copied
         setting_key = (
@@ -333,6 +339,7 @@ class TOTPDialog(wx.Dialog):
             "behavior.auto_copy_on_update", False
         )
         if auto_copy_enabled and otp_has_changed:
+            logger.debug("Auto-copying current OTP to clipboard")
             pyperclip.copy(current_otp)
             play_copied_sound = self.settings_manager.get(
                 "audio.play_current_copied_sound", True
@@ -453,6 +460,7 @@ class TOTPDialog(wx.Dialog):
 
     def _on_close(self, event):
         """Handle close button click."""
+        logger.debug("TOTPDialog closed")
         self.timer.Stop()
         self.EndModal(wx.ID_CLOSE)
 

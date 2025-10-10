@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from simple_otp.constants import MAX_RECENT_FILES
+from simple_otp.core.logger import logger
 from simple_otp.core.settings_manager import SettingsManager
 
 
@@ -37,6 +38,9 @@ class RecentFilesManager:
         # Remove if already exists (to move to front)
         if file_str in recent_files:
             recent_files.remove(file_str)
+            logger.debug(f"Moved existing file to front of recent list: {file_str}")
+        else:
+            logger.info(f"Added new file to recent list: {file_str}")
 
         # Add to front
         recent_files.insert(0, file_str)
@@ -68,8 +72,12 @@ class RecentFilesManager:
             recent_files.remove(file_str)
             self.settings.set("files.recent_files", recent_files)
             self.settings.save()
+            logger.info(f"Removed file from recent list: {file_str}")
             return True
 
+        logger.debug(
+            f"Attempted to remove non-existent file from recent list: {file_str}"
+        )
         return False
 
     def get_recent_files(self) -> list[Path]:
@@ -93,8 +101,10 @@ class RecentFilesManager:
 
     def clear_history(self) -> None:
         """Clear all recent files from history."""
+        count = len(self.get_recent_files_strings())
         self.settings.set("files.recent_files", [])
         self.settings.save()
+        logger.info(f"Cleared recent files history ({count} items)")
 
     def has_recent_files(self) -> bool:
         """

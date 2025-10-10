@@ -3,6 +3,7 @@
 import wx
 
 from simple_otp.core.i18n import _
+from simple_otp.core.logger import logger
 
 
 class PasswordDialog(wx.Dialog):
@@ -28,6 +29,9 @@ class PasswordDialog(wx.Dialog):
             message: Message to display above password field
             require_confirmation: If True, show password confirmation field
         """
+        mode = "with confirmation" if require_confirmation else "login mode"
+        logger.debug(f"PasswordDialog opened ({mode})")
+
         # Use default title and message if not provided
         if title is None:
             title = _("password_dialog.title_required")
@@ -112,6 +116,7 @@ class PasswordDialog(wx.Dialog):
 
         # Validate password is not empty
         if not password:
+            logger.warning("Password validation failed: empty password")
             wx.MessageBox(
                 _("password_dialog.validation.password_empty"),
                 _("password_dialog.validation.invalid_password"),
@@ -125,6 +130,7 @@ class PasswordDialog(wx.Dialog):
         if self.require_confirmation and self.confirm_ctrl is not None:
             confirm = self.confirm_ctrl.GetValue()
             if password != confirm:
+                logger.warning("Password validation failed: passwords do not match")
                 wx.MessageBox(
                     _("password_dialog.validation.passwords_mismatch"),
                     _("password_dialog.validation.password_mismatch"),
@@ -135,6 +141,7 @@ class PasswordDialog(wx.Dialog):
                 self.confirm_ctrl.SetFocus()
                 return
 
+        logger.info("Password validation successful, dialog closing with OK")
         # Close with OK result
         self.EndModal(wx.ID_OK)
 
