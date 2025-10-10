@@ -70,6 +70,30 @@ def get_available_locales() -> list[str]:
     return sorted(available)
 
 
+def get_locale_native_name(locale_code: str) -> str:
+    """Get the native name of a locale from its locale file.
+
+    Args:
+        locale_code: Locale code (e.g., "en-US", "uk-UA")
+
+    Returns:
+        Native name of the locale (e.g., "English", "Українська"),
+        or the locale code if the native name is not found.
+    """
+    import json
+
+    locale_file = locales_dir / f"{locale_code}.json"
+    if locale_file.exists():
+        try:
+            with locale_file.open(encoding="utf-8") as f:
+                data = json.load(f)
+                # Try to get native name from locale.native_name
+                return data.get("locale", {}).get("native_name", locale_code)
+        except (json.JSONDecodeError, OSError):
+            pass
+    return locale_code
+
+
 def init_i18n(locale: str | None = None, auto_detect: bool = True) -> None:
     """Initialize i18n configuration for the application.
 

@@ -1,4 +1,7 @@
 {
+    "locale": {
+        "native_name": "Українська"
+    },
     "main": {
         "title": "Simple OTP",
         "title_with_file": "Simple OTP - %{filename}",

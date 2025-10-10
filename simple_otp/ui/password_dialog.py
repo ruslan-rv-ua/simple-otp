@@ -39,8 +39,8 @@ class PasswordDialog(wx.Dialog):
         self.require_confirmation = require_confirmation
         self._create_ui(message)
 
-        # Center the dialog
-        self.Centre()
+        # Center the dialog on parent window
+        self.CenterOnParent()
 
     def _create_ui(self, message: str):
         """Create the dialog UI."""

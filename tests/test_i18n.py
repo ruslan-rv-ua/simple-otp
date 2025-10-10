@@ -2,6 +2,7 @@
 
 from simple_otp.core.i18n import (
     get_available_locales,
+    get_locale_native_name,
     get_windows_locale,
     init_i18n,
     set_locale,
@@ -112,3 +113,18 @@ class TestI18n:
 
         # Verify they're different
         assert english_search != ukrainian_search
+
+    def test_get_locale_native_name_en_us(self):
+        """Test getting native name for English locale."""
+        name = get_locale_native_name("en-US")
+        assert name == "English"
+
+    def test_get_locale_native_name_uk_ua(self):
+        """Test getting native name for Ukrainian locale."""
+        name = get_locale_native_name("uk-UA")
+        assert name == "Українська"
+
+    def test_get_locale_native_name_missing_locale(self):
+        """Test that missing locale returns the code itself."""
+        name = get_locale_native_name("xx-XX")
+        assert name == "xx-XX"

@@ -29,7 +29,7 @@ class AddAccountDialog(wx.Dialog):
 
         self.settings_manager = settings_manager
         self._create_ui()
-        self.Centre()
+        self.CenterOnParent()
 
     def _create_ui(self):
         """Create the dialog UI."""

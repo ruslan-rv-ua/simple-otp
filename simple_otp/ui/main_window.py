@@ -60,8 +60,9 @@ class MainWindow(wx.Frame):
         # Update window title with filename
         self._update_title()
 
-        # Try to open the last file on startup (if setting is enabled)
-        self._open_last_file_on_startup()
+        # Schedule opening the last file after the window is shown
+        # This ensures the password dialog appears centered on the main window
+        wx.CallAfter(self._open_last_file_on_startup)
 
     def _create_menu_bar(self):
         """Create the menu bar with File, Account, Tools, and Help menus."""
@@ -155,20 +156,14 @@ class MainWindow(wx.Frame):
         Args:
             menu: The menu to populate with language items
         """
-        from simple_otp.core.i18n import get_available_locales
-
-        # Map locale codes to native language names
-        locale_names = {
-            "en-US": "English",
-            "uk-UA": "Українська",
-        }
+        from simple_otp.core.i18n import get_available_locales, get_locale_native_name
 
         available_locales = get_available_locales()
         current_locale = self.settings_manager.get("locale")
 
         for locale_code in available_locales:
-            # Get native language name (fallback to locale code if not mapped)
-            language_name = locale_names.get(locale_code, locale_code)
+            # Get native language name from locale file
+            language_name = get_locale_native_name(locale_code)
 
             # Create menu item
             item = menu.AppendRadioItem(wx.ID_ANY, language_name)
@@ -237,6 +232,20 @@ class MainWindow(wx.Frame):
         else:
             self.accounts_list.SetObjects([])
 
+    def _ensure_file_open(self) -> bool:
+        """
+        Ensure a file is open and password is available.
+
+        Returns:
+            True if file and password are available, False otherwise
+        """
+        if not self.accounts_manager or not self.password:
+            self._show_warning(
+                _("main.messages.no_file_open"), _("main.dialogs.no_file")
+            )
+            return False
+        return True
+
     # Helper methods for consistent message dialogs
     def _show_error(self, message: str, title: str | None = None):
         """
@@ -302,10 +311,7 @@ class MainWindow(wx.Frame):
 
     def _on_item_activated(self, event):
         """Handle list item activation (double-click or Enter)."""
-        if not self.accounts_manager or not self.password:
-            self._show_warning(
-                _("main.messages.no_file_open"), _("main.dialogs.no_file")
-            )
+        if not self._ensure_file_open():
             return
 
         account = self.accounts_list.GetSelectedObject()
@@ -322,10 +328,7 @@ class MainWindow(wx.Frame):
 
     def _on_add_account(self, event):
         """Handle Add Account menu item."""
-        if not self.accounts_manager or not self.password:
-            self._show_warning(
-                _("main.messages.no_file_open_create"), _("main.dialogs.no_file")
-            )
+        if not self._ensure_file_open():
             return
 
         # Show the add account dialog
@@ -374,10 +377,7 @@ class MainWindow(wx.Frame):
 
     def _on_delete_account(self, event):
         """Handle Delete Account menu item."""
-        if not self.accounts_manager:
-            self._show_warning(
-                _("main.messages.no_file_open"), _("main.dialogs.no_file")
-            )
+        if not self._ensure_file_open():
             return
 
         selected = self.accounts_list.GetSelectedObject()
