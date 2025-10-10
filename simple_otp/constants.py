@@ -9,3 +9,6 @@ MIN_PBKDF2_ITERATIONS = 100_000
 
 # Maximum number of recent files to remember
 MAX_RECENT_FILES = 16
+
+# Maximum number of password attempts for authentication
+MAX_PASSWORD_ATTEMPTS = 3

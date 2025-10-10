@@ -98,9 +98,9 @@ class TestMainWindow:
             mock_dialog.GetPassword.return_value = password
             mock_dialog_class.return_value = mock_dialog
 
-            result_password, success = main_window._authenticate(file_path)
+            accounts_manager, result_password = main_window._authenticate(file_path)
 
-            assert success is True
+            assert accounts_manager is not None
             assert result_password == password
             mock_dialog.Destroy.assert_called_once()
 
@@ -114,9 +114,9 @@ class TestMainWindow:
             mock_dialog.ShowModal.return_value = wx.ID_CANCEL
             mock_dialog_class.return_value = mock_dialog
 
-            result_password, success = main_window._authenticate(file_path)
+            accounts_manager, result_password = main_window._authenticate(file_path)
 
-            assert success is False
+            assert accounts_manager is None
             assert result_password is None
             mock_dialog.Destroy.assert_called_once()
 
@@ -131,14 +131,12 @@ class TestMainWindow:
             mock_dialog.GetPassword.return_value = "wrong_password"
             mock_dialog_class.return_value = mock_dialog
 
-            # Mock MessageBox to avoid showing error dialog
-            with patch("simple_otp.ui.main_window.wx.MessageBox"):
-                result_password, success = main_window._authenticate(file_path)
+            accounts_manager, result_password = main_window._authenticate(file_path)
 
-                assert success is False
-                assert result_password is None
-                # Should be called 3 times (max attempts)
-                assert mock_dialog.ShowModal.call_count == 3
+            assert accounts_manager is None
+            assert result_password is None
+            # Should be called 3 times (max attempts)
+            assert mock_dialog.ShowModal.call_count == 3
 
     def test_open_last_file_on_startup_disabled(
         self, app, temp_settings, temp_accounts_file

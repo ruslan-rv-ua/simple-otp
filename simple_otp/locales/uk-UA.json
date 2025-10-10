@@ -59,6 +59,7 @@
             "failed_to_delete_account": "Не вдалося видалити обліковий запис: %{error}",
             "failed_to_delete_not_found": "Не вдалося видалити обліковий запис (не знайдено)",
             "failed_to_display_totp": "Не вдалося відобразити TOTP: %{error}",
+            "password_verification_failed": "Не вдалося перевірити пароль: %{error}",
             "language_changed": "Програма має бути перезапущена, щоб зміна мови набула повного ефекту."
         },
         "dialogs": {
