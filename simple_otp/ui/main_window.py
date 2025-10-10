@@ -231,6 +231,9 @@ class MainWindow(wx.Frame):
         if self.accounts_manager:
             accounts = self.accounts_manager.list_accounts()
             self.accounts_list.SetObjects(accounts)
+            if accounts:  # Select and focus the first account if available
+                self.accounts_list.Select(0)
+                self.accounts_list.Focus(0)
         else:
             self.accounts_list.SetObjects([])
 
@@ -362,9 +365,7 @@ class MainWindow(wx.Frame):
 
             except ValueError as e:
                 # Handle duplicate account or validation errors
-                self._show_error(
-                    _("main.messages.failed_to_add_account", error=str(e))
-                )
+                self._show_error(_("main.messages.failed_to_add_account", error=str(e)))
             except Exception as e:
                 # Handle any other errors
                 self._show_error(_("main.messages.unexpected_error", error=str(e)))
@@ -422,9 +423,7 @@ class MainWindow(wx.Frame):
             else:
                 self._show_error(_("main.messages.failed_to_delete_not_found"))
         except Exception as e:
-            self._show_error(
-                _("main.messages.failed_to_delete_account", error=str(e))
-            )
+            self._show_error(_("main.messages.failed_to_delete_account", error=str(e)))
 
     def _on_exit(self, event):
         """Handle Exit menu item."""
