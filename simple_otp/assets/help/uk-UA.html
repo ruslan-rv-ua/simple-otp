@@ -4,119 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Довідка - Simple OTP</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.17/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        :root {
-            color-scheme: dark;
-        }
-        
-        body {
-            background-color: #0a0a0a;
-            color: #f5f5f5;
-        }
-        
-        /* High contrast for accessibility */
-        a {
-            color: #60a5fa;
-            text-decoration: underline;
-        }
-        
-        a:hover {
-            color: #93c5fd;
-        }
-        
-        a:focus {
-            outline: 2px solid #60a5fa;
-            outline-offset: 2px;
-        }
-        
-        /* Skip to content link for screen readers */
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: #1e40af;
-            color: white;
-            padding: 8px;
-            text-decoration: none;
-            z-index: 100;
-        }
-        
-        .skip-link:focus {
-            top: 0;
-        }
-        
-        /* Code blocks */
-        code {
-            background-color: #1e1e1e;
-            border: 1px solid #374151;
-            color: #22d3ee;
-        }
-        
-        kbd {
-            background-color: #1e1e1e;
-            border: 1px solid #6b7280;
-            border-bottom-width: 2px;
-            color: #fbbf24;
-        }
-        
-        /* Table styling */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        
-        th {
-            background-color: #1e1e1e;
-            font-weight: 600;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #171717;
-        }
-        
-        /* Section headers */
-        h2::before {
-            content: "§ ";
-            color: #60a5fa;
-        }
-        
-        /* Focus indicators */
-        *:focus {
-            outline: 2px solid #60a5fa;
-            outline-offset: 2px;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="font-sans leading-relaxed">
-    <a href="#main-content" class="skip-link">Перейти до основного вмісту</a>
+<body class="bg-black text-white font-sans leading-relaxed">
     
     <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <header class="mb-12">
-            <h1 class="text-4xl font-bold mb-4 text-blue-400">Довідка Simple OTP</h1>
+        <header class="mb-12" role="banner">
+            <h1 id="page-title" class="text-4xl font-bold mb-4 text-blue-400">Довідка Simple OTP</h1>
             <p class="text-xl text-gray-300">Генератор одноразових паролів на основі часу (TOTP)</p>
             <p class="text-sm text-gray-400 mt-2">Версія: 0.1.0</p>
         </header>
         
-        <nav class="mb-12 bg-gray-900 p-6 rounded-lg border border-gray-700" aria-label="Навігація по документу">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-400">Зміст</h2>
+        <nav class="mb-12 bg-gray-900 p-6 rounded-lg border border-gray-700" aria-label="Навігація по документу" role="navigation" aria-labelledby="contents-heading">
+            <h2 id="contents-heading" class="text-2xl font-semibold mb-4 text-blue-400">Зміст</h2>
             <ul class="space-y-2">
-                <li><a href="#introduction" class="hover:text-blue-300">1. Вступ</a></li>
-                <li><a href="#getting-started" class="hover:text-blue-300">2. Початок роботи</a></li>
-                <li><a href="#managing-files" class="hover:text-blue-300">3. Робота з файлами</a></li>
-                <li><a href="#managing-accounts" class="hover:text-blue-300">4. Управління обліковими записами</a></li>
-                <li><a href="#generating-codes" class="hover:text-blue-300">5. Генерація кодів TOTP</a></li>
-                <li><a href="#settings" class="hover:text-blue-300">6. Налаштування</a></li>
-                <li><a href="#keyboard-shortcuts" class="hover:text-blue-300">7. Гарячі клавіші</a></li>
-                <li><a href="#accessibility" class="hover:text-blue-300">8. Доступність</a></li>
-                <li><a href="#security" class="hover:text-blue-300">9. Безпека</a></li>
-                <li><a href="#troubleshooting" class="hover:text-blue-300">10. Вирішення проблем</a></li>
+                <li><a href="#introduction" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">1. Вступ</a></li>
+                <li><a href="#getting-started" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">2. Початок роботи</a></li>
+                <li><a href="#managing-files" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">3. Робота з файлами</a></li>
+                <li><a href="#managing-accounts" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">4. Управління обліковими записами</a></li>
+                <li><a href="#generating-codes" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">5. Генерація кодів TOTP</a></li>
+                <li><a href="#settings" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">6. Налаштування</a></li>
+                <li><a href="#keyboard-shortcuts" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">7. Гарячі клавіші</a></li>
+                <li><a href="#accessibility" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">8. Доступність</a></li>
+                <li><a href="#security" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">9. Безпека</a></li>
+                <li><a href="#troubleshooting" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">10. Вирішення проблем</a></li>
             </ul>
         </nav>
         
-        <main id="main-content">
+    <main id="main-content" role="main" aria-labelledby="page-title">
             <section id="introduction" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">1. Вступ</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Вступ</h2>
                 <p class="mb-4">Simple OTP — це безпечна десктопна програма для генерації одноразових паролів на основі часу (TOTP). Вона дозволяє керувати всіма вашими обліковими записами двофакторної автентифікації в одному місці.</p>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Основні можливості:</h3>
@@ -131,35 +48,40 @@
                     <li>Багатомовний інтерфейс (українська, англійська)</li>
                 </ul>
             </section>
+            <section id="why" class="mb-12">
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Чому?</h2>
+                <p class="mb-4">Я, автор програми, незрячий і шукaв простий та доступний додаток для Windows, який би генерував TOTP-коди та був повністю сумісний зі скрінрідерами.</p>
+                <p class="mb-4">Спільнота порадила лише один широко доступний варіант — <strong>KeePass</strong>. Хоча KeePass здатен зберігати й генерувати TOTP, він не містив деяких функцій, які були важливі саме для мого робочого процесу та потреб у доступності.</p>
+                <p class="mb-4">Маючи трохи вільного часу та багато натхнення, я вирішив створити Simple OTP. Мета — зробити простий, чіткий та зручний інструмент, орієнтований на користувачів, що покладаються на скрінрідери та клавіатурну навігацію.</p>
+                <p class="mb-4">Якщо ви маєте ідеї або потреби, пов'язані з доступністю, буду радий отримати ваші відгуки — вони допоможуть зробити програму кращою для всіх.</p>
+            </section>
             
             <section id="getting-started" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">2. Початок роботи</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Початок роботи</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Перше запуск</h3>
                 <p class="mb-4">При першому запуску Simple OTP ви побачите порожнє вікно програми. Щоб почати користуватися програмою, вам потрібно:</p>
                 <ol class="list-decimal list-inside space-y-2 ml-4 mb-4">
-                    <li>Створити новий файл облікових записів (<kbd class="px-2 py-1 rounded text-sm">Ctrl+N</kbd>)</li>
+                    <li>Створити новий файл облікових записів (<kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+N</kbd>)</li>
                     <li>Встановити пароль для захисту ваших даних</li>
-                    <li>Додати перший обліковий запис (<kbd class="px-2 py-1 rounded text-sm">F7</kbd>)</li>
+                    <li>Додати перший обліковий запис (<kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">F7</kbd>)</li>
                 </ol>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Системні вимоги</h3>
                 <ul class="list-disc list-inside space-y-2 ml-4">
                     <li>Windows 10 або новіша версія</li>
-                    <li>Python 3.13 або новіша версія</li>
-                    <li>Підтримка скрінрідерів: NVDA, JAWS, Windows Narrator</li>
                 </ul>
             </section>
             
             <section id="managing-files" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">3. Робота з файлами</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Робота з файлами</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Створення нового файлу</h3>
                 <p class="mb-4">Щоб створити новий файл облікових записів:</p>
                 <ol class="list-decimal list-inside space-y-2 ml-4 mb-4">
-                    <li>Виберіть <strong>Файл → Створити...</strong> або натисніть <kbd class="px-2 py-1 rounded text-sm">Ctrl+N</kbd></li>
+                    <li>Виберіть <strong>Файл → Створити...</strong> або натисніть <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+N</kbd></li>
                     <li>Виберіть місце збереження та введіть ім'я файлу</li>
-                    <li>Встановіть надійний пароль (мінімум 8 символів)</li>
+                    <li>Встановіть надійний пароль</li>
                     <li>Підтвердьте пароль</li>
                 </ol>
                 <p class="mb-4 bg-yellow-900 border-l-4 border-yellow-500 p-4 rounded">
@@ -169,8 +91,8 @@
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Відкриття існуючого файлу</h3>
                 <p class="mb-4">Щоб відкрити існуючий файл:</p>
                 <ol class="list-decimal list-inside space-y-2 ml-4 mb-4">
-                    <li>Виберіть <strong>Файл → Відкрити...</strong> або натисніть <kbd class="px-2 py-1 rounded text-sm">Ctrl+O</kbd></li>
-                    <li>Виберіть файл з розширенням <code class="px-2 py-1 rounded text-sm">.json</code></li>
+                    <li>Виберіть <strong>Файл → Відкрити...</strong> або натисніть <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+O</kbd></li>
+                    <li>Виберіть файл з розширенням <code class="bg-gray-800 border border-gray-600 text-cyan-400 px-2 py-1 rounded text-sm">.json</code></li>
                     <li>Введіть пароль для розшифрування файлу</li>
                 </ol>
                 
@@ -183,12 +105,12 @@
             </section>
             
             <section id="managing-accounts" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">4. Управління обліковими записами</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Управління обліковими записами</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Додавання облікового запису</h3>
                 <p class="mb-4">Щоб додати новий обліковий запис:</p>
                 <ol class="list-decimal list-inside space-y-2 ml-4 mb-4">
-                    <li>Натисніть <kbd class="px-2 py-1 rounded text-sm">F7</kbd> або виберіть <strong>Обліковий запис → Додати</strong></li>
+                    <li>Натисніть <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">F7</kbd> або виберіть <strong>Обліковий запис → Додати</strong></li>
                     <li>Заповніть обов'язкові поля:
                         <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
                             <li><strong>Назва:</strong> ідентифікатор облікового запису (наприклад, user@example.com)</li>
@@ -213,7 +135,7 @@
                 <p class="mb-4">Щоб видалити обліковий запис:</p>
                 <ol class="list-decimal list-inside space-y-2 ml-4 mb-4">
                     <li>Виберіть обліковий запис у списку</li>
-                    <li>Натисніть <kbd class="px-2 py-1 rounded text-sm">Del</kbd> або виберіть <strong>Обліковий запис → Видалити</strong></li>
+                    <li>Натисніть <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Del</kbd> або виберіть <strong>Обліковий запис → Видалити</strong></li>
                     <li>Підтвердьте видалення</li>
                 </ol>
                 
@@ -222,13 +144,13 @@
             </section>
             
             <section id="generating-codes" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">5. Генерація кодів TOTP</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Генерація кодів TOTP</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Отримання коду</h3>
                 <p class="mb-4">Щоб отримати код TOTP:</p>
                 <ol class="list-decimal list-inside space-y-2 ml-4 mb-4">
                     <li>Виберіть обліковий запис у списку (клацніть мишею або використайте клавіші стрілок)</li>
-                    <li>Натисніть <kbd class="px-2 py-1 rounded text-sm">Enter</kbd> або двічі клацніть мишею</li>
+                    <li>Натисніть <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Enter</kbd> або двічі клацніть мишею</li>
                     <li>Відкриється діалогове вікно з TOTP-кодом</li>
                 </ol>
                 
@@ -244,7 +166,7 @@
                 <p class="mb-4">Код автоматично копіюється в буфер обміну при відкритті діалогового вікна. Ви також можете:</p>
                 <ul class="list-disc list-inside space-y-2 ml-4">
                     <li>Натиснути кнопку <strong>Копіювати код</strong></li>
-                    <li>Використати клавіші <kbd class="px-2 py-1 rounded text-sm">Ctrl+C</kbd></li>
+                    <li>Використати клавіші <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+C</kbd></li>
                 </ul>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Автоматичне оновлення</h3>
@@ -252,63 +174,63 @@
             </section>
             
             <section id="settings" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">6. Налаштування</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Налаштування</h2>
                 
-                <p class="mb-4">Відкрийте вікно налаштувань через <strong>Опції → Налаштування...</strong> або натисніть <kbd class="px-2 py-1 rounded text-sm">Ctrl+,</kbd></p>
+                <p class="mb-4">Відкрийте вікно налаштувань через <strong>Опції → Налаштування...</strong> або натисніть <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+,</kbd></p>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Вкладка "Поведінка"</h3>
-                <table class="w-full border border-gray-700 mb-4">
+                <table class="w-full border-collapse border border-gray-600 mb-4">
                     <thead>
                         <tr>
-                            <th class="border border-gray-700 px-4 py-2 text-left">Налаштування</th>
-                            <th class="border border-gray-700 px-4 py-2 text-left">Опис</th>
+                            <th class="border border-gray-600 px-4 py-2 bg-gray-800 font-semibold text-left">Налаштування</th>
+                            <th class="border border-gray-600 px-4 py-2 bg-gray-800 font-semibold text-left">Опис</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2">Закривати вікно TOTP автоматично</td>
-                            <td class="border border-gray-700 px-4 py-2">Автоматично закриває діалогове вікно після копіювання коду</td>
+                            <td class="border border-gray-600 px-4 py-2">Закривати вікно TOTP автоматично</td>
+                            <td class="border border-gray-600 px-4 py-2">Автоматично закриває діалогове вікно після копіювання коду</td>
+                        </tr>
+                        <tr class="bg-gray-900">
+                            <td class="border border-gray-600 px-4 py-2">Відтворювати звук при оновленні коду</td>
+                            <td class="border border-gray-600 px-4 py-2">Звуковий сигнал при генерації нового коду</td>
                         </tr>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2">Відтворювати звук при оновленні коду</td>
-                            <td class="border border-gray-700 px-4 py-2">Звуковий сигнал при генерації нового коду</td>
+                            <td class="border border-gray-600 px-4 py-2">Відтворювати звук при копіюванні</td>
+                            <td class="border border-gray-600 px-4 py-2">Звуковий сигнал при копіюванні коду в буфер обміну</td>
                         </tr>
-                        <tr>
-                            <td class="border border-gray-700 px-4 py-2">Відтворювати звук при копіюванні</td>
-                            <td class="border border-gray-700 px-4 py-2">Звуковий сигнал при копіюванні коду в буфер обміну</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-700 px-4 py-2">Приховувати паролі при введенні</td>
-                            <td class="border border-gray-700 px-4 py-2">Маскує символи пароля зірочками (*)</td>
+                        <tr class="bg-gray-900">
+                            <td class="border border-gray-600 px-4 py-2">Приховувати паролі при введенні</td>
+                            <td class="border border-gray-600 px-4 py-2">Маскує символи пароля зірочками (*)</td>
                         </tr>
                     </tbody>
                 </table>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Вкладка "За замовчуванням"</h3>
                 <p class="mb-4">Налаштуйте значення за замовчуванням для нових облікових записів:</p>
-                <table class="w-full border border-gray-700 mb-4">
+                <table class="w-full border-collapse border border-gray-600 mb-4">
                     <thead>
                         <tr>
-                            <th class="border border-gray-700 px-4 py-2 text-left">Параметр</th>
-                            <th class="border border-gray-700 px-4 py-2 text-left">Значення</th>
-                            <th class="border border-gray-700 px-4 py-2 text-left">Опис</th>
+                            <th class="border border-gray-600 px-4 py-2 bg-gray-800 font-semibold text-left">Параметр</th>
+                            <th class="border border-gray-600 px-4 py-2 bg-gray-800 font-semibold text-left">Значення</th>
+                            <th class="border border-gray-600 px-4 py-2 bg-gray-800 font-semibold text-left">Опис</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2">Кількість цифр</td>
-                            <td class="border border-gray-700 px-4 py-2">6 або 8</td>
-                            <td class="border border-gray-700 px-4 py-2">Довжина TOTP-коду</td>
+                            <td class="border border-gray-600 px-4 py-2">Кількість цифр</td>
+                            <td class="border border-gray-600 px-4 py-2">6 або 8</td>
+                            <td class="border border-gray-600 px-4 py-2">Довжина TOTP-коду</td>
+                        </tr>
+                        <tr class="bg-gray-900">
+                            <td class="border border-gray-600 px-4 py-2">Алгоритм</td>
+                            <td class="border border-gray-600 px-4 py-2">SHA1, SHA256, SHA512</td>
+                            <td class="border border-gray-600 px-4 py-2">Алгоритм хешування</td>
                         </tr>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2">Алгоритм</td>
-                            <td class="border border-gray-700 px-4 py-2">SHA1, SHA256, SHA512</td>
-                            <td class="border border-gray-700 px-4 py-2">Алгоритм хешування</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-700 px-4 py-2">Інтервал</td>
-                            <td class="border border-gray-700 px-4 py-2">30 секунд</td>
-                            <td class="border border-gray-700 px-4 py-2">Час дії коду</td>
+                            <td class="border border-gray-600 px-4 py-2">Інтервал</td>
+                            <td class="border border-gray-600 px-4 py-2">30 секунд</td>
+                            <td class="border border-gray-600 px-4 py-2">Час дії коду</td>
                         </tr>
                     </tbody>
                 </table>
@@ -318,44 +240,44 @@
             </section>
             
             <section id="keyboard-shortcuts" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">7. Гарячі клавіші</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Гарячі клавіші</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Основні команди</h3>
-                <table class="w-full border border-gray-700 mb-6">
+                <table class="w-full border-collapse border border-gray-600 mb-6">
                     <thead>
                         <tr>
-                            <th class="border border-gray-700 px-4 py-2 text-left">Клавіша</th>
-                            <th class="border border-gray-700 px-4 py-2 text-left">Дія</th>
+                            <th class="border border-gray-600 px-4 py-2 bg-gray-800 font-semibold text-left">Клавіша</th>
+                            <th class="border border-gray-600 px-4 py-2 bg-gray-800 font-semibold text-left">Дія</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Ctrl+N</kbd></td>
-                            <td class="border border-gray-700 px-4 py-2">Створити новий файл</td>
+                            <td class="border border-gray-600 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+N</kbd></td>
+                            <td class="border border-gray-600 px-4 py-2">Створити новий файл</td>
+                        </tr>
+                        <tr class="bg-gray-900">
+                            <td class="border border-gray-600 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+O</kbd></td>
+                            <td class="border border-gray-600 px-4 py-2">Відкрити файл</td>
                         </tr>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Ctrl+O</kbd></td>
-                            <td class="border border-gray-700 px-4 py-2">Відкрити файл</td>
+                            <td class="border border-gray-600 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+,</kbd></td>
+                            <td class="border border-gray-600 px-4 py-2">Відкрити налаштування</td>
+                        </tr>
+                        <tr class="bg-gray-900">
+                            <td class="border border-gray-600 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Esc</kbd></td>
+                            <td class="border border-gray-600 px-4 py-2">Вийти з програми / Закрити діалог</td>
                         </tr>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Ctrl+,</kbd></td>
-                            <td class="border border-gray-700 px-4 py-2">Відкрити налаштування</td>
+                            <td class="border border-gray-600 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">F7</kbd></td>
+                            <td class="border border-gray-600 px-4 py-2">Додати обліковий запис</td>
+                        </tr>
+                        <tr class="bg-gray-900">
+                            <td class="border border-gray-600 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Del</kbd></td>
+                            <td class="border border-gray-600 px-4 py-2">Видалити обліковий запис</td>
                         </tr>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Esc</kbd></td>
-                            <td class="border border-gray-700 px-4 py-2">Вийти з програми / Закрити діалог</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">F7</kbd></td>
-                            <td class="border border-gray-700 px-4 py-2">Додати обліковий запис</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Del</kbd></td>
-                            <td class="border border-gray-700 px-4 py-2">Видалити обліковий запис</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Enter</kbd></td>
-                            <td class="border border-gray-700 px-4 py-2">Відкрити TOTP-код для вибраного облікового запису</td>
+                            <td class="border border-gray-600 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Enter</kbd></td>
+                            <td class="border border-gray-600 px-4 py-2">Відкрити TOTP-код для вибраного облікового запису</td>
                         </tr>
                     </tbody>
                 </table>
@@ -373,7 +295,7 @@
                             <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">↑</kbd> / <kbd class="px-2 py-1 rounded text-sm">↓</kbd></td>
                             <td class="border border-gray-700 px-4 py-2">Переміщення по списку облікових записів</td>
                         </tr>
-                        <tr>
+                        <tr class="bg-gray-900">
                             <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Home</kbd></td>
                             <td class="border border-gray-700 px-4 py-2">Перейти до першого облікового запису</td>
                         </tr>
@@ -381,7 +303,7 @@
                             <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">End</kbd></td>
                             <td class="border border-gray-700 px-4 py-2">Перейти до останнього облікового запису</td>
                         </tr>
-                        <tr>
+                        <tr class="bg-gray-900">
                             <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Tab</kbd></td>
                             <td class="border border-gray-700 px-4 py-2">Перехід між елементами</td>
                         </tr>
@@ -402,11 +324,11 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Ctrl+C</kbd></td>
+                            <td class="border border-gray-700 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Ctrl+C</kbd></td>
                             <td class="border border-gray-700 px-4 py-2">Копіювати код</td>
                         </tr>
-                        <tr>
-                            <td class="border border-gray-700 px-4 py-2"><kbd class="px-2 py-1 rounded text-sm">Esc</kbd></td>
+                        <tr class="bg-gray-900">
+                            <td class="border border-gray-700 px-4 py-2"><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Esc</kbd></td>
                             <td class="border border-gray-700 px-4 py-2">Закрити вікно</td>
                         </tr>
                     </tbody>
@@ -414,7 +336,7 @@
             </section>
             
             <section id="accessibility" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">8. Доступність</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Доступність</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Підтримка скрінрідерів</h3>
                 <p class="mb-4">Simple OTP повністю сумісна зі скрінрідерами:</p>
@@ -436,10 +358,10 @@
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Клавіатурна навігація</h3>
                 <p class="mb-4">Всі функції програми доступні через клавіатуру без використання миші. Використовуйте:</p>
                 <ul class="list-disc list-inside space-y-2 ml-4 mb-4">
-                    <li><kbd class="px-2 py-1 rounded text-sm">Tab</kbd> для переходу між елементами</li>
-                    <li><kbd class="px-2 py-1 rounded text-sm">Enter</kbd> або <kbd class="px-2 py-1 rounded text-sm">Пробіл</kbd> для активації кнопок</li>
-                    <li><kbd class="px-2 py-1 rounded text-sm">Alt</kbd> + підкреслена літера для швидкого доступу до меню</li>
-                    <li>Стрілки для навігації по спискам та меню</li>
+                    <li><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Tab</kbd> для переходу між елементами</li>
+                    <li><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Enter</kbd> або <kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Пробіл</kbd> для активації кнопок</li>
+                    <li><kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Alt</kbd> + підкреслена літера для швидкого доступу до меню</li>
+                    <li>Стрілки для навігації по списках та меню</li>
                 </ul>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Підтримка Braille-дисплеїв</h3>
@@ -455,7 +377,7 @@
             </section>
             
             <section id="security" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">9. Безпека</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Безпека</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Шифрування даних</h3>
                 <p class="mb-4">Всі файли облікових записів шифруються з використанням:</p>
@@ -491,7 +413,7 @@
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Резервне копіювання</h3>
                 <p class="mb-4">Регулярно створюйте резервні копії ваших файлів облікових записів:</p>
                 <ol class="list-decimal list-inside space-y-2 ml-4">
-                    <li>Копіюйте файли <code class="px-2 py-1 rounded text-sm">.json</code> в безпечне місце</li>
+                    <li>Копіюйте файли <code class="bg-gray-800 border border-gray-600 text-cyan-400 px-2 py-1 rounded text-sm">.json</code> в безпечне місце</li>
                     <li>Зберігайте резервні копії в зашифрованому вигляді</li>
                     <li>Використовуйте хмарні сховища з двофакторною автентифікацією</li>
                     <li>Зберігайте паролі окремо від файлів (використовуйте менеджер паролів)</li>
@@ -499,7 +421,7 @@
             </section>
             
             <section id="troubleshooting" class="mb-12">
-                <h2 class="text-3xl font-bold mb-4 text-blue-400">10. Вирішення проблем</h2>
+                <h2 class="text-3xl font-bold mb-4 text-blue-400">Вирішення проблем</h2>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Невірний пароль</h3>
                 <p class="mb-4"><strong>Проблема:</strong> "Невірний пароль для цього файлу"</p>
@@ -537,7 +459,7 @@
                     <li>Переконайтеся, що скрінрідер запущений перед програмою</li>
                     <li>Спробуйте перезапустити програму</li>
                     <li>Для NVDA: переконайтеся, що увімкнено підтримку UIA (UI Automation)</li>
-                    <li>Використовуйте клавіатурну навігацію (<kbd class="px-2 py-1 rounded text-sm">Tab</kbd>, стрілки)</li>
+                    <li>Використовуйте клавіатурну навігацію (<kbd class="bg-gray-800 border border-gray-500 border-b-2 text-yellow-400 px-2 py-1 rounded text-sm">Tab</kbd>, стрілки)</li>
                 </ul>
                 
                 <h3 class="text-xl font-semibold mb-3 text-blue-300">Файл не відкривається</h3>
@@ -565,9 +487,9 @@
             <p class="mb-2">Simple OTP v0.1.0</p>
             <p class="mb-2">© 2025 Ruslan Iskov</p>
             <p class="mb-4">
-                <a href="https://github.com/ruslan-rv-ua/simple-otp" class="hover:text-blue-300">GitHub</a>
+                <a href="https://github.com/ruslan-rv-ua/simple-otp" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">GitHub</a>
                 <span class="mx-2">|</span>
-                <a href="https://github.com/ruslan-rv-ua/simple-otp/issues" class="hover:text-blue-300">Повідомити про проблему</a>
+                <a href="https://github.com/ruslan-rv-ua/simple-otp/issues" class="text-blue-400 underline hover:text-blue-300 focus:outline-2 focus:outline-blue-400 focus:outline-offset-2">Повідомити про проблему</a>
             </p>
             <p class="text-sm">Ліцензія: MIT</p>
         </footer>
