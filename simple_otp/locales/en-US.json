@@ -1,7 +1,7 @@
 {
     "main": {
         "title": "Simple OTP",
-        "title_with_file": "Simple OTP - {filename}",
+        "title_with_file": "Simple OTP - %{filename}",
         "title_no_file": "Simple OTP - No file opened",
         "search": "Fast Search:",
         "account_column_name": "Name",
@@ -44,21 +44,21 @@
             "no_file_open_create": "No accounts file is open.\n\nPlease create or open a file first.",
             "no_file_opened_info": "No accounts file is currently open.\n\nPlease create a new file (File > New) or\nopen an existing one (File > Open).",
             "no_account_selected": "No account selected",
-            "account_added": "Account added successfully: {name}",
-            "account_deleted": "Account deleted: {name}",
-            "delete_confirm": "Are you sure you want to delete {name}?",
+            "account_added": "Account added successfully: %{name}",
+            "account_deleted": "Account deleted: %{name}",
+            "delete_confirm": "Are you sure you want to delete %{name}?",
             "delete_last_account": "\n\nThis is the last account. The file will remain open but empty.",
-            "file_not_found": "File not found: {path}\n\nThe file will be removed from recent files.",
+            "file_not_found": "File not found: %{path}\n\nThe file will be removed from recent files.",
             "clear_history_confirm": "Are you sure you want to clear the recent files history?",
             "history_cleared": "Recent files history cleared.",
-            "file_created": "New accounts file created: {filename}\n\nYou can now add your accounts.",
+            "file_created": "New accounts file created: %{filename}\n\nYou can now add your accounts.",
             "incorrect_password": "Incorrect password for this file.",
-            "failed_to_open_file": "Failed to open file: {error}",
-            "failed_to_add_account": "Failed to add account: {error}",
-            "unexpected_error": "An unexpected error occurred: {error}",
-            "failed_to_delete_account": "Failed to delete account: {error}",
+            "failed_to_open_file": "Failed to open file: %{error}",
+            "failed_to_add_account": "Failed to add account: %{error}",
+            "unexpected_error": "An unexpected error occurred: %{error}",
+            "failed_to_delete_account": "Failed to delete account: %{error}",
             "failed_to_delete_not_found": "Failed to delete account (not found)",
-            "failed_to_display_totp": "Failed to display TOTP: {error}",
+            "failed_to_display_totp": "Failed to display TOTP: %{error}",
             "language_changed": "The application needs to restart for the language change to take full effect."
         },
         "dialogs": {
@@ -93,7 +93,7 @@
             "name_required": "Name is required.",
             "secret_required": "Secret is required.",
             "invalid_base32": "Secret must be a valid Base32 string (A-Z, 2-7, optional padding with '=').",
-            "invalid_base32_decode": "Invalid Base32 secret: {error}",
+            "invalid_base32_decode": "Invalid Base32 secret: %{error}",
             "validation_error": "Validation Error"
         }
     },
@@ -103,7 +103,7 @@
         "title_enter": "Enter Password",
         "message_enter": "Enter password:",
         "message_set": "Enter a password to encrypt the new accounts file:",
-        "message_for_file": "Enter password for {filename}:",
+        "message_for_file": "Enter password for %{filename}:",
         "password_label": "Password:",
         "confirm_label": "Confirm Password:",
         "button_ok": "OK",
@@ -116,7 +116,7 @@
         }
     },
     "totp_dialog": {
-        "title": "TOTP - {name}",
+        "title": "TOTP - %{name}",
         "current_label": "Current",
         "next_label": "Next",
         "time_remaining_label": "Time Remaining:",
@@ -168,8 +168,8 @@
     },
     "authentication": {
         "title": "Authentication Required",
-        "enter_password": "Enter password for {filename}:",
-        "incorrect_password": "Incorrect password. {remaining} attempt(s) remaining.\n\nEnter password for {filename}:",
+        "enter_password": "Enter password for %{filename}:",
+        "incorrect_password": "Incorrect password. %{remaining} attempt(s) remaining.\n\nEnter password for %{filename}:",
         "max_attempts_exceeded": "Maximum login attempts exceeded.\n\nThe application will now close.",
         "failed": "Authentication Failed"
     }

@@ -31,10 +31,12 @@ def authenticate(file_path: Path) -> str | None:
         remaining = max_attempts - attempt + 1
 
         if attempt == 1:
-            message = _("authentication.enter_password").format(filename=file_path.name)
+            message = _("authentication.enter_password", filename=file_path.name)
         else:
-            message = _("authentication.incorrect_password").format(
-                remaining=remaining, filename=file_path.name
+            message = _(
+                "authentication.incorrect_password",
+                remaining=remaining,
+                filename=file_path.name,
             )
 
         dialog = PasswordDialog(

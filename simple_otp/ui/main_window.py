@@ -293,7 +293,7 @@ class MainWindow(wx.Frame):
             dialog.Destroy()
         except Exception as e:
             wx.MessageBox(
-                _("main.messages.failed_to_display_totp").format(error=str(e)),
+                _("main.messages.failed_to_display_totp", error=str(e)),
                 _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
@@ -336,8 +336,9 @@ class MainWindow(wx.Frame):
 
                 # Show success message
                 wx.MessageBox(
-                    _("main.messages.account_added").format(
-                        name=new_account.get_display_name()
+                    _(
+                        "main.messages.account_added",
+                        name=new_account.get_display_name(),
                     ),
                     _("main.dialogs.account_added"),
                     wx.OK | wx.ICON_INFORMATION,
@@ -346,14 +347,14 @@ class MainWindow(wx.Frame):
             except ValueError as e:
                 # Handle duplicate account or validation errors
                 wx.MessageBox(
-                    _("main.messages.failed_to_add_account").format(error=str(e)),
+                    _("main.messages.failed_to_add_account", error=str(e)),
                     _("main.dialogs.error"),
                     wx.OK | wx.ICON_ERROR,
                 )
             except Exception as e:
                 # Handle any other errors
                 wx.MessageBox(
-                    _("main.messages.unexpected_error").format(error=str(e)),
+                    _("main.messages.unexpected_error", error=str(e)),
                     _("main.dialogs.error"),
                     wx.OK | wx.ICON_ERROR,
                 )
@@ -384,8 +385,8 @@ class MainWindow(wx.Frame):
         is_last_account = len(accounts) == 1
 
         # Confirm deletion
-        confirm_msg = _("main.messages.delete_confirm").format(
-            name=selected.get_display_name()
+        confirm_msg = _(
+            "main.messages.delete_confirm", name=selected.get_display_name()
         )
         if is_last_account:
             confirm_msg += _("main.messages.delete_last_account")
@@ -405,8 +406,9 @@ class MainWindow(wx.Frame):
                 # Refresh the list
                 self._load_accounts()
                 wx.MessageBox(
-                    _("main.messages.account_deleted").format(
-                        name=selected.get_display_name()
+                    _(
+                        "main.messages.account_deleted",
+                        name=selected.get_display_name(),
                     ),
                     _("main.dialogs.account_deleted"),
                     wx.OK | wx.ICON_INFORMATION,
@@ -419,7 +421,7 @@ class MainWindow(wx.Frame):
                 )
         except Exception as e:
             wx.MessageBox(
-                _("main.messages.failed_to_delete_account").format(error=str(e)),
+                _("main.messages.failed_to_delete_account", error=str(e)),
                 _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
@@ -534,7 +536,7 @@ class MainWindow(wx.Frame):
         """Update window title to show current file name."""
         if self.current_file:
             filename = self.current_file.name
-            self.SetTitle(_("main.title_with_file").format(filename=filename))
+            self.SetTitle(_("main.title_with_file", filename=filename))
         else:
             self.SetTitle(_("main.title_no_file"))
 
@@ -593,14 +595,14 @@ class MainWindow(wx.Frame):
 
         except FileNotFoundError:
             wx.MessageBox(
-                _("main.messages.file_not_found").format(path=file_path),
+                _("main.messages.file_not_found", path=file_path),
                 _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
             return False
         except Exception as e:
             wx.MessageBox(
-                _("main.messages.failed_to_open_file").format(error=str(e)),
+                _("main.messages.failed_to_open_file", error=str(e)),
                 _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
@@ -759,14 +761,14 @@ class MainWindow(wx.Frame):
             self._update_recent_files(file_path)
 
             wx.MessageBox(
-                _("main.messages.file_created").format(filename=file_path.name),
+                _("main.messages.file_created", filename=file_path.name),
                 _("main.dialogs.file_created"),
                 wx.OK | wx.ICON_INFORMATION,
             )
 
         except Exception as e:
             wx.MessageBox(
-                _("main.messages.failed_to_open_file").format(error=str(e)),
+                _("main.messages.failed_to_open_file", error=str(e)),
                 _("main.dialogs.error"),
                 wx.OK | wx.ICON_ERROR,
             )
@@ -789,9 +791,7 @@ class MainWindow(wx.Frame):
         password_dialog = PasswordDialog(
             self,
             title=_("password_dialog.title_enter"),
-            message=_("password_dialog.message_for_file").format(
-                filename=file_path.name
-            ),
+            message=_("password_dialog.message_for_file", filename=file_path.name),
             require_confirmation=False,
         )
 
@@ -815,7 +815,7 @@ class MainWindow(wx.Frame):
         # Check if file exists
         if not file_path.exists():
             wx.MessageBox(
-                _("main.messages.file_not_found").format(path=file_path),
+                _("main.messages.file_not_found", path=file_path),
                 _("main.dialogs.file_not_found"),
                 wx.OK | wx.ICON_WARNING,
             )
@@ -835,9 +835,7 @@ class MainWindow(wx.Frame):
         password_dialog = PasswordDialog(
             self,
             title=_("password_dialog.title_enter"),
-            message=_("password_dialog.message_for_file").format(
-                filename=file_path.name
-            ),
+            message=_("password_dialog.message_for_file", filename=file_path.name),
             require_confirmation=False,
         )
 

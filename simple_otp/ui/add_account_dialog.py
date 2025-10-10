@@ -176,7 +176,7 @@ class AddAccountDialog(wx.Dialog):
             base64.b32decode(clean_secret)
         except Exception as e:
             wx.MessageBox(
-                _("add_account.validation.invalid_base32_decode").format(error=str(e)),
+                _("add_account.validation.invalid_base32_decode", error=str(e)),
                 _("add_account.validation.validation_error"),
                 wx.OK | wx.ICON_ERROR,
             )
