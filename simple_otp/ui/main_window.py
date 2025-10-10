@@ -21,24 +21,17 @@ from simple_otp.ui.totp_dialog import TOTPDialog
 class MainWindow(wx.Frame):
     """Main application window with search and accounts list."""
 
-    def __init__(
-        self,
-        parent,
-        password: str | None = None,
-        accounts_file: Path | None = None,
-    ):
+    def __init__(self, parent):
         """
         Initialize the main window.
 
         Args:
             parent: Parent window (typically None)
-            password: Master password for decrypting accounts (None if no file open)
-            accounts_file: Optional path to accounts file (None if no file open)
         """
         super().__init__(parent, title=_("main.title"), style=wx.DEFAULT_FRAME_STYLE)
 
         # Store the password for decrypting accounts
-        self.password = password
+        self.password = None
 
         # Maximize the window
         self.Maximize()
@@ -46,10 +39,6 @@ class MainWindow(wx.Frame):
         # Initialize accounts manager (None if no file open)
         self.accounts_manager = None
         self.current_file = None
-
-        if accounts_file and password:
-            self.accounts_manager = AccountsManager(storage_path=accounts_file)
-            self.current_file = accounts_file
 
         # Initialize settings manager
         self.settings_manager = SettingsManager()
@@ -64,15 +53,11 @@ class MainWindow(wx.Frame):
         # Update window title with filename
         self._update_title()
 
-        # Add current file to recent files (if we have one)
-        if self.current_file:
-            self._update_recent_files(self.current_file)
+        # Try to open the last file on startup (if setting is enabled)
+        self._open_last_file_on_startup()
 
-        # Load accounts from storage (if we have a file)
-        if self.accounts_manager:
-            self._load_accounts()
-        else:
-            # Show empty state message
+        # Show empty state message if no file is open
+        if not self.accounts_manager:
             self._show_no_file_message()
 
     def _create_menu_bar(self):
@@ -553,6 +538,111 @@ class MainWindow(wx.Frame):
             wx.OK | wx.ICON_INFORMATION,
         )
 
+    def _authenticate(
+        self, file_path: Path, title: str | None = None
+    ) -> tuple[str | None, bool]:
+        """
+        Perform authentication for a specific accounts file.
+
+        Args:
+            file_path: Path to the accounts file to authenticate against
+            title: Optional custom title for the dialog. If None, uses default.
+
+        Returns:
+            Tuple of (password, success):
+                - password: The validated password if successful, None otherwise
+                - success: True if authenticated, False if cancelled or max
+                  attempts exceeded
+        """
+        # Create accounts manager for the specific file
+        accounts_manager = AccountsManager(storage_path=file_path, auto_create=False)
+
+        # Ask for password to verify
+        max_attempts = 3
+
+        for attempt in range(1, max_attempts + 1):
+            remaining = max_attempts - attempt + 1
+
+            if title is None:
+                if attempt == 1:
+                    dialog_title = _(
+                        "authentication.enter_password", filename=file_path.name
+                    )
+                else:
+                    dialog_title = _(
+                        "authentication.incorrect_password",
+                        remaining=remaining,
+                        filename=file_path.name,
+                    )
+            else:
+                dialog_title = title
+
+            dialog = PasswordDialog(
+                self,
+                title=dialog_title,
+                message="",
+                require_confirmation=False,
+            )
+
+            if dialog.ShowModal() != wx.ID_OK:
+                dialog.Destroy()
+                return None, False
+
+            password = dialog.GetPassword()
+            dialog.Destroy()
+
+            # Verify password by trying to decrypt accounts
+            if accounts_manager.verify_password(password):
+                return password, True
+
+            # If this was the last attempt, show error
+            if attempt == max_attempts:
+                wx.MessageBox(
+                    _("authentication.max_attempts_exceeded"),
+                    _("authentication.failed"),
+                    wx.OK | wx.ICON_ERROR,
+                )
+                return None, False
+
+        return None, False
+
+    def _open_last_file_on_startup(self):
+        """
+        Check settings and attempt to open the last used file on startup.
+
+        If the setting is enabled and a recent file exists, attempts to
+        authenticate and open it. If authentication fails or is cancelled,
+        the window remains with no file open.
+        """
+        # Check if we should open the last file
+        if not self.settings_manager.get("files.open_last_file_on_startup", True):
+            return
+
+        # Get recent files list
+        recent_files = self.settings_manager.get("files.recent_files", [])
+        if not recent_files:
+            return
+
+        # Get the last file path
+        last_file_str = recent_files[0]
+        last_file_path = Path(last_file_str)
+
+        # Check if the file exists
+        if not last_file_path.exists():
+            # File doesn't exist anymore - remove from recent files
+            recent_files.remove(last_file_str)
+            self.settings_manager.set("files.recent_files", recent_files)
+            self.settings_manager.save()
+            return
+
+        # Authenticate against this specific file
+        password, success = self._authenticate(last_file_path)
+
+        if success and password:
+            # Switch to the file
+            self._switch_to_file(last_file_path, password)
+        # If authentication was cancelled or failed, just continue with no file
+
     def _switch_to_file(self, file_path: Path, password: str) -> bool:
         """
         Switch to a different accounts file.
@@ -787,23 +877,12 @@ class MainWindow(wx.Frame):
 
             file_path = Path(file_dialog.GetPath())
 
-        # Ask for password (without confirmation)
-        password_dialog = PasswordDialog(
-            self,
-            title=_("password_dialog.title_enter"),
-            message=_("password_dialog.message_for_file", filename=file_path.name),
-            require_confirmation=False,
-        )
+        # Authenticate
+        password, success = self._authenticate(file_path)
 
-        if password_dialog.ShowModal() != wx.ID_OK:
-            password_dialog.Destroy()
-            return
-
-        password = password_dialog.GetPassword()
-        password_dialog.Destroy()
-
-        # Try to switch to the file
-        self._switch_to_file(file_path, password)
+        if success and password:
+            # Try to switch to the file
+            self._switch_to_file(file_path, password)
 
     def _on_recent_file_selected(self, file_path: Path):
         """
@@ -831,23 +910,12 @@ class MainWindow(wx.Frame):
 
             return
 
-        # Ask for password
-        password_dialog = PasswordDialog(
-            self,
-            title=_("password_dialog.title_enter"),
-            message=_("password_dialog.message_for_file", filename=file_path.name),
-            require_confirmation=False,
-        )
+        # Authenticate
+        password, success = self._authenticate(file_path)
 
-        if password_dialog.ShowModal() != wx.ID_OK:
-            password_dialog.Destroy()
-            return
-
-        password = password_dialog.GetPassword()
-        password_dialog.Destroy()
-
-        # Try to switch to the file
-        self._switch_to_file(file_path, password)
+        if success and password:
+            # Try to switch to the file
+            self._switch_to_file(file_path, password)
 
     def _on_clear_recent_files(self, event):
         """Handle Clear History menu item."""

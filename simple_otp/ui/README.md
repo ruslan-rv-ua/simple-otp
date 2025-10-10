@@ -3,6 +3,30 @@
 ## Overview
 The main window has been implemented with the following features:
 
+## Architecture Changes (v0.6.0+)
+
+### Entry Point Simplification
+Starting from v0.6.0, the application architecture has been refactored to follow better separation of concerns:
+
+**Before (v0.5.x and earlier):**
+- `__main__.py` contained authentication logic and file opening logic
+- MainWindow accepted `password` and `accounts_file` as constructor parameters
+- Duplication of authentication code between entry point and UI methods
+
+**After (v0.6.0+):**
+- `__main__.py` is minimal - only initializes wx.App, i18n, and creates MainWindow
+- MainWindow handles all file operations and authentication internally
+- `_authenticate()` private method centralizes authentication logic
+- `_open_last_file_on_startup()` handles automatic file opening on startup
+- Constructor simplified to `MainWindow(parent)` with no file-related parameters
+
+### Benefits of Refactoring
+1. **Single Responsibility**: MainWindow owns all file and authentication logic
+2. **No Code Duplication**: One authentication method used everywhere
+3. **Better Testability**: All logic in testable class methods
+4. **Cleaner Entry Point**: `__main__.py` is now simple and maintainable
+5. **Consistent UX**: Same authentication flow for startup and manual file opening
+
 ## Window Layout
 - **Maximized window** - Opens in maximized state by default
 - **Vertical layout** with two main components:
