@@ -15,6 +15,18 @@ Manages TOTP accounts with JSON file persistence.
 ### `settings_manager.py`
 Manages application settings with JSON persistence. See [Settings Documentation](../../docs/SETTINGS.md) for details.
 
+### `authenticator.py`
+Handles password authentication for encrypted account files. Provides centralized authentication logic with retry attempts.
+
+### `recent_files_manager.py`
+Manages the recent files list in application settings. Handles adding, removing, and clearing recent file entries with configurable maximum entries.
+
+### `version_utils.py`
+Utility module for retrieving application version from `pyproject.toml`.
+
+### `i18n.py`
+Internationalization support for multiple languages (English, Ukrainian).
+
 ## AccountsManager
 
 The `AccountsManager` class handles all operations for managing TOTP accounts, including storage, retrieval, and modification.

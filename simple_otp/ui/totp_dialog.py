@@ -48,7 +48,7 @@ class TOTPDialog(wx.Dialog):
         """
         super().__init__(
             parent,
-            title=_("totp_dialog.title").format(name=account.get_display_name()),
+            title=_("totp_dialog.title", name=account.get_display_name()),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
 

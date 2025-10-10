@@ -131,6 +131,19 @@ See [docs/ADD_ACCOUNT_USAGE.md](docs/ADD_ACCOUNT_USAGE.md) for detailed instruct
 - **No Plaintext**: Secrets are never stored in plaintext
 - **Memory Safety**: Secrets are only decrypted when needed
 
+## Architecture (v0.6.0+)
+
+Starting from v0.6.0, the application follows a cleaner architecture with better separation of concerns:
+
+- **Entry Point (`__main__.py`)**: Minimal initialization - creates wx.App, initializes i18n, and launches MainWindow
+- **MainWindow**: Owns all file operations and authentication logic
+  - `_authenticate()`: Centralized authentication for all file operations
+  - `_open_last_file_on_startup()`: Handles automatic file opening on startup (configurable in settings)
+  - Manages accounts file lifecycle (create, open, switch)
+- **No Duplication**: Single authentication flow used for startup, file opening, and recent files
+
+This design improves testability, maintainability, and follows SOLID principles.
+
 ## Project Structure
 
 ```
@@ -143,20 +156,25 @@ simple-otp/
 │   └── PASSWORD_AUTHENTICATION.md
 ├── simple_otp/             # Main package
 │   ├── __init__.py
-│   ├── __main__.py         # Entry point
+│   ├── __main__.py         # Entry point (minimal launcher)
 │   ├── core/               # Business logic
 │   │   ├── accounts_manager.py
-│   │   └── encryptor.py
+│   │   ├── encryptor.py
+│   │   ├── i18n.py
+│   │   └── settings_manager.py
 │   ├── models/             # Data models
 │   │   └── totp_account.py
 │   └── ui/                 # GUI components
-│       ├── main_window.py
+│       ├── main_window.py  # Main application window (owns file logic)
 │       ├── add_account_dialog.py
 │       ├── password_dialog.py
+│       ├── settings_dialog.py
 │       └── totp_dialog.py
 └── tests/                  # Unit tests
     ├── test_accounts_manager.py
     ├── test_add_account_dialog.py
+    ├── test_main_window.py
+    ├── test_settings_dialog.py
     └── test_totp_account.py
 ```
 

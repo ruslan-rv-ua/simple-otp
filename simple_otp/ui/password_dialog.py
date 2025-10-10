@@ -39,17 +39,18 @@ class PasswordDialog(wx.Dialog):
         self.require_confirmation = require_confirmation
         self._create_ui(message)
 
-        # Center the dialog
-        self.Centre()
+        # Center the dialog on parent window
+        self.CenterOnParent()
 
     def _create_ui(self, message: str):
         """Create the dialog UI."""
         # Main sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Message
-        message_text = wx.StaticText(self, label=message)
-        sizer.Add(message_text, 0, wx.ALL | wx.EXPAND, 10)
+        # Message (only if not empty)
+        if message:
+            message_text = wx.StaticText(self, label=message)
+            sizer.Add(message_text, 0, wx.ALL | wx.EXPAND, 10)
 
         # Password field
         password_label = wx.StaticText(self, label=_("password_dialog.password_label"))
