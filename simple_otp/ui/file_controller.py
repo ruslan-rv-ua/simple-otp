@@ -8,6 +8,7 @@ import wx
 from simple_otp.core.accounts_manager import AccountsManager
 from simple_otp.core.authenticator import Authenticator
 from simple_otp.core.i18n import _
+from simple_otp.core.logger import logger
 from simple_otp.ui.password_dialog import PasswordDialog
 
 
@@ -22,6 +23,7 @@ class FileController:
             parent_window: Parent window for displaying dialogs
             authenticator: Authenticator instance for password handling
         """
+        logger.debug("FileController initialized")
         self.parent = parent_window
         self.authenticator = authenticator
 
@@ -41,7 +43,10 @@ class FileController:
                 - accounts_manager: Initialized manager, or None if failed
                 - password: The set password, or None if cancelled/failed
         """
+        logger.info("User initiated new file creation")
+
         # Show file dialog
+        logger.debug("Showing file save dialog")
         with wx.FileDialog(
             self.parent,
             _("main.dialogs.create_new_file"),
@@ -49,15 +54,20 @@ class FileController:
             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
         ) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
+                logger.info("User cancelled new file creation (file dialog)")
                 return None, None, None
 
             file_path = Path(file_dialog.GetPath())
+            logger.debug(f"User selected file path: {file_path}")
 
             # Ensure .json extension
             if file_path.suffix.lower() != ".json":
+                original_path = file_path
                 file_path = file_path.with_suffix(".json")
+                logger.debug(f"Added .json extension: {original_path} -> {file_path}")
 
         # Ask for password with confirmation
+        logger.debug("Showing password setup dialog")
         password_dialog = PasswordDialog(
             self.parent,
             title=_("password_dialog.title_set"),
@@ -67,26 +77,34 @@ class FileController:
 
         if password_dialog.ShowModal() != wx.ID_OK:
             password_dialog.Destroy()
+            logger.info("User cancelled new file creation (password dialog)")
             return None, None, None
 
         new_password = password_dialog.GetPassword()
         password_dialog.Destroy()
+        logger.debug("Password set by user")
 
         try:
+            logger.info(f"Creating new accounts file: {file_path}")
             # Create an empty accounts file
             data = {"accounts": []}
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            logger.debug(f"Empty JSON file created: {file_path}")
 
             # Create new accounts manager with the file (auto_create=False)
             new_manager = AccountsManager(storage_path=file_path, auto_create=False)
+            logger.debug("AccountsManager created for new file")
 
             # Create the default account with the provided password
+            logger.debug("Creating initial account")
             new_manager.create_initial_account(new_password)
 
+            logger.info(f"New file created successfully: {file_path}")
             return file_path, new_manager, new_password
 
         except Exception as e:
+            logger.opt(exception=True).error(f"Failed to create new file: {e}")
             self._show_error(_("main.messages.failed_to_open_file", error=str(e)))
             return None, None, None
 
@@ -109,8 +127,11 @@ class FileController:
                 - accounts_manager: Authenticated manager, or None if failed
                 - password: The validated password, or None if cancelled/failed
         """
+        logger.info("User initiated file open")
+
         # Show file dialog if path not provided
         if file_path is None:
+            logger.debug("Showing file open dialog")
             with wx.FileDialog(
                 self.parent,
                 _("main.dialogs.open_file"),
@@ -118,12 +139,17 @@ class FileController:
                 style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
             ) as file_dialog:
                 if file_dialog.ShowModal() == wx.ID_CANCEL:
+                    logger.info("User cancelled file open (file dialog)")
                     return None, None, None
 
                 file_path = Path(file_dialog.GetPath())
+                logger.debug(f"User selected file: {file_path}")
+        else:
+            logger.debug(f"Opening specified file: {file_path}")
 
         # Check if file exists
         if not file_path.exists():
+            logger.error(f"File does not exist: {file_path}")
             self._show_warning(
                 _("main.messages.file_not_found", path=file_path),
                 _("main.dialogs.file_not_found"),
@@ -131,11 +157,14 @@ class FileController:
             return None, None, None
 
         # Authenticate
+        logger.info(f"Attempting to open file: {file_path}")
         accounts_manager, password = self.authenticator.authenticate(file_path)
 
         if accounts_manager and password:
+            logger.info(f"File opened successfully: {file_path}")
             return file_path, accounts_manager, password
 
+        logger.warning(f"Failed to open file (authentication failed): {file_path}")
         return None, None, None
 
     def _show_error(self, message: str):

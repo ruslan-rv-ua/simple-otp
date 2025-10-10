@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from simple_otp.core.logger import logger
 from simple_otp.models.totp_account import DigestAlgorithm, TOTPAccount
 
 
@@ -26,17 +27,30 @@ class AccountsManager:
                         with example account.
                         If False, storage must be created manually.
         """
+        logger.debug(f"Initializing AccountsManager (auto_create={auto_create})")
+
         if storage_path is None:
             # Get the project root (where simple_otp package is located)
             project_root = Path(__file__).parent.parent.parent
             # Go one level up and create accounts.json
             self._storage_path = project_root.parent / "accounts.json"
+            logger.debug(f"Using default storage path: {self._storage_path}")
         else:
             self._storage_path = storage_path
+            logger.debug(f"Using custom storage path: {self._storage_path}")
 
         # Initialize storage if it doesn't exist (only if auto_create is True)
         if auto_create and not self._storage_path.exists():
+            logger.info(
+                f"Storage file does not exist, creating initial storage: "
+                f"{self._storage_path}"
+            )
             self._create_initial_storage()
+        else:
+            logger.debug(
+                f"Storage file exists or auto_create=False: "
+                f"{self._storage_path.exists()}"
+            )
 
     def _create_initial_storage(self) -> None:
         """Create initial storage file with an example account."""
@@ -70,22 +84,39 @@ class AccountsManager:
             FileNotFoundError: If the storage file doesn't exist
             json.JSONDecodeError: If the file contains invalid JSON
         """
-        with open(self._storage_path, encoding="utf-8") as f:
-            data = json.load(f)
+        logger.debug(f"Loading accounts from: {self._storage_path}")
 
-        accounts = []
-        for account_data in data.get("accounts", []):
-            # Convert digest string back to DigestAlgorithm enum
-            digest_str = account_data.get("digest", "sha1")
-            account_data["digest"] = DigestAlgorithm(digest_str)
+        try:
+            with open(self._storage_path, encoding="utf-8") as f:
+                data = json.load(f)
 
-            # Remove iterations field if it exists (legacy field from older versions)
-            account_data.pop("iterations", None)
+            accounts = []
+            for account_data in data.get("accounts", []):
+                # Convert digest string back to DigestAlgorithm enum
+                digest_str = account_data.get("digest", "sha1")
+                account_data["digest"] = DigestAlgorithm(digest_str)
 
-            account = TOTPAccount(**account_data)
-            accounts.append(account)
+                # Remove iterations field if it exists
+                # (legacy field from older versions)
+                account_data.pop("iterations", None)
 
-        return accounts
+                account = TOTPAccount(**account_data)
+                accounts.append(account)
+
+            logger.info(f"Loaded {len(accounts)} accounts from {self._storage_path}")
+            return accounts
+
+        except FileNotFoundError:
+            logger.error(f"Storage file not found: {self._storage_path}")
+            raise
+        except json.JSONDecodeError:
+            logger.opt(exception=True).error(
+                f"Invalid JSON in storage file: {self._storage_path}"
+            )
+            raise
+        except Exception as e:
+            logger.opt(exception=True).error(f"Unexpected error loading accounts: {e}")
+            raise
 
     def _save_accounts(self, accounts: list[TOTPAccount]) -> None:
         """
@@ -94,24 +125,35 @@ class AccountsManager:
         Args:
             accounts: List of TOTPAccount objects to save
         """
-        # Convert accounts to dictionaries
-        accounts_data = []
-        for account in accounts:
-            account_dict = {
-                "name": account.name,
-                "encrypted_secret": account.encrypted_secret,
-                "salt": account.salt,
-                "issuer": account.issuer,
-                "digits": account.digits,
-                "digest": account.digest.value,  # Convert enum to string
-                "interval": account.interval,
-            }
-            accounts_data.append(account_dict)
+        logger.debug(f"Saving {len(accounts)} accounts to: {self._storage_path}")
 
-        # Write to file with indentation for readability
-        data = {"accounts": accounts_data}
-        with open(self._storage_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        try:
+            # Convert accounts to dictionaries
+            accounts_data = []
+            for account in accounts:
+                account_dict = {
+                    "name": account.name,
+                    "encrypted_secret": account.encrypted_secret,
+                    "salt": account.salt,
+                    "issuer": account.issuer,
+                    "digits": account.digits,
+                    "digest": account.digest.value,  # Convert enum to string
+                    "interval": account.interval,
+                }
+                accounts_data.append(account_dict)
+
+            # Write to file with indentation for readability
+            data = {"accounts": accounts_data}
+            with open(self._storage_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            logger.info(f"Successfully saved {len(accounts)} accounts")
+
+        except Exception as e:
+            logger.opt(exception=True).error(
+                f"Failed to save accounts to {self._storage_path}: {e}"
+            )
+            raise
 
     def add_account(self, account: TOTPAccount) -> None:
         """

@@ -32,7 +32,9 @@
                 "options": "&Options",
                 "language": "&Language",
                 "settings": "&Settings...\tCtrl+,",
-                "settings_hint": "Configure application settings"
+                "settings_hint": "Configure application settings",
+                "open_log": "Open &Log File",
+                "open_log_hint": "Open application log file in default editor"
             },
             "help": {
                 "help": "&Help",
@@ -63,7 +65,9 @@
             "failed_to_delete_not_found": "Failed to delete account (not found)",
             "failed_to_display_totp": "Failed to display TOTP: %{error}",
             "password_verification_failed": "Password verification failed: %{error}",
-            "language_changed": "The application needs to restart for the language change to take full effect."
+            "language_changed": "The application needs to restart for the language change to take full effect.",
+            "log_file_not_found": "Log file not found. The log file will be created when you perform actions in the application.",
+            "failed_to_open_log": "Failed to open log file: %{error}"
         },
         "dialogs": {
             "no_file": "No File",
