@@ -462,22 +462,34 @@ class MainWindow(wx.Frame):
         """Handle User Guide menu item - opens help documentation in browser."""
         import webbrowser
 
+        from simple_otp.core.help_converter import HelpConverter
+
         # Get current locale to determine which help file to open
         locale = self.settings_manager.get("locale")
 
-        # Construct path to help file
-        assets_path = Path(__file__).parent.parent / "assets" / "help"
-        help_file_path = assets_path / f"{locale}.html"
+        # Construct path to Markdown help file in simple_otp/docs/
+        docs_path = Path(__file__).parent.parent / "docs"
+        md_file_path = docs_path / f"{locale}.md"
 
         # Fallback to English if locale-specific help doesn't exist
-        if not help_file_path.exists():
-            help_file_path = assets_path / "en-US.html"
+        if not md_file_path.exists():
+            md_file_path = docs_path / "en-US.md"
 
-        # Open in default browser
-        if help_file_path.exists():
-            # Convert to file:// URL for proper browser opening
-            file_url = help_file_path.as_uri()
-            webbrowser.open(file_url)
+        # Convert Markdown to HTML
+        if md_file_path.exists():
+            try:
+                converter = HelpConverter()
+                html_file_path = converter.convert_md_to_html(md_file_path)
+
+                # Open in default browser
+                file_url = html_file_path.as_uri()
+                webbrowser.open(file_url)
+            except Exception as e:
+                wx.MessageBox(
+                    f"Error converting help file: {e}",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
         else:
             wx.MessageBox(
                 "Help file not found.",
