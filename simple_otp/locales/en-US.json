@@ -65,6 +65,8 @@
         "dialogs": {
             "no_file": "No File",
             "error": "Error",
+            "warning": "Warning",
+            "success": "Success",
             "account_added": "Account Added",
             "account_deleted": "Account Deleted",
             "confirm_delete": "Confirm Delete",

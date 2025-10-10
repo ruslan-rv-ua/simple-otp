@@ -3,9 +3,28 @@
 ## Overview
 The main window has been implemented with the following features:
 
-## Architecture Changes (v0.6.0+)
+## Architecture Changes
 
-### Entry Point Simplification
+### v0.7.0+ - Refactoring for Maintainability
+Further refactoring to improve code organization and reduce MainWindow complexity:
+
+**New Helper Modules:**
+- `authenticator.py` - Centralized password authentication logic
+- `file_controller.py` - File operations (create, open) with dialogs
+- `constants.py` - UI-specific constants (SEARCH_MIN_LENGTH, MAX_PATH_DISPLAY_LENGTH)
+
+**Helper Methods:**
+- `_show_error()` - Consistent error message dialogs
+- `_show_warning()` - Consistent warning message dialogs  
+- `_show_success()` - Consistent success message dialogs
+
+**Benefits:**
+- MainWindow reduced from ~933 to ~712 lines (23.7% reduction)
+- Improved separation of concerns
+- Better testability (24 new tests added)
+- Consistent error handling throughout the application
+
+### v0.6.0+ - Entry Point Simplification
 Starting from v0.6.0, the application architecture has been refactored to follow better separation of concerns:
 
 **Before (v0.5.x and earlier):**
@@ -16,14 +35,14 @@ Starting from v0.6.0, the application architecture has been refactored to follow
 **After (v0.6.0+):**
 - `__main__.py` is minimal - only initializes wx.App, i18n, and creates MainWindow
 - MainWindow handles all file operations and authentication internally
-- `_authenticate()` private method centralizes authentication logic
+- Authentication logic extracted to dedicated `Authenticator` class
 - `_open_last_file_on_startup()` handles automatic file opening on startup
 - Constructor simplified to `MainWindow(parent)` with no file-related parameters
 
-### Benefits of Refactoring
-1. **Single Responsibility**: MainWindow owns all file and authentication logic
-2. **No Code Duplication**: One authentication method used everywhere
-3. **Better Testability**: All logic in testable class methods
+**Benefits:**
+1. **Single Responsibility**: MainWindow delegates to specialized helper classes
+2. **No Code Duplication**: Reusable components (Authenticator, FileController, RecentFilesManager)
+3. **Better Testability**: All logic in testable class methods with full test coverage
 4. **Cleaner Entry Point**: `__main__.py` is now simple and maintainable
 5. **Consistent UX**: Same authentication flow for startup and manual file opening
 
@@ -133,8 +152,20 @@ player.play("sound.wav")
 
 ### Key Components
 - `simple_otp/ui/main_window.py` - Main window implementation
+- `simple_otp/ui/file_controller.py` - File operations (create, open) with dialogs
+- `simple_otp/ui/constants.py` - UI-specific constants
+- `simple_otp/ui/add_account_dialog.py` - Dialog for adding new accounts
+- `simple_otp/ui/totp_dialog.py` - Dialog for displaying TOTP codes
+- `simple_otp/ui/settings_dialog.py` - Application settings dialog
+- `simple_otp/ui/password_dialog.py` - Password entry dialog
+- `simple_otp/ui/audio_player.py` - Background audio playback
 - `simple_otp/ui/__init__.py` - UI package initialization
 - `simple_otp/__main__.py` - Entry point that launches the GUI
+
+### Helper Modules
+- `simple_otp/core/authenticator.py` - Password authentication with retry logic
+- `simple_otp/core/recent_files_manager.py` - Recent files list management
+- `simple_otp/core/version_utils.py` - Application version from pyproject.toml
 
 ### Dependencies
 - **wxPython** - Native GUI framework

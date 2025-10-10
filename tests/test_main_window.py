@@ -88,17 +88,19 @@ class TestMainWindow:
         assert main_window.password is None
 
     def test_authenticate_success(self, main_window, temp_accounts_file):
-        """Test successful authentication."""
+        """Test successful authentication via authenticator."""
         file_path, password = temp_accounts_file
 
         # Mock the PasswordDialog to return the correct password
-        with patch("simple_otp.ui.main_window.PasswordDialog") as mock_dialog_class:
+        with patch("simple_otp.core.authenticator.PasswordDialog") as mock_dialog_class:
             mock_dialog = MagicMock()
             mock_dialog.ShowModal.return_value = wx.ID_OK
             mock_dialog.GetPassword.return_value = password
             mock_dialog_class.return_value = mock_dialog
 
-            accounts_manager, result_password = main_window._authenticate(file_path)
+            accounts_manager, result_password = main_window.authenticator.authenticate(
+                file_path
+            )
 
             assert accounts_manager is not None
             assert result_password == password
@@ -109,12 +111,14 @@ class TestMainWindow:
         file_path, _ = temp_accounts_file
 
         # Mock the PasswordDialog to return CANCEL
-        with patch("simple_otp.ui.main_window.PasswordDialog") as mock_dialog_class:
+        with patch("simple_otp.core.authenticator.PasswordDialog") as mock_dialog_class:
             mock_dialog = MagicMock()
             mock_dialog.ShowModal.return_value = wx.ID_CANCEL
             mock_dialog_class.return_value = mock_dialog
 
-            accounts_manager, result_password = main_window._authenticate(file_path)
+            accounts_manager, result_password = main_window.authenticator.authenticate(
+                file_path
+            )
 
             assert accounts_manager is None
             assert result_password is None
@@ -125,18 +129,22 @@ class TestMainWindow:
         file_path, _ = temp_accounts_file
 
         # Mock the PasswordDialog to return wrong password 3 times
-        with patch("simple_otp.ui.main_window.PasswordDialog") as mock_dialog_class:
+        with patch("simple_otp.core.authenticator.PasswordDialog") as mock_dialog_class:
             mock_dialog = MagicMock()
             mock_dialog.ShowModal.return_value = wx.ID_OK
             mock_dialog.GetPassword.return_value = "wrong_password"
             mock_dialog_class.return_value = mock_dialog
 
-            accounts_manager, result_password = main_window._authenticate(file_path)
+            # Mock MessageBox to avoid showing error dialog
+            with patch("simple_otp.core.authenticator.wx.MessageBox"):
+                accounts_manager, result_password = (
+                    main_window.authenticator.authenticate(file_path)
+                )
 
-            assert accounts_manager is None
-            assert result_password is None
-            # Should be called 3 times (max attempts)
-            assert mock_dialog.ShowModal.call_count == 3
+                assert accounts_manager is None
+                assert result_password is None
+                # Should be called 3 times (max attempts)
+                assert mock_dialog.ShowModal.call_count == 3
 
     def test_open_last_file_on_startup_disabled(
         self, app, temp_settings, temp_accounts_file
@@ -199,17 +207,21 @@ class TestMainWindow:
         with patch(
             "simple_otp.ui.main_window.SettingsManager", return_value=settings_manager
         ):
-            window = MainWindow(None)
+            with patch(
+                "simple_otp.core.recent_files_manager.SettingsManager",
+                return_value=settings_manager,
+            ):
+                window = MainWindow(None)
 
-            # Window should have no file open
-            assert window.accounts_manager is None
-            assert window.current_file is None
+                # Window should have no file open
+                assert window.accounts_manager is None
+                assert window.current_file is None
 
-            # Non-existent file should be removed from recent files
-            recent_files = settings_manager.get("files.recent_files", [])
-            assert str(non_existent) not in recent_files
+                # Non-existent file should be removed from recent files
+                recent_files = window.recent_files_manager.get_recent_files_strings()
+                assert str(non_existent.resolve()) not in recent_files
 
-            window.Destroy()
+                window.Destroy()
 
     def test_open_last_file_on_startup_success(
         self, app, temp_settings, temp_accounts_file
@@ -227,20 +239,26 @@ class TestMainWindow:
         with patch(
             "simple_otp.ui.main_window.SettingsManager", return_value=settings_manager
         ):
-            with patch("simple_otp.ui.main_window.PasswordDialog") as mock_dialog_class:
-                mock_dialog = MagicMock()
-                mock_dialog.ShowModal.return_value = wx.ID_OK
-                mock_dialog.GetPassword.return_value = password
-                mock_dialog_class.return_value = mock_dialog
+            with patch(
+                "simple_otp.core.recent_files_manager.SettingsManager",
+                return_value=settings_manager,
+            ):
+                with patch(
+                    "simple_otp.core.authenticator.PasswordDialog"
+                ) as mock_dialog_class:
+                    mock_dialog = MagicMock()
+                    mock_dialog.ShowModal.return_value = wx.ID_OK
+                    mock_dialog.GetPassword.return_value = password
+                    mock_dialog_class.return_value = mock_dialog
 
-                window = MainWindow(None)
+                    window = MainWindow(None)
 
-                # Window should have the file open
-                assert window.accounts_manager is not None
-                assert window.current_file == accounts_file
-                assert window.password == password
+                    # Window should have the file open
+                    assert window.accounts_manager is not None
+                    assert window.current_file == accounts_file
+                    assert window.password == password
 
-                window.Destroy()
+                    window.Destroy()
 
     def test_open_last_file_on_startup_cancelled(
         self, app, temp_settings, temp_accounts_file
@@ -258,15 +276,21 @@ class TestMainWindow:
         with patch(
             "simple_otp.ui.main_window.SettingsManager", return_value=settings_manager
         ):
-            with patch("simple_otp.ui.main_window.PasswordDialog") as mock_dialog_class:
-                mock_dialog = MagicMock()
-                mock_dialog.ShowModal.return_value = wx.ID_CANCEL
-                mock_dialog_class.return_value = mock_dialog
+            with patch(
+                "simple_otp.core.recent_files_manager.SettingsManager",
+                return_value=settings_manager,
+            ):
+                with patch(
+                    "simple_otp.core.authenticator.PasswordDialog"
+                ) as mock_dialog_class:
+                    mock_dialog = MagicMock()
+                    mock_dialog.ShowModal.return_value = wx.ID_CANCEL
+                    mock_dialog_class.return_value = mock_dialog
 
-                window = MainWindow(None)
+                    window = MainWindow(None)
 
-                # Window should have no file open
-                assert window.accounts_manager is None
-                assert window.current_file is None
+                    # Window should have no file open
+                    assert window.accounts_manager is None
+                    assert window.current_file is None
 
-                window.Destroy()
+                    window.Destroy()
