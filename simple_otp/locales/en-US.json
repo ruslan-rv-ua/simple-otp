@@ -167,9 +167,8 @@
         "developer": "Ruslan Iskov"
     },
     "authentication": {
-        "title": "Authentication Required",
-        "enter_password": "Enter password for %{filename}:",
-        "incorrect_password": "Incorrect password. %{remaining} attempt(s) remaining.\n\nEnter password for %{filename}:",
+        "enter_password": "Enter password for %{filename}",
+        "incorrect_password": "Incorrect password. %{remaining} attempt(s) remaining. Enter password for %{filename}",
         "max_attempts_exceeded": "Maximum login attempts exceeded.\n\nThe application will now close.",
         "failed": "Authentication Failed"
     }

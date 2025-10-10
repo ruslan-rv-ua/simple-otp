@@ -167,9 +167,8 @@
         "developer": "Руслан Іськов"
     },
     "authentication": {
-        "title": "Потрібна автентифікація",
-        "enter_password": "Введіть пароль для %{filename}:",
-        "incorrect_password": "Невірний пароль. Залишилось спроб: %{remaining}.\n\nВведіть пароль для %{filename}:",
+        "enter_password": "Введіть пароль для %{filename}",
+        "incorrect_password": "Невірний пароль. Залишилось спроб: %{remaining}. Введіть пароль для %{filename}",
         "max_attempts_exceeded": "Перевищено максимальну кількість спроб входу.\n\nПрограма буде закрита.",
         "failed": "Помилка автентифікації"
     }
