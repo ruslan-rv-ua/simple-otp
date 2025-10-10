@@ -132,6 +132,12 @@ class MainWindow(wx.Frame):
 
         # Help menu
         help_menu = wx.Menu()
+        user_guide_item = help_menu.Append(
+            wx.ID_ANY,
+            _("main.menu.help.user_guide"),
+            _("main.menu.help.user_guide_hint"),
+        )
+        help_menu.AppendSeparator()
         about_item = help_menu.Append(
             wx.ID_ABOUT,
             _("main.menu.help.about"),
@@ -148,6 +154,7 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self._on_delete_account, delete_item)
         self.Bind(wx.EVT_MENU, self._on_exit, exit_item)
         self.Bind(wx.EVT_MENU, self._on_settings, settings_item)
+        self.Bind(wx.EVT_MENU, self._on_user_guide, user_guide_item)
         self.Bind(wx.EVT_MENU, self._on_about, about_item)
 
         # Load recent files menu
@@ -450,6 +457,45 @@ class MainWindow(wx.Frame):
             _("main.dialogs.language_changed"),
             wx.OK | wx.ICON_INFORMATION,
         )
+
+    def _on_user_guide(self, event):
+        """Handle User Guide menu item - opens help documentation in browser."""
+        import webbrowser
+
+        from simple_otp.core.help_converter import HelpConverter
+
+        # Get current locale to determine which help file to open
+        locale = self.settings_manager.get("locale")
+
+        # Construct path to Markdown help file in simple_otp/docs/
+        docs_path = Path(__file__).parent.parent / "docs"
+        md_file_path = docs_path / f"{locale}.md"
+
+        # Fallback to English if locale-specific help doesn't exist
+        if not md_file_path.exists():
+            md_file_path = docs_path / "en-US.md"
+
+        # Convert Markdown to HTML
+        if md_file_path.exists():
+            try:
+                converter = HelpConverter()
+                html_file_path = converter.convert_md_to_html(md_file_path)
+
+                # Open in default browser
+                file_url = html_file_path.as_uri()
+                webbrowser.open(file_url)
+            except Exception as e:
+                wx.MessageBox(
+                    f"Error converting help file: {e}",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+        else:
+            wx.MessageBox(
+                "Help file not found.",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
 
     def _on_about(self, event):
         """Handle About menu item."""
