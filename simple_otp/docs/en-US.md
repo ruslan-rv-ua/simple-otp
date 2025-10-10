@@ -32,19 +32,18 @@ Simple OTP is a secure desktop application for generating Time-based One-Time Pa
 - Support for multiple account files
 - Quick account search
 - Copy codes to clipboard
-- Audio notifications for screen reader users
+- Audio notifications
 - Full keyboard navigation support
-- Multilingual interface (Ukrainian, English)
 
 ## Why?
 
-I, the author, am blind and was looking for a simple and accessible Windows application that would generate TOTP codes and be fully compatible with screen readers.
+I'm a blind developer who was looking for the perfect TOTP code generation app for Windows — simple, accessible, and fully screen reader compatible.
 
-The community recommended only one widely available option — **KeePass**. While KeePass can store and generate TOTP, it lacked some features that were important specifically for my workflow and accessibility needs.
+The community suggested only one option — **KeePass**. It handles TOTP storage and generation, but lacked those features that were vital for my workflow and accessibility needs.
 
-Having some free time and lots of inspiration, I decided to create Simple OTP. The goal — to make a simple, clear, and convenient tool focused on users who rely on screen readers and keyboard navigation.
+So, with some time and lots of inspiration, I created **Simple OTP**. My goal is to create a simple, clear, and convenient tool for those who rely on screen readers and keyboard navigation.
 
-If you have ideas or accessibility-related needs, I'd be happy to receive your feedback — it will help make the application better for everyone.
+If you have ideas, I'd be happy to receive your feedback — it will help make the application better for everyone.
 
 ---
 
@@ -74,6 +73,13 @@ To create a new accounts file:
 2. Choose a save location and enter a filename
 3. Set a strong password
 4. Confirm the password
+
+After creating the file, the application will automatically create a test account to verify TOTP functionality:
+
+- **Name**: `totp@authenticationtest.com`
+- **Issuer**: `AuthenticationTest.com`
+
+You can use this account for testing at [authenticationtest.com](https://authenticationtest.com/totpChallenge). After verification, it can be deleted.
 
 > **Important:** Keep your password in a safe place. If you forget the password, recovering access to the file will be impossible!
 
@@ -105,11 +111,11 @@ To add a new account:
    - **Name:** account identifier (e.g., user@example.com)
    - **Secret:** Base32 key from the provider (e.g., JBSWY3DPEHPK3PXP)
 3. Optionally fill in additional fields:
-   - **Issuer:** service name (Google, GitHub, etc.)
-   - **Digits:** usually 6 (default)
-   - **Algorithm:** usually SHA1 (default)
-   - **Period:** usually 30 seconds (default)
-4. Press **Add**
+   - **Issuer:** service name (Google, GitHub, Binance, etc.)
+   - **Digits:** usually 6, but 7 and 8 are also supported
+   - **Hash algorithm:** usually SHA1, SHA256 and SHA512 are also available
+   - **Period:** usually 30 seconds
+4. Press **OK**
 
 ### Where to Find the Secret Key
 
@@ -125,7 +131,7 @@ To delete an account:
 
 ### Searching for Accounts
 
-Use the quick search field in the main window to filter accounts by name or issuer. Search works in real-time as you type.
+Use the quick search field in the main window to filter accounts by name or issuer. Search activates after entering at least 3 characters and works in real-time. Search is performed for all words entered separated by spaces.
 
 ---
 
@@ -143,20 +149,27 @@ To get a TOTP code:
 
 The dialog window displays:
 
-- **Current code:** 6-digit code that constantly updates
-- **Countdown timer:** time until the next code update
-- **Name and issuer:** account information
+- **Current code:** valid TOTP code that can be used right now for authentication (formatted with spaces, e.g., "12 34 56")
+- **Next code:** TOTP code that will become valid after the current code expires
+- **Remaining time progress:** indicator showing how much time is left until automatic code update
 
 ### Copying the Code
 
-The code is automatically copied to the clipboard when the dialog window opens. You can also:
+The current code is **automatically copied** to the clipboard when the dialog window opens. You can also:
 
-- Press the **Copy Code** button
-- Use the `Ctrl+C` keys
+- Press the **Copy Current** or **Copy Next** button
+- Use hotkeys `K` (current) or `D` (next)
+- Use combinations `Ctrl+Enter` (current) or `Ctrl+Shift+Enter` (next)
+
+An audio signal sounds when copying (if enabled in settings).
 
 ### Automatic Update
 
-The code automatically updates according to the configured period (usually every 30 seconds). An audio signal sounds when updated (if enabled in settings).
+The code automatically updates according to the configured period (usually every 30 seconds). When updating:
+- An audio signal sounds (if enabled)
+- The code can be automatically copied to the clipboard (if configured)
+- The code can be automatically spoken by the screen reader (if configured)
+- A few seconds before expiration, a warning signal may sound (if configured)
 
 ---
 
@@ -168,20 +181,30 @@ Open the settings window through **Options → Settings...** or press `Ctrl+,`
 
 | Setting | Description |
 |---------|-------------|
-| Auto-close TOTP window | Automatically closes the dialog window after copying the code |
-| Play sound on code update | Audio signal when generating a new code |
-| Play sound on copy | Audio signal when copying code to clipboard |
-| Hide passwords on input | Masks password characters with asterisks (*) |
+| Automatically copy password to clipboard on update | New code is automatically copied on each update |
+| Hide passwords in TOTP dialog | Displays codes as '******' and disables keyboard focusing |
+| Automatically speak password on update | New code is automatically spoken by screen reader on update |
+| Open last file on startup | Automatically opens the last used file when starting the application |
 
-### "Defaults" Tab
+### "Audio" Tab
+
+| Setting | Description |
+|---------|-------------|
+| Play sound when copying current password | Audio signal when copying current code |
+| Play sound when copying next password | Audio signal when copying next code |
+| Play sound on password update | Audio signal when generating a new code |
+| Play warning sound | Audio signal before password expiration |
+| Play warning sound (seconds before expiration) | Number of seconds before expiration when warning starts (default 5) |
+
+### "TOTP Defaults" Tab
 
 Configure default values for new accounts:
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| Digits | 6 or 8 | TOTP code length |
-| Algorithm | SHA1, SHA256, SHA512 | Hashing algorithm |
-| Period | 30 seconds | Code validity time |
+| Digits | 6, 7, or 8 | TOTP code length (default 6) |
+| Algorithm | SHA1, SHA256, SHA512 | Hashing algorithm (default SHA1) |
+| Period | 15-120 seconds | Code validity time (default 30) |
 
 ### Changing Language
 
@@ -217,8 +240,13 @@ Select the interface language through **Options → Language**. Some interface e
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+C` | Copy code |
-| `Esc` | Close window |
+| `K` | Copy current code |
+| `D` | Copy next code |
+| `J` or `Enter` | Speak current code (by screen reader) |
+| `F` or `Shift+Enter` | Speak next code (by screen reader) |
+| `Ctrl+Enter` | Copy current code |
+| `Ctrl+Shift+Enter` | Copy next code |
+| `A` or `Esc` | Close window |
 
 ---
 
@@ -226,11 +254,7 @@ Select the interface language through **Options → Language**. Some interface e
 
 ### Screen Reader Support
 
-Simple OTP is fully compatible with screen readers:
-
-- **NVDA** — recommended (free, open-source)
-- **JAWS** — full support
-- **Windows Narrator** — basic support
+Simple OTP has been tested with the NVDA screen reader. Theoretically, the application is compatible with any screen reader.
 
 ### Audio Notifications
 
@@ -251,18 +275,6 @@ All application features are accessible via keyboard without using a mouse. Use:
 - `Alt` + underlined letter for quick menu access
 - Arrows to navigate lists and menus
 
-### Braille Display Support
-
-The application is integrated with the VocaBraille library for improved Braille display support. All text elements are correctly displayed in Braille.
-
-### Contrast and Text Sizes
-
-Simple OTP adheres to system settings:
-
-- Uses system fonts and sizes
-- Supports Windows high-contrast themes
-- Works correctly with DPI settings
-
 ---
 
 ## Security
@@ -271,9 +283,9 @@ Simple OTP adheres to system settings:
 
 All account files are encrypted using:
 
-- **AES-256-GCM** — symmetric encryption
-- **PBKDF2** — password-based key derivation (600,000 iterations)
-- **Random salt** — unique for each file
+- **AES-256-GCM** — symmetric encryption with built-in authentication
+- **PBKDF2-HMAC-SHA256** — password-based key derivation (600,000 iterations according to OWASP 2023 recommendations)
+- **Random salt** — unique for each file (generated by the `secrets` module)
 - **Random nonce** — unique for each encryption operation
 
 ### Password Recommendations
@@ -287,15 +299,14 @@ For maximum security, use passwords that:
 
 ### Storing Secrets
 
-> **Important:** Base32 secret keys are stored in encrypted form. Never share your account files or secret keys with others!
+> **Important:** Base32 secret keys are stored in encrypted form. Never share your secret keys with others!
 
 ### Clipboard Security
 
 TOTP codes are copied to the system clipboard. Remember:
 
 - Other applications can read the clipboard contents
-- Clear the clipboard after using the code
-- Don't leave the code in the clipboard for long
+- Codes are copied without spaces (even if displayed with formatting)
 
 ### Backup
 
@@ -326,10 +337,10 @@ Regularly create backups of your account files:
 
 **Solution:**
 
-- Base32 contains only characters A-Z and 2-7
-- Remove spaces and hyphens from the secret
+- Base32 contains only characters A-Z and 2-7, optionally with '=' characters for alignment
+- Remove spaces and hyphens from the secret (the application does this automatically, but it's better to enter clean text)
 - Make sure you've copied the entire secret
-- Some services show the secret in a format with spaces — remove them
+- Some services show the secret in a format with spaces — the application automatically removes them during validation
 
 ### Code Doesn't Match
 
@@ -337,21 +348,11 @@ Regularly create backups of your account files:
 
 **Solution:**
 
-- Check the time on your computer — it must be accurate
-- Synchronize time through Windows settings
+- Check the time on your computer — it must be accurate (synchronized with an internet server)
+- Synchronize time through Windows settings (Settings → Time & Language → Time Synchronization)
 - Make sure parameters (digits, digest, interval) match service requirements
 - Usually used: 6 digits, SHA1, 30 seconds
-
-### Screen Reader Problems
-
-**Problem:** Screen reader doesn't read application elements
-
-**Solution:**
-
-- Make sure the screen reader is running before the application
-- Try restarting the application
-- For NVDA: make sure UIA (UI Automation) support is enabled
-- Use keyboard navigation (`Tab`, arrows)
+- When entering the code on a website, enter WITHOUT spaces (123456, not 12 34 56)
 
 ### File Won't Open
 
@@ -359,7 +360,6 @@ Regularly create backups of your account files:
 
 **Solution:**
 
-- Check that the file is not corrupted
 - Make sure the file is not open in another program
 - Check file access permissions
 - Try restoring from backup
