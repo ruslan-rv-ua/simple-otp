@@ -253,6 +253,9 @@ class TestMainWindow:
 
                     window = MainWindow(None)
 
+                    # Process pending events to execute wx.CallAfter
+                    app.Yield()
+
                     # Window should have the file open
                     assert window.accounts_manager is not None
                     assert window.current_file == accounts_file
@@ -288,6 +291,9 @@ class TestMainWindow:
                     mock_dialog_class.return_value = mock_dialog
 
                     window = MainWindow(None)
+
+                    # Process pending events to execute wx.CallAfter
+                    app.Yield()
 
                     # Window should have no file open
                     assert window.accounts_manager is None
