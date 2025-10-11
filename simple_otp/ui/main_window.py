@@ -589,14 +589,13 @@ class MainWindow(wx.Frame):
     def _on_about(self, event):
         """Handle About menu item."""
         # Read version from pyproject.toml
-        # TODO: update the URL and developer info
         version = get_app_version()
 
         info = wx.adv.AboutDialogInfo()
         info.SetName(_("main.title"))
         info.SetVersion(version)
         info.SetDescription(_("about.description"))
-        info.SetWebSite(_("about.website"))
+        info.SetWebSite("https://github.com/ruslan-rv-ua/simple-otp")
         info.AddDeveloper(_("about.developer"))
 
         wx.adv.AboutBox(info)

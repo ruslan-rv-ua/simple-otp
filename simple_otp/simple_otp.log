@@ -1,5 +1,0 @@
-2025-10-10 15:23:54.322 | INFO     | simple_otp.core.logger:configure_logging:55 - ================================================================================
-2025-10-10 15:23:54.322 | INFO     | simple_otp.core.logger:configure_logging:56 - Logging system initialized
-2025-10-10 15:23:54.322 | INFO     | simple_otp.core.logger:configure_logging:57 - Log file: C:\dev\simple-otp\simple_otp\simple_otp.log
-2025-10-10 15:23:54.322 | INFO     | simple_otp.core.logger:configure_logging:58 - ================================================================================
-2025-10-10 15:23:54.322 | INFO     | __main__:<module>:1 - Test log entry
